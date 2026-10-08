@@ -139,6 +139,29 @@ class TestFeedback:
         graph.evaluations["SIMPLIFIED"].replacement = CriteriaGraph.END
         assert list(graph.generate_feedback("response", "EQ_TRUE")) == ["EQ_TRUE"]
 
+    def test_replacement_chains_are_followed(self):
+        graph = equality_graph()
+        graph.attach("EQ_FALSE", "OTHER", summary="other", details="other", evaluate=returns("OTHER_TRUE"))
+        graph.attach("OTHER", "OTHER_TRUE", summary="yes", details="yes")
+        graph.evaluations["SIMPLIFIED"].replacement = graph.evaluations["OTHER"]
+        graph.evaluations["OTHER"].replacement = CriteriaGraph.END
+        assert list(graph.generate_feedback("response", "EQ_TRUE")) == ["EQ_TRUE"]
+
+    def test_replacement_cycles_terminate(self):
+        graph = equality_graph()
+        graph.attach("EQ_FALSE", "OTHER", summary="other", details="other", evaluate=returns("OTHER_TRUE"))
+        graph.attach("OTHER", "OTHER_TRUE", summary="yes", details="yes")
+        graph.evaluations["SIMPLIFIED"].replacement = graph.evaluations["OTHER"]
+        graph.evaluations["OTHER"].replacement = graph.evaluations["SIMPLIFIED"]
+        assert list(graph.generate_feedback("response", "EQ_TRUE")) == ["EQ_TRUE"]
+
+    def test_evaluate_must_return_a_mapping(self):
+        graph = CriteriaGraph("g")
+        graph.add_evaluation_node("E", "s", "d", evaluate=lambda response: ["C"])
+        graph.attach("E", "C", summary="c", details="c")
+        with pytest.raises(CriteriaGraphError, match=r"E must return a mapping .* got list"):
+            graph.generate_feedback("x", "C")
+
     def test_unknown_criterion_reported_by_evaluate(self):
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E", "s", "d", evaluate=returns("TYPO"))

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Collection, Iterable, Mapping
 from typing import Any, ClassVar
 
@@ -240,10 +241,10 @@ class CriteriaGraph:
             raise CriteriaGraphError(f"No evaluation leads to criterion {criterion}.")
         # Ordered worklist (not a set): the result must not depend on the hash seed.
         starting: list[str] = []
-        candidates = list(base)
+        candidates = deque(base)
         seen: set[str] = set()
         while candidates:
-            candidate = candidates.pop(0)
+            candidate = candidates.popleft()
             if candidate in seen:
                 continue  # sufficiencies can form cycles
             seen.add(candidate)
@@ -257,7 +258,7 @@ class CriteriaGraph:
                         raise CriteriaGraphError(
                             f"Evaluation node {candidate} has sufficiency {sufficiency}, which is not a criterion."
                         )
-                    candidates += [edge.source.label for edge in sufficient.incoming]
+                    candidates.extend(edge.source.label for edge in sufficient.incoming)
         return starting or base
 
     def build_tree(self, starting_evaluation: str, main_criteria: Collection[str] = ()) -> CriteriaTree:
@@ -268,28 +269,32 @@ class CriteriaGraph:
         """One tree per starting evaluation for ``criterion``, with ``criterion`` marked as the main criterion."""
         return [self.build_tree(start, main_criteria=[criterion]) for start in self.starting_evaluations(criterion)]
 
-    def generate_feedback(self, response: Any, main_criterion: str) -> dict[str, Mapping[str, Any] | None]:
+    def generate_feedback(self, response: Any, main_criterion: str) -> ReachedCriteria:
         """Run the evaluations reachable from the starting evaluations for criterion ``main_criterion``.
 
         Returns every criterion reached, mapped to the inputs for its feedback
         text, in the order reached (breadth-first, in attachment order); pass
         it to ``export_feedback`` or ``resolve_feedback`` for the text.
-        Evaluations with a ``replacement`` are skipped in favour of it.
+        Evaluations with a ``replacement`` are skipped in favour of it, following
+        chains of replacements; replacing with an output (e.g. ``END``) stops there.
 
         Raises ``CriteriaEvaluationError`` (chaining the cause) if an
         ``evaluate`` function fails, and ``CriteriaGraphError`` if an evaluation
-        has no ``evaluate`` function or reports a criterion not in the graph,
-        and for the reasons ``starting_evaluations`` does.
+        has no ``evaluate`` function, returns something other than a mapping or
+        reports a criterion not in the graph, and for the reasons
+        ``starting_evaluations`` does.
         """
-        queue = self.starting_evaluations(main_criterion)
+        queue = deque(self.starting_evaluations(main_criterion))
         visited: set[str] = set()
         feedback: dict[str, Mapping[str, Any] | None] = {}
         while queue:
-            label = queue.pop(0)
+            label = queue.popleft()
             node = self.evaluations.get(label)
-            if node is not None and node.replacement is not None:
+            # Follow replacements; `visited` also stops replacement cycles.
+            while node is not None and node.replacement is not None and label not in visited:
                 visited.add(label)
                 label = node.replacement.label
+                node = self.evaluations.get(label)
             if label in visited or label not in self.evaluations:
                 continue
             visited.add(label)
@@ -300,12 +305,17 @@ class CriteriaGraph:
                 results = evaluate(response)
             except Exception as exc:
                 raise CriteriaEvaluationError(label) from exc
+            if not isinstance(results, Mapping):
+                raise CriteriaGraphError(
+                    f"Evaluation node {label} must return a mapping of criterion labels to feedback inputs, "
+                    f"got {type(results).__name__}."
+                )
             unknown = [criterion for criterion in results if criterion not in self.criteria]
             if unknown:
                 raise CriteriaGraphError(f"Evaluation node {label} reported unknown criteria: {', '.join(unknown)}.")
             feedback.update(results)
             for criterion in results:
-                queue += [edge.target.label for edge in self.criteria[criterion].outgoing]
+                queue.extend(edge.target.label for edge in self.criteria[criterion].outgoing)
         return feedback
 
     # ------------------------------------------------------------------

@@ -1,4 +1,4 @@
-"""Criteria DSL parser and criteria (evaluation) graphs.
+"""Criteria parser and criteria graphs for Lambda Feedback evaluation functions.
 
 - :func:`build_criteria_parser` parses criteria such as
   ``response = answer where a = 2``.
@@ -7,9 +7,6 @@
   reached into feedback on a result object such as
   ``lf_toolkit.evaluation.Result`` (:meth:`CriteriaGraph.export_feedback`)
   and renders the graph.
-
-Extracted from compareExpressions (app/utility/criteria_parsing.py and
-app/utility/criteria_graph_utilities.py).
 """
 
 from .errors import CriteriaError, CriteriaEvaluationError, CriteriaGraphError

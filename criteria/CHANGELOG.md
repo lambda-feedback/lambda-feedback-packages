@@ -29,6 +29,10 @@ Labels are unique across node kinds: adding a node whose label is already used b
 
 Starting points: `starting_evaluations`, `generate_feedback` and `trees` take a criterion label only; they used to also accept an evaluation label and start there. Passing an evaluation label, or a criterion that no evaluation leads to (which used to give `[]` / no feedback), raises `CriteriaGraphError`. To run from an evaluation, pass a criterion it leads to.
 
+Replacements: `generate_feedback` follows chains of `replacement`s (an evaluation replaced by an evaluation that is itself replaced), stopping on cycles; it used to follow only one step and run the second evaluation. An `evaluate` function returning something other than a mapping raises `CriteriaGraphError` naming the evaluation (it was an opaque `ValueError` from `dict.update`). `generate_feedback` is annotated as returning `ReachedCriteria`.
+
+Packaging: README (PyPI description), MIT licence and project metadata.
+
 Rendering: `to_mermaid()` draws sufficiency edges between the real nodes (they pointed at new, unconnected boxes named after the labels) and escapes `"` in labels and text; tree mermaid ids are safe for labels with spaces or punctuation. Tree children are in attachment order (they were reversed). `Evaluate` and `FeedbackStringGenerator` are exported for type hints.
 
 Errors: graph misuse raises `CriteriaGraphError` (a `ValueError`) instead of bare `Exception`; `CriteriaError` is the common base.
