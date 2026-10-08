@@ -140,12 +140,12 @@ class CriteriaGraph:
         the target doesn't exist it is created (of the kind the source leads
         to), which requires ``summary`` and ``details``. A new criterion takes
         ``feedback_string_generator``; a new evaluation takes ``sufficiencies``
-        and ``evaluate``.
+        and ``evaluate``. To attach to an existing node, pass none of these.
 
         Raises ``CriteriaGraphError`` if the source is unknown or an output,
         the target is of the wrong kind or is unknown without ``summary`` and
-        ``details``, a keyword doesn't apply to the new node's kind, or the
-        edge already exists.
+        ``details``, a keyword doesn't apply to the new node's kind, keywords
+        are given for an existing target, or the edge already exists.
         """
         source: Node | None = self.evaluations.get(source_label) or self.criteria.get(source_label)
         if source is None:
@@ -191,6 +191,13 @@ class CriteriaGraph:
                         f"{target_label} is an evaluation node, evaluation nodes cannot generate feedback strings."
                     )
                 target = self.add_evaluation_node(target_label, summary, details, sufficiencies, evaluate)
+        elif any(
+            option is not None for option in (summary, details, sufficiencies, evaluate, feedback_string_generator)
+        ):
+            raise CriteriaGraphError(
+                f"{target_label} already exists; summary, details and node options only apply when attach creates "
+                "the target."
+            )
 
         edge = Edge(source, target)
         if edge in source.outgoing:

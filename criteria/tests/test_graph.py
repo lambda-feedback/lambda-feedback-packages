@@ -9,6 +9,7 @@ from lambdafeedback.criteria import (
     CriteriaGraphError,
     CriterionNode,
     EvaluationNode,
+    Node,
     OutputNode,
 )
 
@@ -75,6 +76,18 @@ class TestBuilding:
         with pytest.raises(CriteriaGraphError, match="cannot have an evaluate function"):
             graph.attach("EQ", "NEW_C", summary="s", details="d", evaluate=lambda response: {})
         assert "NEW_E" not in graph.evaluations and "NEW_C" not in graph.criteria
+
+    def test_attach_to_existing_target_rejects_node_options(self):
+        graph = equality_graph()
+        with pytest.raises(CriteriaGraphError, match="SIMPLIFIED already exists"):
+            graph.attach("EQ_FALSE", "SIMPLIFIED", summary="s", details="d")
+        with pytest.raises(CriteriaGraphError, match="SIMPLIFIED already exists"):
+            graph.attach("EQ_FALSE", "SIMPLIFIED", evaluate=returns("X"))
+        assert [edge.target.label for edge in graph.criteria["EQ_FALSE"].outgoing] == ["END"]
+
+    def test_add_node_rejects_other_types(self):
+        with pytest.raises(CriteriaGraphError, match="Can only add"):
+            CriteriaGraph("g").add_node(Node("X", "s", "d"))
 
     def test_labels_are_unique_across_node_kinds(self):
         graph = equality_graph()
