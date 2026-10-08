@@ -13,6 +13,7 @@ from lambdafeedback.expression_parsing import (
     BracketNotationError,
     ExpressionParams,
     ExpressionParsingError,
+    InvalidParameterError,
     LatexParseError,
     SymbolAssumptionError,
     SympyParsingConfig,
@@ -216,3 +217,103 @@ class TestPublicReleaseReview:
         # The ± expansion used to run symbol substitution over the LaTeX, so \lambda became \lamda.
         both = sorted([parse_latex(r"1 + \lambda", {}), parse_latex(r"1 - \lambda", {})])
         assert parse_latex(r"1 \pm \lambda", {}) == "{" + ", ".join(both) + "}"
+
+
+class TestPythonKeywords:
+    """Python keywords can't be names in SymPy's eval; they used to fail or be mangled."""
+
+    @pytest.mark.parametrize(
+        ("response", "expected"),
+        [("in", "i*n"), ("2*is + 1", "2*i*s + 1"), ("x if", "f*i*x"), ("as", "a*s"), ("True", "T*e*r*u")],
+    )
+    def test_keywords_are_read_like_other_words(self, response, expected):
+        assert str(parse_expression(response, parsing_params())) == expected
+
+    def test_keywords_are_single_symbols_with_strict_syntax(self):
+        assert parse_expression("2*in", parsing_params(strict_syntax=True)) == 2 * Symbol("in")
+
+    def test_as_inside_a_name_is_not_split_with_strict_syntax(self):
+        # The old 'as' -> 'a*s' rule was a substring replacement: 'phase' became 'pha*se'.
+        assert parse_expression("phase", parsing_params(strict_syntax=True, convention=None)) == Symbol("phase")
+
+    @pytest.mark.parametrize("code", ["in", "as", "del", "lambda_1"])
+    def test_keyword_like_symbol_codes_keep_their_symbol(self, code):
+        params = ExpressionParams.from_dict(
+            {"symbols": {code: {"latex": "Q", "aliases": ["q"]}}, "symbol_assumptions": f"('{code}', 'positive')"}
+        )
+        parsed = parse_expression(
+            preprocess_expression("response", "2q", params), SympyParsingConfig.from_params(params)
+        )
+        assert sympy_to_latex(parsed, params.symbols) == "2 Q"
+        assert all(symbol.is_positive for symbol in parsed.free_symbols)
+
+    def test_lambda_and_lamda_cannot_both_be_defined(self):
+        with pytest.raises(InvalidParameterError, match="lamda"):
+            ExpressionParams.from_dict({"symbols": {"lambda": {"latex": "A"}, "lamda": {"latex": "B"}}})
+
+    def test_symbols_with_assumptions_keep_their_latex(self):
+        params = ExpressionParams.from_dict(
+            {"symbols": {"vx": {"latex": "v_x"}}, "symbol_assumptions": "('vx', 'positive')"}
+        )
+        parsed = parse_expression("2*vx", SympyParsingConfig.from_params(params))
+        assert sympy_to_latex(parsed, params.symbols) == "2 v_x"
+
+
+class TestFunctionNames:
+    """Short function names matched inside ordinary words; unapplied functions gave unhelpful errors."""
+
+    @pytest.mark.parametrize("word", ["area", "time", "rest", "interval", "pressure", "free", "design"])
+    def test_short_function_names_inside_words_are_letters(self, word):
+        parsed = parse_expression(
+            preprocess_expression("response", word, ExpressionParams(elementary_functions=True)),
+            parsing_params(elementary_functions=True),
+        )
+        assert not parsed.atoms(Function)
+        assert {str(symbol) for symbol in parsed.free_symbols} <= set(word) | {"E"}
+
+    @pytest.mark.parametrize(
+        ("response", "expected"),
+        [
+            ("re(z)+im(z)", "re(z) + im(z)"),
+            ("xmax(a, b)", "x*Max(a, b)"),
+            ("sec^2(x)", "sec(x)**2"),
+            ("max (a, b)", "Max(a, b)"),
+        ],
+    )
+    def test_short_function_names_still_apply(self, response, expected):
+        params = ExpressionParams(elementary_functions=True)
+        assert (
+            str(
+                parse_expression(
+                    preprocess_expression("response", response, params), parsing_params(elementary_functions=True)
+                )
+            )
+            == expected
+        )
+
+    def test_short_function_name_as_a_task_symbol(self):
+        params = ExpressionParams.from_dict({"symbols": {"max": {"latex": "M"}}})
+        assert parse_expression(
+            preprocess_expression("response", "2max", params), SympyParsingConfig.from_params(params)
+        ) == 2 * Symbol("max")
+
+    @pytest.mark.parametrize(
+        ("response", "function"), [("sin", "sin"), ("sin x", "sin"), ("2sqrtx", "sqrt"), ("abs", "Abs")]
+    )
+    def test_function_without_brackets_says_so(self, response, function):
+        params = ExpressionParams(elementary_functions=True)
+        with pytest.raises(ExpressionParsingError, match=re.escape(f"{function} is a function")):
+            parse_expression(
+                preprocess_expression("response", response, params), parsing_params(elementary_functions=True)
+            )
+
+    def test_declared_function_without_brackets_says_so(self):
+        with pytest.raises(ExpressionParsingError, match="f is a function"):
+            parse_expression("f x", parsing_params(symbol_assumptions="('f', 'function')"))
+
+    @pytest.mark.parametrize("response", ["int(x, x)", "xmax(a, b)"])
+    def test_unrecognised_function_arguments_are_not_called_a_set(self, response):
+        # Without elementary_functions these multiply by the tuple (a, b); the message used to blame a set.
+        with pytest.raises(ExpressionParsingError, match="bracketed list") as info:
+            parse_expression(response, parsing_params())
+        assert "set" not in str(info.value)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -12,7 +13,8 @@ from token import NAME, OP
 from tokenize import TokenError, generate_tokens
 from typing import Any
 
-from sympy import Basic, Equality, Function, Symbol
+import sympy
+from sympy import Basic, Equality, Function, Set, Symbol, Tuple
 from sympy.parsing.sympy_parser import T as TRANSFORMATIONS
 from sympy.parsing.sympy_parser import _token_splittable, split_symbols_custom
 from sympy.utilities.exceptions import SymPyDeprecationWarning
@@ -199,20 +201,34 @@ def _parse_expr(expr: str, **kwargs: Any) -> Any:
     """:func:`safe_parse_expr` that rejects arithmetic on non-expressions.
 
     With ``{}`` read as set literals (strict syntax), inputs like
-    ``{x+1}*{x-1}`` build ``Mul(FiniteSet, FiniteSet)``, which SymPy only
-    deprecates (and will reject in future). Other warnings pass through.
+    ``{x+1}*{x-1}`` build ``Mul(FiniteSet, FiniteSet)``, and an unrecognised
+    function name before its arguments (``xmax(a, b)`` without
+    ``elementary_functions``) multiplies by the ``Tuple`` ``(a, b)``. SymPy
+    only deprecates such arithmetic (and will reject it in future). Other
+    warnings pass through.
     """
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         parsed = safe_parse_expr(expr, **kwargs)
     for warning in caught:
         if issubclass(warning.category, SymPyDeprecationWarning) and "non-Expr" in str(warning.message):
-            raise ExpressionParsingError(
-                f"Arithmetic on a set ({{...}}) is not supported in {expr!r}; use ( ) for grouping.",
-                expression=expr,
-            )
+            raise ExpressionParsingError(_non_expr_message(str(warning.message), expr), expression=expr)
         warnings.warn_explicit(warning.message, warning.category, warning.filename, warning.lineno)
     return parsed
+
+
+def _non_expr_message(warning: str, expr: str) -> str:
+    """Explain SymPy's "non-Expr arguments" warning in terms of what the learner wrote."""
+    match = re.search(r"has type '(\w+)'", warning)
+    kind = getattr(sympy, match.group(1), None) if match else None
+    if isinstance(kind, type) and issubclass(kind, Set):
+        return f"Arithmetic on a set ({{...}}) is not supported in {expr!r}; use ( ) for grouping."
+    if kind is Tuple:
+        return (
+            f"A bracketed list such as (a, b) can't be used in arithmetic in {expr!r}. "
+            "If it is meant as a function's arguments, check the function's name."
+        )
+    return f"{expr!r} combines something that isn't a number or expression (e.g. a comparison) in arithmetic."
 
 
 def _unapplied_function(expr: str, symbol_dict: Mapping[str, Any]) -> str | None:
