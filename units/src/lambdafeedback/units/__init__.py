@@ -12,6 +12,8 @@ Previewing a response (LaTeX/SymPy rendering) is an app-layer concern and
 lives in compareExpressions, not here.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .data import (
     ALL_UNITS,
     COMMON_UNITS,
@@ -22,17 +24,23 @@ from .data import (
     SI_PREFIXES,
     UNIT_SETS,
     VERY_COMMON_UNITS,
+    AnyUnit,
     BaseUnit,
     Prefix,
     Unit,
     units_in,
 )
-from .errors import QuantityError, QuantityParseError, UnitConversionError
+from .errors import QuantityError, QuantityParamsError, QuantityParseError, UnitConversionError
 from .params import QuantityParams, Strictness
 from .parser import build_quantity_parser
 from .preprocessing import preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
 from .quantity import PhysicalQuantity, RevertedUnit, parse_quantity
 from .tags import QuantityTag
+
+try:
+    __version__ = version("lambdafeedback-units")
+except PackageNotFoundError:  # running from a source checkout that isn't installed
+    __version__ = "0+unknown"
 
 __all__ = [
     "ALL_UNITS",
@@ -44,17 +52,20 @@ __all__ = [
     "SI_PREFIXES",
     "UNIT_SETS",
     "VERY_COMMON_UNITS",
+    "AnyUnit",
     "BaseUnit",
     "PhysicalQuantity",
     "Prefix",
     "QuantityError",
     "QuantityParams",
+    "QuantityParamsError",
     "QuantityParseError",
     "QuantityTag",
     "RevertedUnit",
     "Strictness",
     "Unit",
     "UnitConversionError",
+    "__version__",
     "build_quantity_parser",
     "parse_quantity",
     "preprocess_legacy",

@@ -5,9 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from sympy import Basic
+
 from lambdafeedback.expression_parsing import (
     AbsoluteValueNotationError,
     BracketNotationError,
+    ExpressionParsingError,
     SympyParsingConfig,
     parse_expression,
     parse_latex,
@@ -15,10 +18,10 @@ from lambdafeedback.expression_parsing import (
     substitute,
     sympy_to_latex,
 )
-from lambdafeedback.slr_parsing import ExprNode, SLRParser
+from lambdafeedback.slr_parsing import ExprNode, SLRError, SLRParser
 
 from .data import CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, units_in
-from .errors import QuantityParseError, UnitConversionError
+from .errors import QuantityError, QuantityParseError, UnitConversionError
 from .params import QuantityParams
 from .parser import build_quantity_parser
 from .tags import QuantityTag
@@ -57,20 +60,41 @@ def _unsplittable_names(params: QuantityParams, all_forms: bool) -> list[str]:
 class PhysicalQuantity:
     """A response read as a quantity: its value and unit, their LaTeX, and SI forms.
 
-    Use :func:`parse_quantity` to create one.
+    Use :func:`parse_quantity` to create one. SymPy results use the SI base
+    units of :data:`~lambdafeedback.units.SI_BASE_UNITS` as symbols; mass is
+    in grams (``kilogram`` expands to ``1000*gram``).
 
     Attributes:
         value, unit: the value and unit subtrees (either may be ``None``).
+        ast_root: the whole parse tree.
         reverted_units: :class:`RevertedUnit` facts for unit-like text read
             as part of the value.
         value_latex, unit_latex, latex: LaTeX for the value, the unit, and both.
-        standard_value: the value with the unit's factor applied (SymPy).
+        standard_value: the value with the unit's factor applied (SymPy), or a
+            set of them for a value such as ``{1, 2}``.
         standard_unit: the unit in SI base units without its factor.
         expanded_unit: the unit in SI base units.
-        dimension: the unit's dimension (e.g. ``length/time``).
+        dimension: the unit's dimension (e.g. ``length/time``), ``1`` without a unit.
         unit_factor: the numeric factor between the unit and SI base units.
         parsing_config: the SymPy parsing configuration used.
     """
+
+    name: str
+    params: QuantityParams
+    ast_root: ExprNode
+    parser: SLRParser
+    parsing_config: SympyParsingConfig
+    reverted_units: list[RevertedUnit]
+    value: ExprNode | None
+    unit: ExprNode | None
+    value_latex: str | None
+    unit_latex: str | None
+    latex: str
+    standard_value: Basic | set[Basic] | None
+    standard_unit: Basic | None
+    expanded_unit: Basic | None
+    dimension: Basic
+    unit_factor: Basic
 
     def __init__(self, name: str, params: QuantityParams, ast_root: ExprNode, parser: SLRParser) -> None:
         self.name = name
@@ -83,9 +107,9 @@ class PhysicalQuantity:
             unsplittable_symbols=unsplittable,
             symbol_assumptions=tuple((name, "positive") for name in unsplittable),
         )
-        self.reverted_units: list[RevertedUnit] = []
-        self.value: ExprNode | None = None
-        self.unit: ExprNode | None = None
+        self.reverted_units = []
+        self.value = None
+        self.unit = None
 
         self._split_value_and_unit()
         if self.value is not None:
@@ -101,6 +125,11 @@ class PhysicalQuantity:
             self.dimension,
             self.unit_factor,
         ) = self._all_forms()
+
+    def __repr__(self) -> str:
+        value = None if self.value is None else self.value.content_string()
+        unit = None if self.unit is None else self.unit.content_string()
+        return f"PhysicalQuantity(value={value!r}, unit={unit!r})"
 
     # ------------------------------------------------------------------
     # Splitting value and unit
@@ -222,7 +251,7 @@ class PhysicalQuantity:
         node.children = [self._expand_units(child) for child in node.children]
         return node
 
-    def _all_forms(self) -> tuple[Any, Any, Any, Any, Any]:
+    def _all_forms(self) -> tuple[Basic | set[Basic] | None, Basic | None, Basic | None, Basic, Basic]:
         config = self.parsing_config
         value: Any = self.value.content_string() if self.value is not None else None
         if value is not None and self.params.is_latex:
@@ -252,10 +281,25 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
     """Read ``expr`` as a physical quantity (value and/or unit).
 
     ``name`` (e.g. ``"response"``) identifies the quantity in messages.
-    Raises :class:`QuantityParseError` if ``expr`` can't be parsed.
+
+    Raises :class:`QuantityParseError` if ``expr`` can't be read as a
+    quantity (including a value SymPy can't parse), or
+    :class:`UnitConversionError` if its unit can't be converted to SI base
+    units. Both are :class:`QuantityError`\\ s carrying ``expression`` and ``name``.
     """
     parser = build_quantity_parser(params.unit_sets, params.strictness)
-    roots = parser.parse(parser.scan(expr.strip()))
-    if len(roots) > 1:
-        raise QuantityParseError("Parsed quantity does not have a single root.")
-    return PhysicalQuantity(name, params, roots[0], parser)
+    try:
+        roots = parser.parse(parser.scan(expr.strip()))
+        if len(roots) > 1:
+            raise QuantityParseError("Parsed quantity does not have a single root.")
+        return PhysicalQuantity(name, params, roots[0], parser)
+    except QuantityError as exc:
+        if exc.expression is None:
+            exc.expression = expr
+        if exc.name is None:
+            exc.name = name
+        raise
+    except SLRError as exc:
+        raise QuantityParseError(str(exc), expression=expr, name=name) from exc
+    except ExpressionParsingError as exc:
+        raise QuantityParseError(f"Could not read the {name}'s value: {exc}", expression=expr, name=name) from exc

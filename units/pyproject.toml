@@ -5,7 +5,23 @@ build-backend = "poetry.core.masonry.api"
 [project]
 name = "lambdafeedback-units"
 version = "0.3.0"
-description = "Unit system data, physical-quantity parsing and dimensional analysis extracted from compareExpressions."
+description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Marcus Messer", email = "marcus.messer@kcl.ac.uk" }]
+keywords = ["units", "physical-quantities", "dimensional-analysis", "si-units", "sympy", "lambda-feedback"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
+]
 # <3.13: latex2sympy2 pins antlr4-python3-runtime 4.7.2, which imports the
 # `typing.io` module removed in Python 3.13.
 requires-python = ">=3.11,<3.13"
@@ -14,6 +30,10 @@ dependencies = [
     "lambdafeedback-expression-parsing (>=0.3.0,<0.4.0)",
     "sympy (>=1.12,<2.0)",
 ]
+
+[project.urls]
+Repository = "https://github.com/m-messer/lambda-feedback-packages"
+Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/units/CHANGELOG.md"
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/units", from = "src" }]

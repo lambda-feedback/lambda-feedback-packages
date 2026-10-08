@@ -2,9 +2,15 @@
 
 ## 0.3.0 (unreleased)
 
-Further tidy-up after the 0.2.0 extraction: this package is unit conversion only now.
+The first public release. This is a further tidy-up after the 0.2.0 extraction: the package now only does unit conversion. Package metadata (MIT licence, README, URLs) is in place for PyPI.
 
 ### Breaking
+
+- **Angles are in radians.** The radian and the steradian are now 1, and the degree is `pi/180`. Before, the radian was `1/(2*pi)`, the steradian `1/(4*pi)` and the degree `1/360` (fractions of a turn), while the arcminute and the arcsecond were already in radians, so `60 angleminute` didn't equal `1 degree`. This changes `standard_value`, `unit_factor`, `expanded_unit` and `dimension` for every angle unit.
+- `parse_quantity` raises only `QuantityError`s. A parser error (`slr_parsing.ParseError`/`ScanError`, e.g. for `2 m)`) and a value SymPy can't parse (`ExpressionParsingError`, e.g. `2 x;y`) are now raised as `QuantityParseError`, with the original error as `__cause__`. Every `QuantityError` carries `expression` and `name`.
+- `QuantityParams` validates `unit_sets`: an unknown name (such as `"si"`) raises `QuantityParamsError`. Before, it was silently ignored, and no units were recognised. `from_dict` splits `units_string` on spaces and commas instead of testing for substrings, so `"SIcommon"` is rejected rather than read as both sets.
+- An unknown `strictness` raises `QuantityParamsError` (with `.field`). It is still an `ExpressionParsingError`, so existing handlers keep working.
+- `UNIT_SETS` and `CONVERSION_TO_BASE_SI` are read-only mappings (`MappingProxyType`). Assigning to them raises `TypeError`, where before it would have silently changed every cached parser.
 
 - `parse_quantity` and `preprocess_quantity` now take `QuantityParams` only; the `Mapping[str, Any]` (raw dict) fallback is gone, along with the `as_quantity_params` helper. Convert evaluation-function parameters explicitly at the call site with `QuantityParams.from_dict(evaluation_params)`.
 - `preview_function` and `fix_exponents` have moved out of this package entirely, to compareExpressions (`app/context/physical_quantity_preview.py`): building a LaTeX/SymPy preview string is an app-layer display concern, not unit conversion. Import them from there instead of `lambdafeedback.units`.
@@ -13,9 +19,22 @@ Further tidy-up after the 0.2.0 extraction: this package is unit conversion only
 - `PhysicalQuantity.value_latex` no longer calls `expression_parsing.preview_function` (removed): it builds the LaTeX directly from `preprocess_expression` + `parse_expression` + `sympy_to_latex`, catching `BracketNotationError`/`AbsoluteValueNotationError` to preview with the best-guess rewrite rather than failing outright (matching the old behaviour of ignoring preprocessing feedback).
 - Requires `lambdafeedback-expression-parsing` 0.3.0 or later.
 
+### Added
+
+- `QuantityParamsError`, `AnyUnit` and `__version__` are exported.
+- `PhysicalQuantity` declares typed attributes (SymPy `Basic` for the SI forms) and has a readable `repr`, e.g. `PhysicalQuantity(value='5', unit='kilometre/hour')`.
+- `README.md` documents usage, parameters, unit sets, errors and known limitations.
+
+### Fixed
+
+- The roentgen was converted as kelvin per kilogram; it is 2.58×10⁻⁴ C/kg (ampere·second per kilogram).
+- The imperial pint was 0.00056826 m³; it is 0.00056826125 m³, so that 8 pints make a gallon.
+- `nautical_miles` is recognised as the plural of `nautical_mile`. Before, only `nauticalmiles` was, and in natural mode `2 nautical_miles` parsed as 2 nautical_mile·second.
+- The comment in `data.py` said the symbols of `COMMON_UNITS` were not accepted. They always have been, and the docs now say so.
+
 ### Deprecated
 
-- `strictness="legacy"` (and constructing `QuantityParams(legacy_preprocessing=True)` directly) now emits a `DeprecationWarning`. The behaviour is unchanged — natural strictness with the old `legacy` preprocessing rewrites — but new callers should use `strictness="natural"` (the default).
+- `strictness="legacy"` (and constructing `QuantityParams(legacy_preprocessing=True)` directly) now emits a `DeprecationWarning`, and will be removed in 1.0. The behaviour is unchanged (natural strictness with the old `legacy` preprocessing rewrites), but new callers should use `strictness="natural"` (the default).
 
 ## 0.2.0 (unreleased)
 

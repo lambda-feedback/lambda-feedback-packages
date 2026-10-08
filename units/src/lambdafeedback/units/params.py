@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+import re
 import warnings
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any, Literal, Self, get_args
 
-from lambdafeedback.expression_parsing import ExpressionParams, ExpressionParsingError
+from lambdafeedback.expression_parsing import ExpressionParams
 
 from .data import UNIT_SETS
+from .errors import QuantityParamsError
 
 Strictness = Literal["strict", "natural"]
 """``strict``: only unit names and symbols, units separated by ``*`` / ``/`` / spaces;
@@ -22,18 +24,26 @@ class QuantityParams(ExpressionParams):
 
     strictness: Strictness = "natural"
     legacy_preprocessing: bool = False
-    """Deprecated: rewrite the response the way the old ``legacy`` strictness did (natural otherwise)."""
+    """Deprecated (removed in 1.0): rewrite the response the way the old ``legacy`` strictness did."""
     unit_sets: frozenset[str] = frozenset(UNIT_SETS)
     """Names from :data:`~lambdafeedback.units.data.UNIT_SETS` whose units are recognised."""
 
     def __post_init__(self) -> None:
         super().__post_init__()
         if self.strictness not in get_args(Strictness):
-            raise ExpressionParsingError(f"Unknown strictness {self.strictness!r}.")
-        object.__setattr__(self, "unit_sets", frozenset(self.unit_sets))
+            raise QuantityParamsError("strictness", f"expected one of {get_args(Strictness)}, got {self.strictness!r}")
+        if isinstance(self.unit_sets, str):
+            raise QuantityParamsError("unit_sets", f"expected a set of names, got the string {self.unit_sets!r}")
+        unit_sets = frozenset(self.unit_sets)
+        if unknown := unit_sets - UNIT_SETS.keys():
+            raise QuantityParamsError(
+                "unit_sets", f"unknown unit sets {sorted(unknown)}, expected any of {list(UNIT_SETS)}"
+            )
+        object.__setattr__(self, "unit_sets", unit_sets)
         if self.legacy_preprocessing:
             warnings.warn(
-                "legacy_preprocessing is deprecated; use strictness='natural' (the default) instead.",
+                "legacy_preprocessing is deprecated and will be removed in 1.0; "
+                "use strictness='natural' (the default) instead.",
                 DeprecationWarning,
                 stacklevel=3,
             )
@@ -43,8 +53,10 @@ class QuantityParams(ExpressionParams):
         """Build from evaluation-function parameters.
 
         ``strictness: "legacy"`` (deprecated) means natural strictness with
-        legacy preprocessing; ``units_string`` names the unit sets (any of
-        ``"SI"``, ``"common"``, ``"imperial"`` it contains).
+        legacy preprocessing; ``units_string`` names the unit sets, separated
+        by spaces or commas (e.g. ``"SI common imperial"``).
+
+        Raises :class:`QuantityParamsError` for an unknown strictness or unit set.
         """
         values = dict(params)
         if values.get("strictness") == "legacy":
@@ -52,5 +64,7 @@ class QuantityParams(ExpressionParams):
             values["legacy_preprocessing"] = True
         units_string = values.pop("units_string", None)
         if units_string is not None:
-            values["unit_sets"] = frozenset(name for name in UNIT_SETS if name in units_string)
+            if not isinstance(units_string, str):
+                raise QuantityParamsError("units_string", f"expected a string, got {units_string!r}")
+            values["unit_sets"] = frozenset(re.split(r"[\s,]+", units_string.strip())) - {""}
         return super().from_dict(values)

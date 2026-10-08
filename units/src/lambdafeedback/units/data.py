@@ -1,12 +1,21 @@
 """Units and prefixes, and their conversion to SI base units.
 
 Remarks: kelvin is the only temperature scale; angle measures, the bel and
-the neper are all treated as dimensionless. The gram (not the kilogram) is
-the base unit of mass, so that SI prefixes apply uniformly.
+the neper are all treated as dimensionless, with the radian and the
+steradian equal to 1 (so ``degree`` is ``pi/180``). The gram (not the
+kilogram) is the base unit of mass, so that SI prefixes apply uniformly.
+
+Every unit set's symbols are recognised, and any SI prefix can be attached to
+any unit (``kft`` is a kilofoot). Where a prefixed form is also the symbol of
+another unit, the unit wins: with the ``common`` set, ``min`` is a minute, not
+a milli-inch. Some symbols differ from the SI ones to avoid collisions:
+``r`` is the radian (``rad`` is the absorbed-dose unit) and ``O`` is the ohm.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import NamedTuple
 
 
@@ -109,11 +118,11 @@ SI_DERIVED_UNITS: tuple[Unit, ...] = (
 # Tables 6 and 7 of https://physics.nist.gov/cuu/Units/outside.html: the subset whose
 # symbols are accepted.
 VERY_COMMON_UNITS: tuple[Unit, ...] = (
-    Unit("radian", "r", "(1/(2*pi))", (), ("radians",)),  # 'r', not 'rad', to avoid a collision with the rad
-    Unit("steradian", "sr", "(1/(4*pi))", (), ("steradians",)),
+    Unit("radian", "r", "(1)", (), ("radians",)),  # 'r', not 'rad', to avoid a collision with the rad
+    Unit("steradian", "sr", "(1)", (), ("steradians",)),
     Unit("minute", "min", "(60*second)", (), ("minutes",)),
     Unit("hour", "h", "(3600*second)", (), ("hours",)),
-    Unit("degree", "deg", "(1/360)", ("°",), ("degrees",)),
+    Unit("degree", "deg", "(pi/180)", ("°",), ("degrees",)),
     Unit("litre", "L", "(10**(-3)*metre**3)", ("liter",), ("litres", "liters")),
     Unit("metricton", "t", "(10**3*kilogram)", ("tonne",), ("tonnes",)),
     Unit("neper", "Np", "(1)", ("Neper",), ("nepers", "Nepers")),
@@ -123,21 +132,24 @@ VERY_COMMON_UNITS: tuple[Unit, ...] = (
     Unit("angstrom", "Å", "(10**(-10)*metre)", ("Angstrom", "Ångström"), ("angstroms", "Angstroms")),
 )
 
-# Tables 6 and 7 of https://physics.nist.gov/cuu/Units/outside.html. Their symbols are
-# listed but not accepted: they cause too many ambiguities.
+# Tables 6 and 7 of https://physics.nist.gov/cuu/Units/outside.html, and older units.
+# Their symbols are recognised too, so including this set adds ambiguities ('d' is a
+# day, 'a' an are).
 COMMON_UNITS: tuple[Unit, ...] = (
     Unit("day", "d", "(86400*second)", (), ("days",)),
     Unit("angleminute", "'", "(pi/10800)"),
     Unit("anglesecond", '"', "(pi/648000)"),
     Unit("astronomical_unit", "au", "(149597870700*metre)", (), ("astronomical_units",)),
-    Unit("nautical_mile", "nmi", "(1852*metre)", (), ("nauticalmiles",)),  # symbol from Wikipedia
+    Unit("nautical_mile", "nmi", "(1852*metre)", (), ("nautical_miles", "nauticalmiles")),  # symbol from Wikipedia
     Unit("knot", "kn", "((1852/3600)*metre/second)", (), ("knots",)),  # symbol from Wikipedia
     Unit("are", "a", "(10**2*metre**2)", (), ("ares",)),
     Unit("hectare", "ha", "(10**4*metre**2)", (), ("hectares",)),
     Unit("bar", "bar", "(10**5*pascal)", (), ("bars",)),
     Unit("barn", "b", "(10**(-28)*metre**2)", (), ("barns",)),
     Unit("curie", "Ci", "(3.7*10**10*becquerel)", ("Curie",), ("curies",)),
-    Unit("roentgen", "R", "(2.58*10**(-4)*kelvin/(kilogram))", ("Roentgen", "Röntgen"), ("roentgens", "Roentgens")),
+    Unit(
+        "roentgen", "R", "(2.58*10**(-4)*second*ampere/(kilogram))", ("Roentgen", "Röntgen"), ("roentgens", "Roentgens")
+    ),
     Unit("rad", "rad", "(10**(-2)*gray)", (), ("rads",)),
     Unit("rem", "rem", "(10**(-2)*sievert)", (), ("rems",)),
 )
@@ -150,7 +162,7 @@ IMPERIAL_UNITS: tuple[Unit, ...] = (
     Unit("mile", "mi", "(1609.344*metre)", (), ("miles",)),
     Unit("fluid_ounce", "fl_oz", "(0.00002841310625*metre**3)", (), ("fluid_ounces",)),
     Unit("gill", "gi", "(0.0001420653125*metre**3)", (), ("gills",)),
-    Unit("pint", "pt", "(0.00056826*metre**3)", (), ("pints",)),
+    Unit("pint", "pt", "(0.00056826125*metre**3)", (), ("pints",)),
     Unit("quart", "qt", "(0.0011365225*metre**3)", (), ("quarts",)),
     Unit("gallon", "gal", "(0.00454609*metre**3)", (), ("gallons",)),
     Unit("ounce", "oz", "(28.349523125*gram)", (), ("ounces",)),
@@ -160,12 +172,14 @@ IMPERIAL_UNITS: tuple[Unit, ...] = (
 
 AnyUnit = BaseUnit | Unit
 
-UNIT_SETS: dict[str, tuple[AnyUnit, ...]] = {
-    "SI": (*SI_BASE_UNITS, *SI_DERIVED_UNITS),
-    "common": (*SI_BASE_UNITS, *SI_DERIVED_UNITS, *COMMON_UNITS, *VERY_COMMON_UNITS),
-    "imperial": IMPERIAL_UNITS,
-}
-"""Named unit sets; a quantity's ``unit_sets`` choose which units are recognised."""
+UNIT_SETS: Mapping[str, tuple[AnyUnit, ...]] = MappingProxyType(
+    {
+        "SI": (*SI_BASE_UNITS, *SI_DERIVED_UNITS),
+        "common": (*SI_BASE_UNITS, *SI_DERIVED_UNITS, *COMMON_UNITS, *VERY_COMMON_UNITS),
+        "imperial": IMPERIAL_UNITS,
+    }
+)
+"""Named unit sets (read-only); a quantity's ``unit_sets`` choose which units are recognised."""
 
 ALL_UNITS: tuple[AnyUnit, ...] = (*SI_BASE_UNITS, *SI_DERIVED_UNITS, *COMMON_UNITS, *VERY_COMMON_UNITS, *IMPERIAL_UNITS)
 
@@ -186,5 +200,5 @@ def _conversion_to_base_si() -> dict[str, str]:
     return {**unprefixed, **prefixed}
 
 
-CONVERSION_TO_BASE_SI: dict[str, str] = _conversion_to_base_si()
-"""Every unit name (with and without SI prefix) mapped to an expression in SI base units."""
+CONVERSION_TO_BASE_SI: Mapping[str, str] = MappingProxyType(_conversion_to_base_si())
+"""Every unit name (with and without SI prefix) mapped to an expression in SI base units (read-only)."""
