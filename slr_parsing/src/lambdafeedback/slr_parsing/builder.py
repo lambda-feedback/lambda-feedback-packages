@@ -37,6 +37,14 @@ def build_expression_parser(
     pairs (the last pair's action is used, and mixed pairs such as ``(x]``
     are accepted).
 
+    Later entries in ``infix_operators`` bind tighter: with
+    ``[("+", "ADD"), ("*", "MUL")]``, ``a+b*c`` is ``a+(b*c)``; listed the
+    other way round it would be ``(a+b)*c``. Every operator is
+    left-associative (``a-b-c`` is ``(a-b)-c``), including ``^``: for a
+    right-associative power, add a custom production. Spaces around operators and
+    delimiters belong to their tokens' content, so ``content_string()``
+    reproduces the input.
+
     ``undefined``, ``expression_node``, ``start``, ``null`` and ``end`` are
     ``(symbol, label)`` pairs overriding the default symbols; ``undefined``
     labels runs of text no other token matches (default ``UNDEFINED``).
@@ -65,11 +73,16 @@ def build_expression_parser(
     productions += [(e, node[0], create_node) for node in nodes]
     productions += [(e, undefined_spec[0], create_node)]
     productions += [(e, e + operator + e, infix) for operator in operator_symbols]
-    for (open_delimiter, close_delimiter), action in delimiters:
+    for (open_delimiter, close_delimiter), _ in delimiters:
         token_list += [
             (re.escape(open_delimiter) + " *", "START_DELIMITER"),
             (" *" + re.escape(close_delimiter), "END_DELIMITER"),
         ]
+    if delimiters:
+        # Every pair scans to the same START_DELIMITER E END_DELIMITER body, so
+        # one production covers them all; one per pair would leave all but the
+        # last unreachable (and logged as such on every construction).
+        (open_delimiter, close_delimiter), action = delimiters[-1]
         productions += [(e, open_delimiter + e + close_delimiter, action)]
     productions += custom_productions
 

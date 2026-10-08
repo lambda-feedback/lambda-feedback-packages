@@ -1,5 +1,7 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
+import logging
+
 import pytest
 
 from lambdafeedback.slr_parsing import (
@@ -54,6 +56,13 @@ class TestExprNodeTags:
 
 
 class TestExpressionParserBuilder:
+    def test_several_delimiter_pairs_build_without_unreachable_warnings(self, caplog):
+        # One production per pair left all but the last unreachable (a WARNING per build).
+        with caplog.at_level(logging.WARNING, logger="lambdafeedback.slr_parsing.parser"):
+            parser = build_expression_parser(delimiters=[(("(", ")"), group(1)), (("[", "]"), group(1))])
+        assert caplog.records == []
+        assert [parser.parse(parser.scan(text))[0].label for text in ("(x)", "[x]")] == ["GROUP", "GROUP"]
+
     def test_custom_expression_node_symbol_is_not_a_literal_token(self):
         # The expression-node symbol ("E") must only exist in the grammar; an "E"
         # in the input is ordinary (undefined) text.

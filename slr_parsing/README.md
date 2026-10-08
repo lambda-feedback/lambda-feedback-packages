@@ -43,6 +43,12 @@ print(root.tree_string())
 root.content_string()  # '2*(x+1)'
 ```
 
+**Precedence:** later entries in `infix_operators` bind tighter, so list
+`+` before `*`. Every operator is left-associative (`a-b-c` is `(a-b)-c`),
+including `^`, so a right-associative power needs a custom production. Spaces
+around operators and delimiters are kept in their tokens' content, so
+`content_string()` reproduces the input.
+
 ## Writing a grammar
 
 For full control, pass token specifications and productions to `SLRParser`.
