@@ -33,6 +33,14 @@ No dependencies. The single `parser.py` (845 lines) is now 7 modules. Released a
 - [x] **Found during the refactor:** infix productions built from `op[0]`, the first character of the operator, which broke multi-character operators.
 - [x] **Found during the refactor:** `traverse_group` called the action twice per group, which duplicated units' `REVERTED_UNIT` messages (6 parity probes deduplicated).
 - [x] **Found during the refactor:** `parse([])` raised `IndexError`; it now raises `ParseError("Unexpected end of input.")`.
+- [x] **Pre-release review:** `new_root_on_error` looped forever when the error was in state 0 or at the end of input; it now raises `ParseError`.
+- [x] **Pre-release review:** each recovered root added a level of recursion (`RecursionError` at ~1000 roots); `parse()` now loops.
+- [x] **Pre-release review:** malformed grammars failed late or silently: undeclared body symbols became catch-all symbols, empty bodies crashed at parse time, multi-symbol heads used their first symbol, and undeclared start/end/null raised `ScanError`. All are now `GrammarError`s at construction.
+- [x] **Pre-release review:** `ExprNode` inherited `Token`'s label-only equality; nodes now compare by identity.
+
+### Release
+
+- [x] MIT `LICENSE`, `README.md` (PyPI long description), project metadata (readme, license, authors, classifiers, URLs).
 
 ### Restructure
 
