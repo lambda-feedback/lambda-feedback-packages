@@ -47,6 +47,8 @@ The first release after the extraction refactor. The import path is now `lambdaf
 - Traversing a `GROUP` node calls the action once, not twice. Actions with side effects ran twice per group: units recorded every reverted unit group as two identical `REVERTED_UNIT` messages.
 - `new_root_on_error` works: parsing resumes at the offending token and the extra roots are appended to the output. Before, the offending token was dropped and `parse()` crashed on the remaining tokens. When no root can be finished (empty input, a bad first token, or an error at the end of input), it raises `ParseError` instead of looping forever.
 - Recovered roots are parsed in a loop rather than recursively, so inputs with many roots no longer hit `RecursionError`.
+- `append`, `append_last` and `join` work on one-symbol production bodies; they used to raise `IndexError` (their slices selected the whole output stack). `append_last` no longer makes a node its own child there.
+- `ExprNode.copy()` and `tree_string()` are iterative, so deeply nested input (such as a thousand nested brackets) no longer raises `RecursionError`. The parser and `traverse` already were.
 
 ### Removed
 

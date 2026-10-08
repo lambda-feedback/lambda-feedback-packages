@@ -43,7 +43,8 @@ class SLRParser:
         error_handler: Sequence[ErrorHandler | tuple[Any, Any]] = (),
         tag_handler: TagHandler = inherit_tags,
     ) -> None:
-        # Longest patterns first, so e.g. "**" is tried before "*".
+        # Longest pattern strings first: scan() keeps the longest match, so this
+        # order only breaks ties between equal-length matches.
         self.token_list: list[TokenSpec] = sorted(token_list, key=lambda spec: -len(spec[0]))
         self.productions = list(productions)
         self.start_symbol = start_symbol
@@ -86,6 +87,10 @@ class SLRParser:
 
     def scan(self, expr: str, mode: Literal["expression", "bnf"] = "expression") -> list[Token]:
         """Split ``expr`` into tokens, preferring the longest match at each position.
+
+        Of equal-length matches, the specification with the longest pattern
+        string wins; a matcher only wins over a pattern with a strictly
+        longer match.
 
         ``mode="bnf"`` scans production strings into grammar symbols: every
         token specification is used as a plain pattern and no matchers run.

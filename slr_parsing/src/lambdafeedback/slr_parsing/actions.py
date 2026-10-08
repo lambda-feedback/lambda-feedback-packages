@@ -23,29 +23,36 @@ def proceed(_production: TokenProduction, output: list[Any], _tag_handler: TagHa
     return output
 
 
+def _body_start(production: TokenProduction, output: list[Any]) -> int:
+    """Index in ``output`` of the first item of the production body.
+
+    Slicing from an explicit index avoids ``output[-0:]``/``output[:1 - 1]``,
+    which select the whole stack (or none of it) for a one-symbol body.
+    """
+    return len(output) - len(production[1])
+
+
 def append(production: TokenProduction, output: list[Any], tag_handler: TagHandler | None) -> list[Any]:
     """Append the rest of the body's items as children of its first item."""
-    body_length = len(production[1])
-    children = output[1 - body_length :]
-    output = output[: 1 - body_length]
-    output[-1].children += children
-    return output
+    first = _body_start(production, output)
+    output[first].children += output[first + 1 :]
+    return output[: first + 1]
 
 
 def append_last(production: TokenProduction, output: list[Any], _tag_handler: TagHandler | None) -> list[Any]:
     """Append the body's last item as a child of its first; drop the items between."""
-    last = output[-1]
-    output = output[: 1 - len(production[1])]
-    output[-1].children.append(last)
-    return output
+    first = _body_start(production, output)
+    if first < len(output) - 1:
+        output[first].children.append(output[-1])
+    return output[: first + 1]
 
 
 def join(production: TokenProduction, output: list[Any], _tag_handler: TagHandler | None) -> list[Any]:
     """Merge the body's items into its first item, relabelled as the production head."""
-    body_length = len(production[1])
-    content = [item.content_string() if isinstance(item, ExprNode) else item.content for item in output[-body_length:]]
+    first = _body_start(production, output)
+    content = [item.content_string() if isinstance(item, ExprNode) else item.content for item in output[first:]]
     joined_end = output[-1].end
-    output = output[: 1 - body_length]
+    output = output[: first + 1]
     output[-1].label = production[0].label
     output[-1].content = "".join(content)
     output[-1].end = joined_end

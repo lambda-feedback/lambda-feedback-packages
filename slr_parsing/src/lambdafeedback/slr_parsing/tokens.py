@@ -95,17 +95,37 @@ class ExprNode(Token):
         self._traverse_step = traverse_step
         self.tags: set[Any] = tag_handler(self) if tag_handler is not None else set(tags or ())
 
-    def copy(self) -> ExprNode:
+    # copy() and tree_string() walk the tree with an explicit stack: input
+    # nesting (e.g. thousands of brackets) must not hit the recursion limit.
+
+    def _shallow_copy(self) -> ExprNode:
         token = Token(self.label, self.content, self.original, self.start, self.end)
-        children = [child.copy() for child in self.children]
-        return ExprNode(token, children, tags=self.tags, traverse_step=self._traverse_step)
+        return ExprNode(token, [], tags=self.tags, traverse_step=self._traverse_step)
+
+    def copy(self) -> ExprNode:
+        """Deep copy of the tree; the copies' tag sets are not shared."""
+        root = self._shallow_copy()
+        stack = [(self, root)]
+        while stack:
+            node, clone = stack.pop()
+            for child in node.children:
+                child_clone = child._shallow_copy()
+                clone.children.append(child_clone)
+                stack.append((child, child_clone))
+        return root
 
     def tree_string(self) -> str:
-        s = str(self)
-        for k, child in enumerate(self.children):
-            padding = "\n|   " if k < len(self.children) - 1 else "\n    "
-            s += f"\n{k}: " + child.tree_string().replace("\n", padding)
-        return s
+        lines: list[str] = []
+        # (node, prefix of its first line, prefix of every later line)
+        stack: list[tuple[ExprNode, str, str]] = [(self, "", "")]
+        while stack:
+            node, head, indent = stack.pop()
+            lines.append(head + str(node).replace("\n", "\n" + indent))
+            last = len(node.children) - 1
+            for k in range(last, -1, -1):
+                padding = "|   " if k < last else "    "
+                stack.append((node.children[k], f"{indent}{k}: ", indent + padding))
+        return "\n".join(lines)
 
     def content_string(self, max_depth: int | None = None) -> str:
         return "".join(self.traverse(lambda node: node.content, max_depth))
