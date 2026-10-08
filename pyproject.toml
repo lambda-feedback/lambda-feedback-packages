@@ -84,6 +84,8 @@ module = [
     "lambdafeedback.slr_parsing.*",
     "lambdafeedback.criteria",
     "lambdafeedback.criteria.*",
+    "lambdafeedback.units",
+    "lambdafeedback.units.*",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
@@ -103,8 +105,6 @@ extra_checks = true
 module = [
     "lambdafeedback.expression_parsing",
     "lambdafeedback.expression_parsing.*",
-    "lambdafeedback.units",
-    "lambdafeedback.units.*",
 ]
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

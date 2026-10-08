@@ -1,19 +1,40 @@
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "lambdafeedback-expression-parsing"
 version = "0.3.0"
-description = "SymPy-based expression parsing and preprocessing extracted from compareExpressions."
+description = "Safe SymPy parsing and preprocessing of learner-written mathematical expressions, for Lambda Feedback evaluation functions."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Lambda Feedback contributors" }]
+keywords = ["sympy", "parsing", "mathematics", "education", "lambda-feedback"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Education",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
+]
 # <3.13: latex2sympy2 pins antlr4-python3-runtime 4.7.2, which imports the
 # `typing.io` module removed in Python 3.13.
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "lambdafeedback-slr-parsing (>=0.2.0,<0.3.0)",
     "sympy (>=1.12,<2.0)",
-    "latex2sympy2",
+    "latex2sympy2 (>=1.9.1,<2.0)",
 ]
+
+[project.urls]
+Repository = "https://github.com/m-messer/lambda-feedback-packages"
+Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/expression_parsing/CHANGELOG.md"
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/expression_parsing", from = "src" }]

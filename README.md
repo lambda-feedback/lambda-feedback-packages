@@ -18,7 +18,7 @@ logic stays in compareExpressions.
 |---|---|---|---|---|
 | `slr_parsing` | `lambdafeedback-slr-parsing` | `lambdafeedback.slr_parsing` | Generic SLR(1) parser engine | — |
 | `criteria` | `lambdafeedback-criteria` | `lambdafeedback.criteria` | Criteria DSL parser and evaluation graph | `slr_parsing` |
-| `expression_parsing` | `lambdafeedback-expression-parsing` | `lambdafeedback.expression_parsing` | SymPy parsing, preprocessing and LaTeX preview | `slr_parsing`, `sympy`, `latex2sympy2` |
+| `expression_parsing` | `lambdafeedback-expression-parsing` | `lambdafeedback.expression_parsing` | Safe SymPy parsing, preprocessing and LaTeX input/output | `slr_parsing`, `sympy`, `latex2sympy2` |
 | `units` | `lambdafeedback-units` | `lambdafeedback.units` | Unit-system data, physical-quantity parsing and dimensional analysis | `slr_parsing`, `expression_parsing`, `sympy` |
 
 ```python
@@ -28,13 +28,13 @@ from lambdafeedback.expression_parsing import (
     parse_expression,
     preprocess_expression,
 )
-from lambdafeedback.units import parse_quantity
+from lambdafeedback.units import QuantityParams, parse_quantity
 
 params = ExpressionParams.from_dict(evaluation_params)  # JSON parameters → typed
 pre = preprocess_expression("response", response, params)  # aliases, brackets, |x|
-expr = parse_expression(pre.expression, SympyParsingConfig.from_params(params))
+expr = parse_expression(pre, SympyParsingConfig.from_params(params))
 
-quantity = parse_quantity("9.81 m/s^2", evaluation_params)  # value, unit, dimension, SI forms
+quantity = parse_quantity("9.81 m/s^2", QuantityParams.from_dict(evaluation_params))  # value, unit, dimension, SI forms
 ```
 
 `evaluation_result` has been retired: use `lf_toolkit.evaluation.Result`

@@ -444,6 +444,57 @@
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
   }
  },
+ "quantity.parse|legacy|10 R": {
+  "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
+  "value": {
+   "content": "10 roentgen",
+   "dimension": "(129/50)*time*electric_current/(10**4*(10**3*mass))",
+   "expanded_unit": "(129/50)*second*ampere/(10**4*(10**3*gram))",
+   "latex": "10~\\mathrm{roentgen}",
+   "messages": [],
+   "standard_unit": "ampere*second/gram",
+   "standard_value": "10*129/500000000",
+   "unit": "R",
+   "unit_factor": "129/500000000",
+   "unit_latex": "\\mathrm{roentgen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 deg": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "10 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "10~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*pi/180",
+   "unit": "deg",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 degree": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "10 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "10~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*pi/180",
+   "unit": "degree",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|legacy|10 kg m/s^2 + 10 kg m/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -548,6 +599,91 @@
    "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{metre}}{\\mathrm{second}^{2}}",
    "value": "10 kgm/s^2 + 10",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
+  }
+ },
+ "quantity.parse|legacy|10 pint": {
+  "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
+  "value": {
+   "content": "10 pint",
+   "dimension": "454609*length**3/800000000",
+   "expanded_unit": "454609*metre**3/800000000",
+   "latex": "10~\\mathrm{pint}",
+   "messages": [],
+   "standard_unit": "metre**3",
+   "standard_value": "10*454609/800000000",
+   "unit": "pint",
+   "unit_factor": "454609/800000000",
+   "unit_latex": "\\mathrm{pint}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 pt": {
+  "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
+  "value": {
+   "content": "10 pint",
+   "dimension": "454609*length**3/800000000",
+   "expanded_unit": "454609*metre**3/800000000",
+   "latex": "10~\\mathrm{pint}",
+   "messages": [],
+   "standard_unit": "metre**3",
+   "standard_value": "10*454609/800000000",
+   "unit": "pt",
+   "unit_factor": "454609/800000000",
+   "unit_latex": "\\mathrm{pint}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 r": {
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "value": {
+   "content": "10 radian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{radian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "r",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{radian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 radian": {
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "value": {
+   "content": "10 radian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{radian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "radian",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{radian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 roentgen": {
+  "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
+  "value": {
+   "content": "10 roentgen",
+   "dimension": "(129/50)*time*electric_current/(10**4*(10**3*mass))",
+   "expanded_unit": "(129/50)*second*ampere/(10**4*(10**3*gram))",
+   "latex": "10~\\mathrm{roentgen}",
+   "messages": [],
+   "standard_unit": "ampere*second/gram",
+   "standard_value": "10*129/500000000",
+   "unit": "roentgen",
+   "unit_factor": "129/500000000",
+   "unit_latex": "\\mathrm{roentgen}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|legacy|10 s/g + 5 gram*second^2 + 7 ms + 5 gram/second^3": {
@@ -732,6 +868,40 @@
    "unit_latex": "\\frac{\\mathrm{gram}}{\\mathrm{second}}",
    "value": "10 second/gram * 7 ms * 5",
    "value_latex": "10 \\cdot second \\cdot \\frac{1}{gram} \\cdot 7 \\cdot m \\cdot s \\cdot 5"
+  }
+ },
+ "quantity.parse|legacy|10 sr": {
+  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "value": {
+   "content": "10 steradian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{steradian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "sr",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{steradian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 steradian": {
+  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "value": {
+   "content": "10 steradian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{steradian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "steradian",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{steradian}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|legacy|100* Pa": {
@@ -924,6 +1094,23 @@
    "unit_latex": null,
    "value": "3 μs",
    "value_latex": "3 \\cdot \\mu \\cdot s"
+  }
+ },
+ "quantity.parse|legacy|5 °": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "5 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "5~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "5*pi/180",
+   "unit": "°",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "5",
+   "value_latex": "5"
   }
  },
  "quantity.parse|legacy|5/s^2": {
@@ -2587,6 +2774,57 @@
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
   }
  },
+ "quantity.parse|natural|10 R": {
+  "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
+  "value": {
+   "content": "10 roentgen",
+   "dimension": "(129/50)*time*electric_current/(10**4*(10**3*mass))",
+   "expanded_unit": "(129/50)*second*ampere/(10**4*(10**3*gram))",
+   "latex": "10~\\mathrm{roentgen}",
+   "messages": [],
+   "standard_unit": "ampere*second/gram",
+   "standard_value": "10*129/500000000",
+   "unit": "R",
+   "unit_factor": "129/500000000",
+   "unit_latex": "\\mathrm{roentgen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 deg": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "10 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "10~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*pi/180",
+   "unit": "deg",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 degree": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "10 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "10~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*pi/180",
+   "unit": "degree",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|natural|10 kg m/s^2 + 10 kg m/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -2691,6 +2929,91 @@
    "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{metre}}{\\mathrm{second}^{2}}",
    "value": "10 kgm/s^2 + 10",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
+  }
+ },
+ "quantity.parse|natural|10 pint": {
+  "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
+  "value": {
+   "content": "10 pint",
+   "dimension": "454609*length**3/800000000",
+   "expanded_unit": "454609*metre**3/800000000",
+   "latex": "10~\\mathrm{pint}",
+   "messages": [],
+   "standard_unit": "metre**3",
+   "standard_value": "10*454609/800000000",
+   "unit": "pint",
+   "unit_factor": "454609/800000000",
+   "unit_latex": "\\mathrm{pint}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 pt": {
+  "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
+  "value": {
+   "content": "10 pint",
+   "dimension": "454609*length**3/800000000",
+   "expanded_unit": "454609*metre**3/800000000",
+   "latex": "10~\\mathrm{pint}",
+   "messages": [],
+   "standard_unit": "metre**3",
+   "standard_value": "10*454609/800000000",
+   "unit": "pt",
+   "unit_factor": "454609/800000000",
+   "unit_latex": "\\mathrm{pint}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 r": {
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "value": {
+   "content": "10 radian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{radian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "r",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{radian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 radian": {
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "value": {
+   "content": "10 radian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{radian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "radian",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{radian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 roentgen": {
+  "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
+  "value": {
+   "content": "10 roentgen",
+   "dimension": "(129/50)*time*electric_current/(10**4*(10**3*mass))",
+   "expanded_unit": "(129/50)*second*ampere/(10**4*(10**3*gram))",
+   "latex": "10~\\mathrm{roentgen}",
+   "messages": [],
+   "standard_unit": "ampere*second/gram",
+   "standard_value": "10*129/500000000",
+   "unit": "roentgen",
+   "unit_factor": "129/500000000",
+   "unit_latex": "\\mathrm{roentgen}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|natural|10 s/g + 5 gram*second^2 + 7 ms + 5 gram/second^3": {
@@ -2875,6 +3198,40 @@
    "unit_latex": "\\frac{\\mathrm{gram}}{\\mathrm{second}}",
    "value": "10 second/gram * 7 ms * 5",
    "value_latex": "10 \\cdot second \\cdot \\frac{1}{gram} \\cdot 7 \\cdot m \\cdot s \\cdot 5"
+  }
+ },
+ "quantity.parse|natural|10 sr": {
+  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "value": {
+   "content": "10 steradian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{steradian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "sr",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{steradian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 steradian": {
+  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "value": {
+   "content": "10 steradian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{steradian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "steradian",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{steradian}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|natural|100* Pa": {
@@ -3067,6 +3424,23 @@
    "unit_latex": null,
    "value": "3 μs",
    "value_latex": "3 \\cdot \\mu \\cdot s"
+  }
+ },
+ "quantity.parse|natural|5 °": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "5 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "5~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "5*pi/180",
+   "unit": "°",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "5",
+   "value_latex": "5"
   }
  },
  "quantity.parse|natural|5/s^2": {
@@ -3481,6 +3855,57 @@
    "value_latex": "- \\frac{10.5 \\cdot g \\cdot k \\cdot m}{s^{2}}"
   }
  },
+ "quantity.parse|strict_all|10 R": {
+  "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
+  "value": {
+   "content": "10 roentgen",
+   "dimension": "(129/50)*time*electric_current/(10**4*(10**3*mass))",
+   "expanded_unit": "(129/50)*second*ampere/(10**4*(10**3*gram))",
+   "latex": "10~\\mathrm{roentgen}",
+   "messages": [],
+   "standard_unit": "ampere*second/gram",
+   "standard_value": "10*129/500000000",
+   "unit": "R",
+   "unit_factor": "129/500000000",
+   "unit_latex": "\\mathrm{roentgen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 deg": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "10 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "10~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*pi/180",
+   "unit": "deg",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 degree": {
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "value": {
+   "content": "10 degree",
+   "dimension": "pi/180",
+   "expanded_unit": "pi/180",
+   "latex": "10~\\mathrm{degree}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*pi/180",
+   "unit": "degree",
+   "unit_factor": "pi/180",
+   "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|strict_all|10 g/sm": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -3853,6 +4278,91 @@
    "value_latex": "\\frac{10 \\cdot c \\cdot e \\cdot gram \\cdot kilo \\cdot metres \\cdot n \\cdot o}{d^{2}}"
   }
  },
+ "quantity.parse|strict_all|10 pint": {
+  "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
+  "value": {
+   "content": "10 pint",
+   "dimension": "454609*length**3/800000000",
+   "expanded_unit": "454609*metre**3/800000000",
+   "latex": "10~\\mathrm{pint}",
+   "messages": [],
+   "standard_unit": "metre**3",
+   "standard_value": "10*454609/800000000",
+   "unit": "pint",
+   "unit_factor": "454609/800000000",
+   "unit_latex": "\\mathrm{pint}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 pt": {
+  "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
+  "value": {
+   "content": "10 pint",
+   "dimension": "454609*length**3/800000000",
+   "expanded_unit": "454609*metre**3/800000000",
+   "latex": "10~\\mathrm{pint}",
+   "messages": [],
+   "standard_unit": "metre**3",
+   "standard_value": "10*454609/800000000",
+   "unit": "pt",
+   "unit_factor": "454609/800000000",
+   "unit_latex": "\\mathrm{pint}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 r": {
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "value": {
+   "content": "10 radian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{radian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "r",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{radian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 radian": {
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "value": {
+   "content": "10 radian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{radian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "radian",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{radian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 roentgen": {
+  "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
+  "value": {
+   "content": "10 roentgen",
+   "dimension": "(129/50)*time*electric_current/(10**4*(10**3*mass))",
+   "expanded_unit": "(129/50)*second*ampere/(10**4*(10**3*gram))",
+   "latex": "10~\\mathrm{roentgen}",
+   "messages": [],
+   "standard_unit": "ampere*second/gram",
+   "standard_value": "10*129/500000000",
+   "unit": "roentgen",
+   "unit_factor": "129/500000000",
+   "unit_latex": "\\mathrm{roentgen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|strict_all|10 s/g + 5 gram*second^2 + 7 ms + 5 gram/second^3": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -4020,6 +4530,40 @@
    "unit_latex": "\\frac{\\mathrm{gram}}{\\mathrm{second}}",
    "value": "10 second/gram * 7 ms * 5",
    "value_latex": "10 \\cdot second \\cdot \\frac{1}{gram} \\cdot 7 \\cdot m \\cdot s \\cdot 5"
+  }
+ },
+ "quantity.parse|strict_all|10 sr": {
+  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "value": {
+   "content": "10 steradian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{steradian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "sr",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{steradian}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 steradian": {
+  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "value": {
+   "content": "10 steradian",
+   "dimension": "1",
+   "expanded_unit": "1",
+   "latex": "10~\\mathrm{steradian}",
+   "messages": [],
+   "standard_unit": "1",
+   "standard_value": "10*1",
+   "unit": "steradian",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{steradian}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|strict_all|10*pi kilogrammetre/second^2": {

@@ -2,21 +2,22 @@
 
 Depends on `slr_parsing`, `sympy` and `latex2sympy2` (the PyPI release; see below). Released as `0.2.0`; see [`expression_parsing/CHANGELOG.md`](../../expression_parsing/CHANGELOG.md) for the migration table.
 
+> **0.3.0:** preview and feedback-tag code (`preview.py`, `feedback.py`) and `PATTERNS` moved to compareExpressions; preprocessing raises typed exceptions instead of returning `Preprocessed`; `parse_expression` evaluates only mathematics (`_safe_parse.py`). The table below is current.
+
 ## Modules
 
 | Module | Contents |
 |---|---|
 | `params.py` | `ExpressionParams` (frozen; `from_dict` maps the JSON names; symbols normalised once), `SymbolSpec`, `Convention`, `parse_symbol_assumptions` |
 | `symbol_tables.py` | `ELEMENTARY_FUNCTIONS`, `GREEK_SYMBOLS` (`SymbolAliases` tuples), `UNICODE_DASHES` |
-| `preprocessing.py` | `create_expression_set`, bracket and absolute-value conversion, `preprocess_expression` → `Preprocessed` |
+| `preprocessing.py` | `create_expression_set`, bracket and absolute-value conversion, `preprocess_expression` → `str` (raises `BracketNotationError`/`AbsoluteValueNotationError` with a best guess) |
 | `substitution.py` | `substitute`, `substitute_input_symbols` (pure), Greek/function/dash substitutions |
 | `conventions.py` | `convention_parser` (cached), `apply_convention` |
 | `sympy_parsing.py` | `SympyParsingConfig`, `parse_expression`, `sympy_symbols` |
 | `latex.py` | `sympy_to_latex`, `parse_latex`, `sanitise_latex`, `E`/`e` placeholder handling |
-| `preview.py` | `parse_symbolic`, `preview_function`, `Preview`/`Result` TypedDicts |
-| `numbers.py` | Number regexes, `is_number`, complex-form checks, `generate_arbitrary_number_pattern_matcher`, `compute_relative_tolerance_from_significant_decimals`, `PATTERNS` |
-| `feedback.py` | `FeedbackTag` (frozen dataclass), `FeedbackTagName` (`StrEnum`) |
-| `errors.py` | `ExpressionParsingError` (a `ValueError`) → `SymbolAssumptionError`, `LatexParseError`, `ExpressionSyntaxError` |
+| `_safe_parse.py` | `safe_parse_expr`: SymPy's parse pipeline with a syntax allowlist and a maths-only namespace |
+| `numbers.py` | Number regexes, `is_number`, complex-form checks, `generate_arbitrary_number_pattern_matcher`, `compute_relative_tolerance_from_significant_decimals` |
+| `errors.py` | `ExpressionParsingError` (a `ValueError`) → `InvalidParameterError`, `UnknownConventionError`, `SymbolAssumptionError`, `LatexParseError`, `BracketNotationError`, `AbsoluteValueNotationError` |
 
 **Deviations from the plan:**
 - **latex2sympy2 stays on PyPI**, not the lambda-feedback fork (decided in Phase 3): a git pin would make the packages unpublishable. The fork's relevant behaviour (`x = 2` → `Eq(x, 2)`, where PyPI's release treats it as an assignment) is reproduced by `parse_latex` splitting `=` itself.

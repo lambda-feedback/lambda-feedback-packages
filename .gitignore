@@ -19,3 +19,7 @@ env/
 
 # OS / editor
 .DS_Store
+
+# Per-package lock files from running Poetry inside a package; only the
+# monorepo root lock is tracked.
+*/poetry.lock
