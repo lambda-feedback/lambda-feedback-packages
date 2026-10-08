@@ -102,8 +102,8 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
 
     Covers the task's ``symbols`` and legacy ``input_symbols``, ``±``/``∓``
     text, and (with ``elementary_functions``) function and Greek aliases;
-    ``lambda`` becomes ``lamda`` and ``as`` becomes ``a*s`` since both are
-    Python keywords. Longer originals take precedence.
+    ``lambda`` becomes ``lamda``, a Python keyword's usual stand-in (other
+    keywords are handled when parsing). Longer originals take precedence.
     """
     exprs = [exprs] if isinstance(exprs, str) else list(exprs)
 
@@ -135,12 +135,12 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
         substitutions.append((code, code))
         substitutions += [(alternative, code) for alternative in alternatives]
 
-    # 'lambda' is a Python keyword: never substitute it back in
-    substitutions = [(original, replacement.replace("lambda", "lamda")) for original, replacement in substitutions]
-
-    # 'as' is a Python keyword: read it as a*s unless it is a defined symbol
-    if "as" not in params.symbols:
-        substitutions.append(("as", "a*s"))
+    # 'lambda' is a Python keyword: never substitute it back in. Only the whole
+    # name: longer names such as 'lambda_1' are valid identifiers and must
+    # match their codes in params.symbols.
+    substitutions = [
+        (original, "lamda" if replacement == "lambda" else replacement) for original, replacement in substitutions
+    ]
 
     ordered = _sorted(substitutions)
     return [" ".join(substitute(expr, ordered).split()) for expr in exprs]

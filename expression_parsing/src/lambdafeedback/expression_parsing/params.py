@@ -66,6 +66,8 @@ def _normalise_symbols(symbols: Mapping[str, SymbolSpec | Mapping[str, Any]]) ->
             raise InvalidParameterError("symbols", f"the latex of symbol {code!r} must be a string")
         aliases = tuple(alias.strip() for alias in _strings("symbols", spec.aliases) if alias.strip())
         normalised[code] = SymbolSpec(spec.latex, aliases)
+    if "lambda" in normalised and "lamda" in normalised:
+        raise InvalidParameterError("symbols", "'lambda' and 'lamda' are the same symbol; define only one")
     lamda = normalised.pop("lambda", None) or normalised.get("lamda") or SymbolSpec(r"\lambda")
     if "lambda" not in lamda.aliases:
         lamda = SymbolSpec(lamda.latex, (*lamda.aliases, "lambda"))

@@ -58,7 +58,14 @@ def sympy_to_latex(
 
     ``settings`` are ``sympy.latex`` settings; ``ln_notation`` defaults to True.
     """
-    settings = {"symbol_names": latex_symbols(symbols), "ln_notation": True, **(settings or {})}
+    names = latex_symbols(symbols)
+    # The printer looks symbols up by equality, and a symbol with assumptions
+    # (Symbol('x', positive=True), from symbol_assumptions) != Symbol('x').
+    by_name = {symbol.name: latex for symbol, latex in names.items()}
+    for symbol in getattr(expression, "free_symbols", ()):
+        if isinstance(symbol, Symbol) and symbol.name in by_name:
+            names[symbol] = by_name[symbol.name]
+    settings = {"symbol_names": names, "ln_notation": True, **(settings or {})}
     return str(_LatexPrinter(settings).doprint(expression))
 
 

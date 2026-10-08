@@ -17,6 +17,8 @@ Further tidy-up after the 0.2.0 extraction: previewing a response and mapping fa
 - `BracketNotationError(expression, *, original)`: the message now quotes the expression as written (`.original`), not the rewrite.
 - `convert_absolute_notation` raises `AbsoluteValueNotationError` for an unpaired `|` (e.g. `x|`, which became the unbalanced `x)`).
 - The unused `params.as_params` helper is removed.
+- Python keywords are read like any other name, at the token level, instead of by text substitution: `in`, `is`, `if`, `True`, ... become `i*n`, `i*s`, ... (or a single symbol with `strict_syntax`) where they used to raise. This replaces the `as` → `a*s` rule, which was a plain substring replacement and so also rewrote longer names: with `strict_syntax`, `phase` became `pha*se`. With `strict_syntax` a lone `as` is now the symbol `as`, like any other multi-letter name.
+- Defining both a `lambda` and a `lamda` symbol raises `InvalidParameterError` (they are the same symbol; the `lamda` definition was silently dropped).
 
 ### Security
 
@@ -24,6 +26,9 @@ Further tidy-up after the 0.2.0 extraction: previewing a response and mapping fa
 
 ### Fixed
 
+- A symbol code that merely contains `lambda` (e.g. `lambda_1`) keeps its name. Every substitution's replacement had `lambda` rewritten to `lamda`, so `lambda_1` became `lamda_1`, which was then split as `lamda*_1` and lost its LaTeX.
+- A task symbol whose code is a Python keyword (`in` for inches, `del`, `as`, ...) parses as that symbol, keeping its LaTeX and assumptions; it used to raise (or, for `as`, become `a*s`).
+- `sympy_to_latex` prints symbols that have assumptions (from `symbol_assumptions`) with the task's LaTeX. The printer matched symbols by equality, and `Symbol('x', positive=True)` is not `Symbol('x')`.
 - `{f(x,y), 2}` is two answers, `f(x,y)` and `2`: `create_expression_set` split at every comma, including those inside brackets.
 - `is_number("2*10^3")` is true: the `^` in `NUMBER_REGEX` was an unescaped anchor, so the `*10^` exponent form never matched.
 - `compute_relative_tolerance_from_significant_decimals` counts only the mantissa for `1.5E3` and `1.5*10^3` (it counted the exponent's digits as significant figures, giving 5e-4 instead of 0.05).

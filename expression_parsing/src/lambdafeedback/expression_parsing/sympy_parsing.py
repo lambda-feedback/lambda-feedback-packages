@@ -6,6 +6,8 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import cached_property
+from keyword import iskeyword
+from token import NAME, OP
 from typing import Any
 
 from sympy import Basic, Equality, Function, Symbol
@@ -19,6 +21,30 @@ from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import Convention, ExpressionParams
 from .preprocessing import convert_bracket_notation, create_expression_set
 from .substitution import _sorted, elementary_function_substitutions, greek_symbol_substitutions, substitute
+
+
+def _keywords_as_names(tokens: list[Any], local_dict: dict[str, Any], global_dict: Any) -> list[Any]:
+    """Read Python keywords (``in``, ``is``, ``as``, ``del``, ...) as ordinary names.
+
+    Python's grammar would reject them, so each becomes the ``Symbol('in')``
+    (``Function('in')`` before a bracket) that ``auto_symbol`` makes of any
+    other unknown name: without strict syntax it is then split like any
+    other word. A keyword that is a defined name (a task symbol with code
+    ``in``) is rebound to an identifier so it keeps its own object.
+    """
+    result: list[Any] = []
+    for index, (kind, value) in enumerate(tokens):
+        if kind != NAME or not iskeyword(value):
+            result.append((kind, value))
+        elif value in local_dict:
+            alias = f"{value}__keyword"
+            local_dict[alias] = local_dict[value]
+            result.append((NAME, alias))
+        else:
+            following = tokens[index + 1][1] if index + 1 < len(tokens) else ""
+            constructor = "Function" if following == "(" else "Symbol"
+            result += [(NAME, constructor), (OP, "("), (NAME, repr(value)), (OP, ")")]
+    return result
 
 
 def sympy_symbols(symbols: Iterable[str]) -> dict[str, Symbol]:
@@ -146,7 +172,10 @@ class SympyParsingConfig:
             )
         if self.rationalise:
             transformations += TRANSFORMATIONS[11]
-        return tuple(transformations)
+        # After auto_symbol (which leaves keywords alone, and would wrap our
+        # Symbol('in') again), before the symbol splitting.
+        lambda_notation, auto_symbol, *rest = transformations
+        return (lambda_notation, auto_symbol, _keywords_as_names, *rest)
 
 
 def _parse_expr(expr: str, **kwargs: Any) -> Any:
