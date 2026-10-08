@@ -4,15 +4,13 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Any
 
 DEFAULT_SIGNIFICANT_FIGURES = 2
 
 NONNEGATIVE_NUMBER_REGEX = r"((0|[1-9]\d*)?(\.\d+)?(?<=\d)(e-?(0|[1-9]\d*))?)"
 """A non-negative decimal, optionally with an ``e`` exponent."""
 
-NUMBER_REGEX = r"(-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)( *(e|E|\*10^|\*10\*\*)-?(0|[1-9]\d*))?)"
+NUMBER_REGEX = r"(-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)( *(e|E|\*10\^|\*10\*\*)-?(0|[1-9]\d*))?)"
 """A decimal, optionally with an exponent written ``e``, ``E``, ``*10^`` or ``*10**``."""
 
 
@@ -89,55 +87,7 @@ def compute_relative_tolerance_from_significant_decimals(string: str) -> float:
     string = string.strip()
     if re.fullmatch(NUMBER_REGEX, string) is None:
         return 0
-    if "e" in string.casefold():
-        string = "".join(string.split())
-    index = min(string.index(separator) if separator in string else len(string) for separator in "e*^ ")
-    significant_characters = string[:index].replace(".", "").lstrip("-0")
+    # The mantissa ends where the exponent starts: "e", "E", "*10^" or "*10**".
+    mantissa = re.split(r" *[eE*]", string, maxsplit=1)[0]
+    significant_characters = mantissa.replace(".", "").lstrip("-0")
     return float(5 * 10 ** (-max(len(significant_characters), DEFAULT_SIGNIFICANT_FIGURES)))
-
-
-@dataclass(frozen=True)
-class SyntacticalPattern:
-    """A written form of numbers, for "written as" criteria.
-
-    ``summary``/``details`` render descriptions from the criterion node (whose
-    two children are the compared expressions) and the parameters.
-    """
-
-    matcher: Callable[[str], bool]
-    name: str
-    summary: Callable[[Any, Any], str]
-    details: Callable[[Any, Any], str]
-
-
-def _both(criterion: Any) -> str:
-    return f"{criterion.children[0].content_string()} and {criterion.children[1].content_string()}"
-
-
-PATTERNS: dict[str, SyntacticalPattern] = {
-    "NUMBER": SyntacticalPattern(
-        matcher=is_number,
-        name="simplified number",
-        summary=lambda criterion, parameters: f"{_both(criterion)} are both numbers written in simplified form.",
-        details=lambda criterion, parameters: f"{_both(criterion)} are both numbers written in simplified form.",
-    ),
-    "CARTESIAN": SyntacticalPattern(
-        matcher=is_complex_number_on_cartesian_form,
-        name="cartesian",
-        summary=lambda criterion, parameters: f"{_both(criterion)} are both complex numbers written in cartesian form",
-        details=lambda criterion, parameters: (
-            f"{_both(criterion)} are both complex numbers written in cartesian form, i.e. $a+bi$."
-        ),
-    ),
-    "EXPONENTIAL": SyntacticalPattern(
-        matcher=is_complex_number_on_exponential_form,
-        name="exponential",
-        summary=lambda criterion, parameters: (
-            f"{_both(criterion)} are both complex numbers written in exponential form"
-        ),
-        details=lambda criterion, parameters: (
-            f"{_both(criterion)} are both complex numbers written in exponential form, i.e. $a exp(bi)$."
-        ),
-    ),
-}
-"""Written forms recognised by "written as" criteria, by name."""

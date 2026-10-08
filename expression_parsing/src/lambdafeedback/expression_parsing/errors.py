@@ -19,6 +19,14 @@ class UnknownConventionError(ExpressionParsingError):
         self.convention = convention
 
 
+class InvalidParameterError(ExpressionParsingError):
+    """A parameter has the wrong type (e.g. ``"false"`` for a boolean); ``name`` is its field name."""
+
+    def __init__(self, name: str, message: str) -> None:
+        super().__init__(f"Invalid parameter {name!r}: {message}")
+        self.name = name
+
+
 class SymbolAssumptionError(ExpressionParsingError):
     """A ``symbol_assumptions`` parameter is malformed or names an invalid assumption.
 
@@ -57,14 +65,16 @@ class LatexParseError(ExpressionParsingError):
 class BracketNotationError(ExpressionParsingError):
     """Brackets closed with a different kind than opened (e.g. ``[x+y)``).
 
-    ``expression`` is a best-effort rewrite (every bracket kind collapsed to
-    ``()``): often this parses fine (a wrong-*kind* mismatch), but it may
-    still fail if the brackets are genuinely unbalanced.
+    ``original`` is the expression as written. ``expression`` is a
+    best-effort rewrite (every bracket kind collapsed to ``()``): often this
+    parses fine (a wrong-*kind* mismatch), but it may still fail if the
+    brackets are genuinely unbalanced.
     """
 
-    def __init__(self, expression: str) -> None:
-        super().__init__(f"Mismatched brackets in {expression!r}.")
+    def __init__(self, expression: str, *, original: str) -> None:
+        super().__init__(f"Mismatched brackets in {original!r}.")
         self.expression: str = expression
+        self.original = original
 
 
 class AbsoluteValueNotationError(ExpressionParsingError):

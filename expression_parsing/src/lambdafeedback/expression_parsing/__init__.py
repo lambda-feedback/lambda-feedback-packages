@@ -20,16 +20,17 @@ from .errors import (
     AbsoluteValueNotationError,
     BracketNotationError,
     ExpressionParsingError,
+    InvalidParameterError,
     LatexParseError,
     SymbolAssumptionError,
     UnknownConventionError,
 )
 from .latex import extract_latex, latex_symbols, parse_latex, sanitise_latex, sympy_to_latex
 from .numbers import (
-    PATTERNS,
-    SyntacticalPattern,
     compute_relative_tolerance_from_significant_decimals,
     generate_arbitrary_number_pattern_matcher,
+    is_complex_number_on_cartesian_form,
+    is_complex_number_on_exponential_form,
     is_number,
 )
 from .params import Convention, ExpressionParams, SymbolSpec, parse_symbol_assumptions
@@ -46,17 +47,16 @@ from .substitution import substitute, substitute_input_symbols, substitutions_so
 from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
 
 __all__ = [
-    "PATTERNS",
     "AbsoluteValueNotationError",
     "BracketNotationError",
     "Convention",
     "ExpressionParams",
     "ExpressionParsingError",
+    "InvalidParameterError",
     "LatexParseError",
     "SymbolAssumptionError",
     "SymbolSpec",
     "SympyParsingConfig",
-    "SyntacticalPattern",
     "UnknownConventionError",
     "apply_convention",
     "compute_relative_tolerance_from_significant_decimals",
@@ -68,6 +68,8 @@ __all__ = [
     "find_matching_parenthesis",
     "generate_arbitrary_number_pattern_matcher",
     "has_matching_brackets",
+    "is_complex_number_on_cartesian_form",
+    "is_complex_number_on_exponential_form",
     "is_multiple_answers_wrapper",
     "is_number",
     "latex_symbols",

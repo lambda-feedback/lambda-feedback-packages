@@ -1,19 +1,28 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
+import re
 import subprocess
 import sys
 import warnings
 
 import pytest
+from sympy import Abs, Function, Integral, Symbol, sqrt
 
 from lambdafeedback.expression_parsing import (
+    AbsoluteValueNotationError,
+    BracketNotationError,
     ExpressionParams,
+    ExpressionParsingError,
     LatexParseError,
     SymbolAssumptionError,
     SympyParsingConfig,
+    compute_relative_tolerance_from_significant_decimals,
+    convert_absolute_notation,
     create_expression_set,
+    is_number,
     parse_expression,
     parse_latex,
+    preprocess_expression,
     substitute_input_symbols,
     sympy_to_latex,
 )
@@ -21,6 +30,60 @@ from lambdafeedback.expression_parsing import (
 
 def parsing_params(**overrides):
     return SympyParsingConfig.from_params(ExpressionParams.from_dict(overrides))
+
+
+class TestOnlyMathematicsIsEvaluated:
+    """parse_expr evals its input; it used to see Python's builtins (open, __import__, ...)."""
+
+    @pytest.mark.parametrize("strict_syntax", [False, True])
+    @pytest.mark.parametrize("convention", [None, "equal_precedence"])
+    @pytest.mark.parametrize(
+        "response",
+        [
+            "__import__('sys').modules.__setitem__('pwned_by_response', 1)",
+            "sin(\"__import__('sys').modules.__setitem__('pwned_by_response', 1)\")",
+            "Number(\"__import__('sys').modules.__setitem__('pwned_by_response', 1)\")",
+            "S('x')",
+            "open('/dev/null')",
+            "x.func",
+            "().__class__.__bases__",
+        ],
+    )
+    def test_code_is_rejected(self, response, convention, strict_syntax):
+        config = parsing_params(convention=convention, strict_syntax=strict_syntax)
+        with pytest.raises(ExpressionParsingError):
+            parse_expression(response, config)
+        assert "pwned_by_response" not in sys.modules
+
+    def test_non_mathematical_sympy_names_are_plain_symbols(self):
+        config = parsing_params(strict_syntax=True, convention=None)
+        assert parse_expression("plot(x)", config) == Function("plot")(Symbol("x"))
+
+    def test_mathematical_names_still_resolve(self):
+        config = parsing_params(elementary_functions=True)
+        x, y = Symbol("x"), Symbol("y")
+        assert parse_expression("sqrt(x)+abs(y)", config) == sqrt(x) + Abs(y)
+        assert parse_expression("Integral(x, x)", config) == Integral(x, x)
+        assert parse_expression("2x3", config).equals(6 * x)  # split_symbols emits Number('3')
+
+    def test_symbol_aliases_are_not_executed(self):
+        symbols = ExpressionParams.from_dict(
+            {
+                "symbols": {
+                    "x": {"latex": "x", "aliases": ["__import__('sys').modules.__setitem__('pwned_by_alias', 1)"]}
+                }
+            }
+        ).symbols
+        parse_latex("x", symbols)
+        assert "pwned_by_alias" not in sys.modules
+
+
+class TestParseExpressionErrors:
+    @pytest.mark.parametrize("response", ["", "x**", "(x", "x)("])
+    def test_invalid_input_raises_expression_parsing_error(self, response):
+        with pytest.raises(ExpressionParsingError) as info:
+            parse_expression(response, parsing_params())
+        assert info.value.expression is not None
 
 
 class TestSymbolAssumptions:
@@ -120,3 +183,36 @@ class TestLatexEquations:
         with pytest.raises(LatexParseError, match="=") as info:
             parse_latex("x = y = 2", {})
         assert info.value.expression == "x = y = 2"
+
+
+class TestPublicReleaseReview:
+    """Bugs found reviewing the package for its public release."""
+
+    def test_multiple_answers_split_at_top_level_commas_only(self):
+        assert create_expression_set("{f(x,y), 2}", ExpressionParams()) == ["f(x,y)", "2"]
+
+    def test_times_ten_to_the_power_is_a_number(self):
+        assert is_number("2*10^3")
+
+    @pytest.mark.parametrize("number", ["1.5e3", "1.5E3", "1.5*10^3", "1.5*10**3", "1.5 e3"])
+    def test_relative_tolerance_counts_mantissa_digits_only(self, number):
+        assert compute_relative_tolerance_from_significant_decimals(number) == pytest.approx(0.05)
+
+    def test_bracket_error_reports_what_was_written(self):
+        with pytest.raises(BracketNotationError, match=re.escape("'[x+y)'")) as info:
+            preprocess_expression("response", "[x+y)", ExpressionParams())
+        assert (info.value.original, info.value.expression) == ("[x+y)", "(x+y)")
+
+    @pytest.mark.parametrize("expr", ["x|", "|x|+|"])
+    def test_unpaired_pipe_is_reported(self, expr):
+        with pytest.raises(AbsoluteValueNotationError):
+            convert_absolute_notation(expr, "response")
+
+    @pytest.mark.parametrize("response", [r"1\pm\sqrt{2}", r"1 \pm \sqrt{2}", r"1\pm{\sqrt{2}}"])
+    def test_latex_plus_minus_without_a_space(self, response):
+        assert parse_latex(response, {}) == "{1 + sqrt(2), 1 - sqrt(2)}"
+
+    def test_latex_plus_minus_does_not_rewrite_the_latex(self):
+        # The ± expansion used to run symbol substitution over the LaTeX, so \lambda became \lamda.
+        both = sorted([parse_latex(r"1 + \lambda", {}), parse_latex(r"1 - \lambda", {})])
+        assert parse_latex(r"1 \pm \lambda", {}) == "{" + ", ".join(both) + "}"

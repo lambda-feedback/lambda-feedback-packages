@@ -7,13 +7,22 @@ from collections.abc import Mapping
 from typing import Any
 
 from latex2sympy2 import latex2sympy
-from sympy import Eq, Symbol, parse_expr
+from sympy import Eq, Symbol
 from sympy.parsing.sympy_parser import implicit_multiplication_application, standard_transformations
 from sympy.printing.latex import LatexPrinter
 
+from ._safe_parse import safe_parse_expr
 from .errors import LatexParseError
-from .params import ExpressionParams, SymbolSpec
-from .preprocessing import create_expression_set, find_matching_parenthesis
+from .params import SymbolSpec
+from .preprocessing import _expand_plus_minus, find_matching_parenthesis
+
+# Symbol aliases are parsed with ``Symbol`` as the only name: an alias that
+# needs anything more (a number, a function call) falls back to a plain name.
+_ALIAS_NAMESPACE = {"Symbol": Symbol}
+
+# \pm and \mp as commands (so not the start of e.g. \pmod), with any space after.
+_PM_RE = re.compile(r"\\pm(?![A-Za-z])\s*")
+_MP_RE = re.compile(r"\\mp(?![A-Za-z])\s*")
 
 SYMBOL_LATEX_RE = re.compile(r"(?P<start>\\\(|\$\$|\$)(?P<latex>.*?)(?P<end>\\\)|\$\$|\$)")
 """Finds math-mode LaTeX (``\\(...\\)``, ``$$...$$`` or ``$...$``) in a symbol's LaTeX string."""
@@ -128,11 +137,8 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     """
     substitutions: dict[Any, Any] = {}
 
-    if r"\pm " in response or r"\mp " in response:
-        expanded = response.replace(r"\pm ", "plus_minus").replace(r"\mp ", "minus_plus")
-        responses = create_expression_set(expanded, ExpressionParams())
-    else:
-        responses = [response]
+    expanded = _MP_RE.sub("minus_plus", _PM_RE.sub("plus_minus", response))
+    responses = list(dict.fromkeys(_expand_plus_minus(expanded)))
 
     alias_transformations = (*standard_transformations, implicit_multiplication_application)
     for code, spec in symbols.items():
@@ -145,11 +151,11 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
             raise LatexParseError(f"Couldn't parse latex symbol {latex} to sympy symbol.", symbol=latex) from e
         for alias in spec.aliases:
             try:
-                parsed_alias = parse_expr(
+                parsed_alias = safe_parse_expr(
                     alias,
                     transformations=alias_transformations,
-                    global_dict={},
-                    local_dict={"Symbol": Symbol, "E": Symbol("E")},
+                    global_dict=_ALIAS_NAMESPACE,
+                    local_dict={"E": Symbol("E")},
                 )
             except Exception:
                 parsed_alias = Symbol(alias)  # not an expression: use the alias as a plain name
@@ -192,9 +198,7 @@ def sanitise_latex(response: str) -> str:
             processed.append(response[index:wrapper_start])
             wrapper_end = find_matching_parenthesis(response, wrapper_start + 1, delimiters=("{", "}"))
             if wrapper_end < 0:
-                raise LatexParseError(
-                    f"Unclosed {wrapper}{{...}} in {response!r}.", response=response, wrapper=wrapper
-                )
+                raise LatexParseError(f"Unclosed {wrapper}{{...}} in {response!r}.", response=response, wrapper=wrapper)
             processed.append(response[wrapper_start + len(wrapper) + 1 : wrapper_end])
             index = wrapper_end + 1
         response = "".join(processed)

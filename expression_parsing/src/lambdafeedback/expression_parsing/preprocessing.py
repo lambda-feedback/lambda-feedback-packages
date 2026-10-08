@@ -63,7 +63,11 @@ def create_expression_set(exprs: str | Sequence[str], params: ExpressionParams) 
     substituted. The result is de-duplicated, in first-seen order.
     """
     if isinstance(exprs, str):
-        exprs = [e.strip() for e in exprs[1:-1].split(",")] if is_multiple_answers_wrapper(exprs) else [exprs]
+        exprs = (
+            [e.strip() for e in _split_top_level(exprs.strip()[1:-1])]
+            if is_multiple_answers_wrapper(exprs)
+            else [exprs]
+        )
     expanded: dict[str, None] = {}
     for original in exprs:
         expr = substitute_input_symbols(original, params)[0]
@@ -71,13 +75,35 @@ def create_expression_set(exprs: str | Sequence[str], params: ExpressionParams) 
             expr = expr.replace(params.plus_minus, "plus_minus")
         if params.minus_plus is not None:
             expr = expr.replace(params.minus_plus, "minus_plus")
-        if "plus_minus" in expr or "minus_plus" in expr:
-            for plus_minus, minus_plus in (("+", "-"), ("-", "+")):
-                signed = expr.replace("plus_minus", plus_minus).replace("minus_plus", minus_plus).strip()
-                expanded[signed.lstrip("+").strip()] = None
-        else:
-            expanded[expr] = None
+        expanded.update(dict.fromkeys(_expand_plus_minus(expr)))
     return list(expanded)
+
+
+def _expand_plus_minus(expr: str) -> list[str]:
+    """Both signs of an expression containing ``plus_minus``/``minus_plus`` (otherwise just ``expr``)."""
+    if "plus_minus" not in expr and "minus_plus" not in expr:
+        return [expr]
+    signed = (
+        expr.replace("plus_minus", plus_minus).replace("minus_plus", minus_plus).strip()
+        for plus_minus, minus_plus in (("+", "-"), ("-", "+"))
+    )
+    return [s.lstrip("+").strip() for s in signed]
+
+
+def _split_top_level(text: str) -> list[str]:
+    """Split ``text`` at the commas that aren't inside brackets."""
+    parts = []
+    depth = start = 0
+    for index, char in enumerate(text):
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth -= 1
+        elif char == "," and depth == 0:
+            parts.append(text[start:index])
+            start = index + 1
+    parts.append(text[start:])
+    return parts
 
 
 def convert_bracket_notation(expr: str) -> str:
@@ -95,7 +121,7 @@ def convert_bracket_notation(expr: str) -> str:
     if not (matched and is_multiple_answers_wrapper(guess)):
         guess = guess.replace("{", "(").replace("}", ")")
     if not matched:
-        raise BracketNotationError(guess)
+        raise BracketNotationError(guess, original=expr)
     return guess
 
 
@@ -105,7 +131,7 @@ def convert_absolute_notation(expr: str, name: str) -> str:
     Nested ``|`` cannot be handled: each ``|`` is paired with the closest one
     to its right, and an :class:`AbsoluteValueNotationError` (naming ``name``,
     e.g. ``"response"``) is raised, carrying the best guess, when that
-    pairing was ambiguous.
+    pairing was ambiguous or a ``|`` is left unpaired.
     """
     n_pipes = expr.count("|")
     ambiguous: list[int] = []
@@ -156,7 +182,7 @@ def convert_absolute_notation(expr: str, name: str) -> str:
             previous_ambiguous = i
         expr = "".join(chars)
 
-    if n_pipes > 2 and ambiguous:
+    if (n_pipes > 2 and ambiguous) or n_pipes % 2:
         raise AbsoluteValueNotationError(expr, name)
     return expr
 
@@ -170,7 +196,8 @@ def preprocess_expression(name: str, expr: str, params: ExpressionParams) -> str
     computed even when raising; a :class:`BracketNotationError` takes
     precedence over an :class:`AbsoluteValueNotationError` when both apply.
     """
-    expr = substitute_input_symbols(expr.strip(), params)[0]
+    original = expr.strip()
+    expr = substitute_input_symbols(original, params)[0]
     bracket_error: BracketNotationError | None = None
     if not params.strict_syntax:
         try:
@@ -185,5 +212,5 @@ def preprocess_expression(name: str, expr: str, params: ExpressionParams) -> str
         if bracket_error is None:
             raise
     if bracket_error is not None:
-        raise BracketNotationError(expr)
+        raise BracketNotationError(expr, original=original)
     return expr

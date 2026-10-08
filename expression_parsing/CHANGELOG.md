@@ -10,6 +10,24 @@ Further tidy-up after the 0.2.0 extraction: previewing a response and mapping fa
 - `preprocess_expression`, `convert_bracket_notation` and `convert_absolute_notation` now return a plain `str` (raising instead of returning `Preprocessed`/a `(str, FeedbackTag | None)` tuple). The `Preprocessed` dataclass is gone. `BracketNotationError` and `AbsoluteValueNotationError` (both `ExpressionParsingError`) are raised on failure; each carries the best-guess rewrite as `.expression`, so a caller can catch it, decide whether to continue with the guess (adding non-fatal feedback) or propagate, exactly as `compareExpressions` already did per-context (learner response vs. answer/criteria).
 - `convert_bracket_notation` now computes a best-guess rewrite even on a bracket-kind mismatch (e.g. `[x+y)` guesses `(x+y)`), instead of leaving the expression untouched. This often recovers a wrong-*kind* mismatch outright; a genuinely unbalanced expression still fails downstream.
 - Every exception in `errors.py` now carries structured fields instead of only a message: `UnknownConventionError.convention`, `SymbolAssumptionError.text`/`.symbol`/`.assumption`, `LatexParseError.symbol`/`.expression`/`.response`/`.wrapper`, `ExpressionParsingError.expression` (the base, used by generic parse failures). The duplicated "Unknown convention" check (`conventions.py` and `params.py`) is now one `validate_convention` helper.
+- `PATTERNS` and `SyntacticalPattern` have moved out to compareExpressions: their summaries are learner-facing feedback text built from criteria nodes. The matchers stay here: `is_number`, and the now-exported `is_complex_number_on_cartesian_form` and `is_complex_number_on_exponential_form`.
+- `parse_expression` only evaluates mathematics (see Security). An input that relied on other SymPy names now reads them as plain symbols or undefined functions (e.g. `plot(x)`), and Python builtins other than `abs`/`max`/`min` are unavailable.
+- `parse_expression` raises `ExpressionParsingError` for every invalid input. Tokenizer errors, `SyntaxError`, slr_parsing's `ParseError` and evaluation errors used to escape unwrapped; they are now its `__cause__`.
+- `ExpressionParams` checks parameter types and raises the new `InvalidParameterError` (`.name` is the field): booleans must be booleans (`"false"` was kept as a truthy string), and lists of strings must be lists (`"aliases": "xy"` used to become the aliases `x` and `y`). `ExpressionParams.symbols` is now a read-only mapping.
+- `BracketNotationError(expression, *, original)`: the message now quotes the expression as written (`.original`), not the rewrite.
+- `convert_absolute_notation` raises `AbsoluteValueNotationError` for an unpaired `|` (e.g. `x|`, which became the unbalanced `x)`).
+- The unused `params.as_params` helper is removed.
+
+### Security
+
+- **`parse_expression` no longer evaluates arbitrary Python.** SymPy's `parse_expr` `eval`s the transformed input, and its default namespace includes Python's builtin functions: a learner response such as `open('/etc/hosts')` was executed (it only failed afterwards, as not a SymPy expression), and `__import__(...)` and attribute access were reachable. Parsing now goes through `_safe_parse.safe_parse_expr`: the generated code is checked against an allowlist of syntax (arithmetic, comparisons, calls of plain names, numbers; a string only as the name in `Symbol('x')`/`Function('f')` or the digits in `Float('1.5')`/`Rational`/`Integer`/`Number`, since SymPy `sympify`s string arguments with its unrestricted namespace), then evaluated with SymPy's mathematical names only and no builtins. `parse_latex` parses symbol aliases the same way (they were evaluated with builtins too). compareExpressions, where this code came from, has the same exposure.
+
+### Fixed
+
+- `{f(x,y), 2}` is two answers, `f(x,y)` and `2`: `create_expression_set` split at every comma, including those inside brackets.
+- `is_number("2*10^3")` is true: the `^` in `NUMBER_REGEX` was an unescaped anchor, so the `*10^` exponent form never matched.
+- `compute_relative_tolerance_from_significant_decimals` counts only the mantissa for `1.5E3` and `1.5*10^3` (it counted the exponent's digits as significant figures, giving 5e-4 instead of 0.05).
+- `parse_latex` recognises `\pm`/`\mp` without a following space (`1\pm\sqrt{2}` failed to parse), and no longer runs symbol substitution over the LaTeX when expanding them (`\lambda` became `\lamda`).
 
 ## 0.2.0 (unreleased)
 

@@ -8,11 +8,12 @@ unrelated keys are ignored.
 from __future__ import annotations
 
 import ast
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, fields, replace
+from types import MappingProxyType
 from typing import Any, Literal, Self, get_args
 
-from .errors import SymbolAssumptionError, UnknownConventionError
+from .errors import InvalidParameterError, SymbolAssumptionError, UnknownConventionError
 from .preprocessing import find_matching_parenthesis
 
 Convention = Literal["equal_precedence", "implicit_higher_precedence"]
@@ -33,34 +34,56 @@ class SymbolSpec:
     aliases: tuple[str, ...] = ()
 
 
-def _normalise_symbols(symbols: Mapping[str, SymbolSpec | Mapping[str, Any]]) -> dict[str, SymbolSpec]:
+def _strings(name: str, value: Any) -> tuple[str, ...]:
+    """``value`` as a tuple of strings; a bare string is rejected rather than split into characters."""
+    if isinstance(value, str) or not isinstance(value, Iterable):
+        raise InvalidParameterError(name, f"expected a list of strings, got {value!r}")
+    items = tuple(value)
+    if not all(isinstance(item, str) for item in items):
+        raise InvalidParameterError(name, f"expected a list of strings, got {value!r}")
+    return items
+
+
+def _normalise_symbols(symbols: Mapping[str, SymbolSpec | Mapping[str, Any]]) -> Mapping[str, SymbolSpec]:
     """Drop blank codes, strip aliases and drop blank ones, and move ``lambda`` to ``lamda``.
 
     ``lambda`` is a Python keyword, so it is parsed as the symbol ``lamda``
     (which always exists, with ``lambda`` as an alias).
     """
+    if not isinstance(symbols, Mapping):
+        raise InvalidParameterError("symbols", f"expected a mapping of symbol codes, got {symbols!r}")
     normalised: dict[str, SymbolSpec] = {}
     for code, spec in symbols.items():
+        if not isinstance(code, str):
+            raise InvalidParameterError("symbols", f"symbol codes must be strings, got {code!r}")
         if not code.strip():
             continue
-        if not isinstance(spec, SymbolSpec):
-            spec = SymbolSpec(latex=spec.get("latex"), aliases=tuple(spec.get("aliases", ())))
-        aliases = tuple(alias.strip() for alias in spec.aliases if alias.strip())
+        if isinstance(spec, Mapping):
+            spec = SymbolSpec(latex=spec.get("latex"), aliases=spec.get("aliases", ()))
+        elif not isinstance(spec, SymbolSpec):
+            raise InvalidParameterError("symbols", f"symbol {code!r} must be a mapping, got {spec!r}")
+        if spec.latex is not None and not isinstance(spec.latex, str):
+            raise InvalidParameterError("symbols", f"the latex of symbol {code!r} must be a string")
+        aliases = tuple(alias.strip() for alias in _strings("symbols", spec.aliases) if alias.strip())
         normalised[code] = SymbolSpec(spec.latex, aliases)
     lamda = normalised.pop("lambda", None) or normalised.get("lamda") or SymbolSpec(r"\lambda")
     if "lambda" not in lamda.aliases:
         lamda = SymbolSpec(lamda.latex, (*lamda.aliases, "lambda"))
     normalised["lamda"] = lamda
-    return normalised
+    return MappingProxyType(normalised)
 
 
 def _normalise_input_symbols(entries: Iterable[Any]) -> tuple[tuple[str, tuple[str, ...]], ...]:
     """Legacy ``[[code, [alternatives]], ...]``: drop blank codes, strip and drop blank alternatives."""
+    if isinstance(entries, str) or not isinstance(entries, Iterable):
+        raise InvalidParameterError("input_symbols", f"expected a list of [code, [alternatives]], got {entries!r}")
     normalised = []
     for entry in entries:
+        if isinstance(entry, str) or not isinstance(entry, Sequence) or (entry and not isinstance(entry[0], str)):
+            raise InvalidParameterError("input_symbols", f"expected [code, [alternatives]], got {entry!r}")
         code = entry[0].strip() if entry else ""
         if code:
-            alternatives = entry[1] if len(entry) > 1 else ()
+            alternatives = _strings("input_symbols", entry[1]) if len(entry) > 1 else ()
             normalised.append((code, tuple(a.strip() for a in alternatives if a.strip())))
     return tuple(normalised)
 
@@ -131,12 +154,22 @@ class ExpressionParams:
     minus_plus: str | None = None
 
     def __post_init__(self) -> None:
+        # Parameters usually come from JSON (via from_dict), so check the types.
+        for name in _BOOL_FIELDS:
+            if not isinstance(getattr(self, name), bool):
+                raise InvalidParameterError(name, f"expected true or false, got {getattr(self, name)!r}")
+        for name in ("plus_minus", "minus_plus"):
+            if getattr(self, name) is not None and not isinstance(getattr(self, name), str):
+                raise InvalidParameterError(name, f"expected a string, got {getattr(self, name)!r}")
         validate_convention(self.convention)
         object.__setattr__(self, "symbols", _normalise_symbols(self.symbols))
         object.__setattr__(self, "input_symbols", _normalise_input_symbols(self.input_symbols))
-        object.__setattr__(self, "reserved_keywords", tuple(self.reserved_keywords))
-        object.__setattr__(self, "unsplittable_symbols", tuple(self.unsplittable_symbols))
-        object.__setattr__(self, "symbol_assumptions", tuple(tuple(pair) for pair in self.symbol_assumptions))
+        object.__setattr__(self, "reserved_keywords", _strings("reserved_keywords", self.reserved_keywords))
+        object.__setattr__(self, "unsplittable_symbols", _strings("unsplittable_symbols", self.unsplittable_symbols))
+        pairs = tuple(_strings("symbol_assumptions", pair) for pair in self.symbol_assumptions)
+        if any(len(pair) != 2 for pair in pairs):
+            raise InvalidParameterError("symbol_assumptions", "expected (symbol, assumption) pairs")
+        object.__setattr__(self, "symbol_assumptions", pairs)
 
     @classmethod
     def from_dict(cls, params: Mapping[str, Any]) -> Self:
@@ -153,6 +186,4 @@ class ExpressionParams:
         return replace(self, **changes)
 
 
-def as_params(params: ExpressionParams | Mapping[str, Any]) -> ExpressionParams:
-    """Accept either typed parameters or an evaluation-function parameter mapping."""
-    return params if isinstance(params, ExpressionParams) else ExpressionParams.from_dict(params)
+_BOOL_FIELDS = tuple(f.name for f in fields(ExpressionParams) if f.type == "bool")

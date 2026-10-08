@@ -4,9 +4,9 @@ import pytest
 from sympy import E, I, Symbol
 
 from lambdafeedback.expression_parsing import (
-    PATTERNS,
     ExpressionParams,
     ExpressionParsingError,
+    InvalidParameterError,
     LatexParseError,
     SymbolAssumptionError,
     SymbolSpec,
@@ -14,6 +14,9 @@ from lambdafeedback.expression_parsing import (
     UnknownConventionError,
     apply_convention,
     convention_parser,
+    is_complex_number_on_cartesian_form,
+    is_complex_number_on_exponential_form,
+    is_number,
     parse_expression,
     parse_latex,
     parse_symbol_assumptions,
@@ -83,6 +86,28 @@ class TestExpressionParams:
     def test_params_are_immutable(self):
         with pytest.raises(AttributeError):
             ExpressionParams().strict_syntax = True
+        with pytest.raises(TypeError):
+            ExpressionParams().symbols["x"] = SymbolSpec("x")  # type: ignore[index]
+
+    @pytest.mark.parametrize(
+        ("params", "name"),
+        [
+            ({"complexNumbers": "false"}, "complex_numbers"),
+            ({"strict_syntax": 1}, "strict_syntax"),
+            ({"reserved_keywords": "abc"}, "reserved_keywords"),
+            ({"unsplittable_symbols": [1]}, "unsplittable_symbols"),
+            ({"symbols": {"x": {"aliases": "xy"}}}, "symbols"),
+            ({"symbols": {"x": {"latex": 1}}}, "symbols"),
+            ({"symbols": ["x"]}, "symbols"),
+            ({"input_symbols": [["x", "xy"]]}, "input_symbols"),
+            ({"plus_minus": 1}, "plus_minus"),
+        ],
+    )
+    def test_parameter_types_are_checked(self, params, name):
+        with pytest.raises(InvalidParameterError) as info:
+            ExpressionParams.from_dict(params)
+        assert info.value.name == name
+        assert isinstance(info.value, ExpressionParsingError)
 
 
 class TestSympyParsingConfig:
@@ -140,8 +165,8 @@ class TestLatex:
         assert sanitise_latex(r"3 \mathrm{kg}~\text{m}") == "3kg m"
 
 
-def test_written_as_patterns():
-    assert PATTERNS["NUMBER"].matcher("3.5")
-    assert PATTERNS["CARTESIAN"].matcher("1+2*I")
-    assert PATTERNS["EXPONENTIAL"].matcher("2*exp(3*I)")
-    assert not PATTERNS["NUMBER"].matcher("x")
+def test_number_forms():
+    assert is_number("3.5")
+    assert is_complex_number_on_cartesian_form("1+2*I")
+    assert is_complex_number_on_exponential_form("2*exp(3*I)")
+    assert not is_number("x")

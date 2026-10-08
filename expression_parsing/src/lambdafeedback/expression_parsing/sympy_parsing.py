@@ -10,9 +10,10 @@ from typing import Any
 
 from sympy import Basic, Equality, Function, Symbol
 from sympy.parsing.sympy_parser import T as TRANSFORMATIONS
-from sympy.parsing.sympy_parser import _token_splittable, parse_expr, split_symbols_custom
+from sympy.parsing.sympy_parser import _token_splittable, split_symbols_custom
 from sympy.utilities.exceptions import SymPyDeprecationWarning
 
+from ._safe_parse import safe_parse_expr
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import Convention, ExpressionParams
@@ -149,7 +150,7 @@ class SympyParsingConfig:
 
 
 def _parse_expr(expr: str, **kwargs: Any) -> Any:
-    """``sympy.parse_expr`` that rejects arithmetic on non-expressions.
+    """:func:`safe_parse_expr` that rejects arithmetic on non-expressions.
 
     With ``{}`` read as set literals (strict syntax), inputs like
     ``{x+1}*{x-1}`` build ``Mul(FiniteSet, FiniteSet)``, which SymPy only
@@ -157,7 +158,7 @@ def _parse_expr(expr: str, **kwargs: Any) -> Any:
     """
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        parsed = parse_expr(expr, **kwargs)
+        parsed = safe_parse_expr(expr, **kwargs)
     for warning in caught:
         if issubclass(warning.category, SymPyDeprecationWarning) and "non-Expr" in str(warning.message):
             raise ExpressionParsingError(
@@ -169,6 +170,16 @@ def _parse_expr(expr: str, **kwargs: Any) -> Any:
 
 
 def _parse_one(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
+    try:
+        return _parse_one_unchecked(expr, config, transformations)
+    except ExpressionParsingError:
+        raise
+    except Exception as e:
+        # Tokenizer, convention-parser and evaluation failures all mean "not a valid expression".
+        raise ExpressionParsingError(f"Failed to parse expression {expr!r}: {e}", expression=expr) from e
+
+
+def _parse_one_unchecked(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
     if not config.strict_syntax:
         expr = convert_bracket_notation(expr)
     expr = apply_convention(expr, config.convention)
