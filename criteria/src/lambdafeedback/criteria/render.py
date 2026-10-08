@@ -20,6 +20,8 @@ SPECIAL_STYLE = ("[[", "]]")
 
 
 def graph_to_json(graph: CriteriaGraph) -> str:
+    """``graph``'s evaluations, criteria and outputs (summary, details, edge labels) and sufficiencies as JSON."""
+
     def entry(node: Any, outgoing: bool = True) -> dict[str, Any]:
         data = {
             "summary": node.summary,
@@ -45,6 +47,7 @@ def graph_to_json(graph: CriteriaGraph) -> str:
 
 
 def graph_to_mermaid(graph: CriteriaGraph) -> str:
+    """Mermaid flowchart source for ``graph``; sufficiencies are drawn as dotted edges."""
     node_groups: list[tuple[Mapping[str, Node], tuple[str, str]]] = [
         (graph.evaluations, EVALUATION_STYLE),
         (graph.criteria, CRITERION_STYLE),
@@ -70,6 +73,8 @@ def graph_to_mermaid(graph: CriteriaGraph) -> str:
 
 
 def tree_to_mermaid(tree: CriteriaTree, special_nodes: Collection[str] = ()) -> str:
+    """Mermaid graph source for ``tree``; nodes labelled in ``special_nodes`` are highlighted."""
+
     def edges_from(node: CriteriaTree) -> list[str]:
         return [f"{node.label}{node.identifier} --> {child.label}{child.identifier}" for child in node.children]
 

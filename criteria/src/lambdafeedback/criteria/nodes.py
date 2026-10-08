@@ -25,9 +25,13 @@ class ResultLike(Protocol):
     """The part of a result object ``CriteriaGraph.export_feedback`` needs (``lf_toolkit.evaluation.Result`` fits)."""
 
     @property
-    def tags(self) -> list[str] | None: ...
+    def tags(self) -> list[str] | None:
+        """The tags already on the result, if any."""
+        ...
 
-    def add_feedback(self, tag: str, feedback: str) -> None: ...
+    def add_feedback(self, tag: str, feedback: str) -> None:
+        """Record ``feedback`` text under ``tag``."""
+        ...
 
 
 def no_feedback(inputs: Mapping[str, Any]) -> None:

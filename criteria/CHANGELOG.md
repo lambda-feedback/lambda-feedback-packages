@@ -22,6 +22,8 @@ The first release after the extraction refactor. The import path is now `lambdaf
 
 Removed (unused): `CriteriaGraph(identifier, entry_evaluations=)` (never read), `CriteriaGraph.RETURN`, the `Evaluation.results` / `Criterion.consequences` aliases of `outgoing`, and the node `tags` attributes.
 
+Signatures: `add_evaluation_node` no longer accepts `feedback_string_generator`, and `add_criterion_node` no longer accepts `sufficiencies` / `evaluate` (they only existed to serve `attach`). `attach` still takes all three and now raises `CriteriaGraphError` when one doesn't apply to the kind of node it creates; previously `evaluate` for a new criterion was silently ignored.
+
 Errors: graph misuse raises `CriteriaGraphError` (a `ValueError`) instead of bare `Exception`; `CriteriaError` is the common base.
 
 Modules: `grammar` (was `parsing`), `nodes`, `graph`, `tree`, `render`, `errors`. Fully type-annotated (`py.typed`).

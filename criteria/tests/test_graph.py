@@ -65,12 +65,15 @@ class TestBuilding:
         with pytest.raises(CriteriaGraphError, match=message):
             equality_graph().attach(source, target, **kwargs)
 
-    def test_evaluation_nodes_cannot_have_feedback_and_criteria_cannot_have_sufficiencies(self):
-        graph = CriteriaGraph("g")
+    def test_attach_rejects_keywords_for_the_other_node_kind(self):
+        graph = equality_graph()
         with pytest.raises(CriteriaGraphError, match="cannot generate feedback"):
-            graph.add_evaluation_node("E", "s", "d", feedback_string_generator=lambda inputs: "x")
+            graph.attach("EQ_TRUE", "NEW_E", summary="s", details="d", feedback_string_generator=lambda inputs: "x")
         with pytest.raises(CriteriaGraphError, match="cannot have sufficiencies"):
-            graph.add_criterion_node("C", "s", "d", sufficiencies=["X"])
+            graph.attach("EQ", "NEW_C", summary="s", details="d", sufficiencies=["X"])
+        with pytest.raises(CriteriaGraphError, match="cannot have an evaluate function"):
+            graph.attach("EQ", "NEW_C", summary="s", details="d", evaluate=lambda response: {})
+        assert "NEW_E" not in graph.evaluations and "NEW_C" not in graph.criteria
 
     def test_add_sufficiencies_extends_without_duplicates(self):
         graph = equality_graph()

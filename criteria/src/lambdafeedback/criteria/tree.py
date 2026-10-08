@@ -39,6 +39,7 @@ class CriteriaTree:
         return tree_to_mermaid(self, special_nodes)
 
     def as_dict(self) -> dict[str, Any]:
+        """The subtree as nested dicts with ``label``, ``summary``, ``details``, ``type`` and ``children``."""
         return {
             "label": self.label,
             "summary": self.summary,
@@ -48,6 +49,7 @@ class CriteriaTree:
         }
 
     def to_json(self) -> str:
+        """``as_dict()`` as a JSON string."""
         return json.dumps(self.as_dict())
 
 

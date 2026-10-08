@@ -38,6 +38,7 @@ class CriteriaGraph:
     """Conventional terminal output; add it with ``graph.add_node(CriteriaGraph.END)``."""
 
     def __init__(self, identifier: str) -> None:
+        """Create an empty graph named ``identifier`` (used to tell graphs apart, e.g. in test data)."""
         self.identifier = identifier
         self.evaluations: dict[str, EvaluationNode] = {}
         self.criteria: dict[str, CriterionNode] = {}
@@ -57,14 +58,16 @@ class CriteriaGraph:
         details: str,
         sufficiencies: Iterable[str] | None = None,
         evaluate: Evaluate | None = None,
-        feedback_string_generator: FeedbackStringGenerator | None = None,
     ) -> EvaluationNode:
-        # feedback_string_generator is accepted (and rejected) so that attach()
-        # can pass the same keywords whichever kind of node it creates.
-        if feedback_string_generator is not None:
-            raise CriteriaGraphError(
-                f"{label} is an evaluation node, evaluation nodes cannot generate feedback strings."
-            )
+        """Add an evaluation node and return it.
+
+        ``evaluate(response)`` reports the criteria that hold (see ``Evaluate``);
+        it may be left unset while building, but ``generate_feedback`` raises if
+        it reaches the node without one. ``sufficiencies`` lists criteria whose
+        evaluations can stand in for this one (see ``starting_evaluations``).
+
+        Raises ``CriteriaGraphError`` if an evaluation labelled ``label`` exists.
+        """
         if label in self.evaluations:
             raise CriteriaGraphError(f"Evaluation node {label} is already defined.")
         node = EvaluationNode(label, summary, details, evaluate)
@@ -77,22 +80,27 @@ class CriteriaGraph:
         label: str,
         summary: str,
         details: str,
-        sufficiencies: Iterable[str] | None = None,
-        evaluate: Evaluate | None = None,
         feedback_string_generator: FeedbackStringGenerator | None = None,
     ) -> CriterionNode:
-        # sufficiencies/evaluate are accepted for attach(), as above; criteria
-        # cannot have sufficiencies, and `evaluate` is ignored.
+        """Add a criterion node and return it.
+
+        ``feedback_string_generator`` renders the criterion's feedback text from
+        the inputs its evaluation reports; by default the criterion has no text.
+
+        Raises ``CriteriaGraphError`` if a criterion labelled ``label`` exists.
+        """
         if label in self.criteria:
             raise CriteriaGraphError(f"Criterion node {label} is already defined.")
-        if sufficiencies is not None:
-            raise CriteriaGraphError("Criterion nodes cannot have sufficiencies.")
         node = CriterionNode(label, summary, details, feedback_string_generator or no_feedback)
         self.criteria[label] = node
         self.sufficiencies[label] = None
         return node
 
     def add_output_node(self, label: str, summary: str, details: str) -> OutputNode:
+        """Add a terminal output node and return it.
+
+        Raises ``CriteriaGraphError`` if an output labelled ``label`` exists.
+        """
         if label in self.outputs:
             raise CriteriaGraphError(f"Output node {label} is already defined.")
         node = OutputNode(label, summary, details)
@@ -126,8 +134,14 @@ class CriteriaGraph:
 
         Evaluations attach to criteria, criteria to evaluations or outputs. If
         the target doesn't exist it is created (of the kind the source leads
-        to), which requires ``summary`` and ``details``; the remaining keywords
-        configure the new node.
+        to), which requires ``summary`` and ``details``. A new criterion takes
+        ``feedback_string_generator``; a new evaluation takes ``sufficiencies``
+        and ``evaluate``.
+
+        Raises ``CriteriaGraphError`` if the source is unknown or an output,
+        the target is of the wrong kind or is unknown without ``summary`` and
+        ``details``, a keyword doesn't apply to the new node's kind, or the
+        edge already exists.
         """
         source: Node | None = self.evaluations.get(source_label) or self.criteria.get(source_label)
         if source is None:
@@ -152,18 +166,23 @@ class CriteriaGraph:
                 )
             if summary is None or details is None:
                 raise CriteriaGraphError(
-                    f"Unknown node {target_label}. If you wish to create a new node summary and details must be "
+                    f"Unknown node {target_label}. If you wish to create a new node, summary and details must be "
                     "specified."
                 )
-            add = self.add_criterion_node if isinstance(source, EvaluationNode) else self.add_evaluation_node
-            target = add(
-                target_label,
-                summary,
-                details,
-                sufficiencies=sufficiencies,
-                evaluate=evaluate,
-                feedback_string_generator=feedback_string_generator,
-            )
+            if isinstance(source, EvaluationNode):
+                if sufficiencies is not None:
+                    raise CriteriaGraphError("Criterion nodes cannot have sufficiencies.")
+                if evaluate is not None:
+                    raise CriteriaGraphError(
+                        f"{target_label} is a criterion node, criterion nodes cannot have an evaluate function."
+                    )
+                target = self.add_criterion_node(target_label, summary, details, feedback_string_generator)
+            else:
+                if feedback_string_generator is not None:
+                    raise CriteriaGraphError(
+                        f"{target_label} is an evaluation node, evaluation nodes cannot generate feedback strings."
+                    )
+                target = self.add_evaluation_node(target_label, summary, details, sufficiencies, evaluate)
 
         edge = Edge(source, target)
         if edge in source.outgoing:
@@ -172,6 +191,11 @@ class CriteriaGraph:
         target.incoming.append(edge)
 
     def add_sufficiencies(self, source_label: str, sufficiencies: Iterable[str]) -> None:
+        """Add criteria whose evaluations can stand in for evaluation ``source_label``.
+
+        Criteria already listed are skipped. Raises ``CriteriaGraphError`` if
+        ``source_label`` is not an evaluation.
+        """
         if source_label not in self.evaluations:
             raise CriteriaGraphError(
                 f"Unknown evaluation node {source_label}. Only evaluation nodes can have sufficiencies."
