@@ -6,7 +6,7 @@ import sys
 import warnings
 
 import pytest
-from sympy import Abs, Function, Integral, Symbol, sqrt
+from sympy import Abs, Eq, Function, Integral, Symbol, sqrt
 
 from lambdafeedback.expression_parsing import (
     AbsoluteValueNotationError,
@@ -317,3 +317,22 @@ class TestFunctionNames:
         with pytest.raises(ExpressionParsingError, match="bracketed list") as info:
             parse_expression(response, parsing_params())
         assert "set" not in str(info.value)
+
+
+class TestEquations:
+    def test_sides_are_left_unevaluated_like_a_whole_expression(self):
+        x = Symbol("x")
+        assert str(parse_expression("x+x=2", parsing_params())) == "Eq(x + x, 2)"
+        assert parse_expression("x+x=2", parsing_params(simplify=True)) == Eq(2 * x, 2, evaluate=False)
+
+    def test_huge_powers_in_an_equation_are_not_evaluated(self):
+        # Evaluating the sides used to compute 9**(9**9), which never finished.
+        assert str(parse_expression("9**9**9=x", parsing_params())) == "Eq(9**(9**9), x)"
+
+
+@pytest.mark.parametrize("expression", ["a/", ")("])
+def test_apply_convention_raises_expression_parsing_error(expression):
+    from lambdafeedback.expression_parsing import apply_convention
+
+    with pytest.raises(ExpressionParsingError):
+        apply_convention(expression, "equal_precedence")

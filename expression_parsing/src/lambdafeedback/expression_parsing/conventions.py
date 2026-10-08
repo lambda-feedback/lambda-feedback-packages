@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from functools import cache
 
-from lambdafeedback.slr_parsing import SLRParser, build_expression_parser, compose, group, infix
+from lambdafeedback.slr_parsing import SLRError, SLRParser, build_expression_parser, compose, group, infix
 
+from .errors import ExpressionParsingError
 from .params import Convention, validate_convention
 
 
@@ -34,8 +35,14 @@ def convention_parser(convention: Convention) -> SLRParser:
 
 
 def apply_convention(expression: str, convention: Convention | None) -> str:
-    """Rewrite ``expression`` with the convention's grouping made explicit (``None``: unchanged)."""
+    """Rewrite ``expression`` with the convention's grouping made explicit (``None``: unchanged).
+
+    Raises :class:`ExpressionParsingError` if ``expression`` can't be parsed (e.g. ``a/``).
+    """
     if convention is None:
         return expression
     parser = convention_parser(convention)
-    return str(parser.parse(parser.scan(expression))[0].content_string())
+    try:
+        return str(parser.parse(parser.scan(expression))[0].content_string())
+    except SLRError as e:
+        raise ExpressionParsingError(f"Failed to parse expression {expression!r}: {e}", expression=expression) from e

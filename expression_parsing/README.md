@@ -56,7 +56,7 @@ Every failure raises a subclass of `ExpressionParsingError`, which is a
 
 | Exception | Raised when |
 |---|---|
-| `ExpressionParsingError` | the expression isn't valid (its `.expression` is the input) |
+| `ExpressionParsingError` | the expression isn't valid (`.expression` is the expression at the point it failed) |
 | `InvalidParameterError` | a parameter has the wrong type (`.name`) |
 | `UnknownConventionError` | `convention` isn't recognised |
 | `SymbolAssumptionError` | `symbol_assumptions` is malformed |
