@@ -31,13 +31,13 @@ Starting points: `starting_evaluations`, `generate_feedback` and `trees` take a 
 
 Replacements: `generate_feedback` follows chains of `replacement`s (an evaluation replaced by an evaluation that is itself replaced), stopping on cycles; it used to follow only one step and run the second evaluation. An `evaluate` function returning something other than a mapping raises `CriteriaGraphError` naming the evaluation (it was an opaque `ValueError` from `dict.update`). `generate_feedback` is annotated as returning `ReachedCriteria`.
 
-Packaging: README (PyPI description), MIT licence and project metadata.
-
 Rendering: `to_mermaid()` draws sufficiency edges between the real nodes (they pointed at new, unconnected boxes named after the labels) and escapes `"` in labels and text; tree mermaid ids are safe for labels with spaces or punctuation. Tree children are in attachment order (they were reversed), and tree mermaid declares nodes in that order, which mermaid uses to lay out siblings. Tree identifiers are unique (the root and the first child both used `_0`). `Evaluate` and `FeedbackStringGenerator` are exported for type hints.
 
 Errors: graph misuse raises `CriteriaGraphError` (a `ValueError`) instead of bare `Exception`; `CriteriaError` is the common base.
 
 Modules: `grammar` (was `parsing`), `nodes`, `graph`, `tree`, `render`, `errors`. Fully type-annotated (`py.typed`).
+
+Packaging: README (PyPI description), MIT licence and project metadata.
 
 ### Replaces `compareexpressions-evaluation-result`
 

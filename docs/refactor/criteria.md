@@ -50,9 +50,9 @@ Depends on `slr_parsing`. Version `0.2.0` (unreleased); see [`criteria/CHANGELOG
 
 Changes after the restructure, so they intentionally differ from the pre-restructure output noted above (all listed in the CHANGELOG):
 
-- [x] `add_*_node` signatures cleaned up; `attach` dispatches explicitly and rejects keywords for the other node kind.
+- [x] `add_*_node` signatures cleaned up; `attach` dispatches explicitly and rejects keywords for the other node kind, or any node keywords for an existing target.
 - [x] Labels unique across node kinds; unknown criteria, sufficiencies, tags and non-mapping `evaluate` results raise `CriteriaGraphError` instead of `KeyError`/`ValueError`.
-- [x] Mermaid: sufficiency edges link the real nodes, quotes are escaped, tree ids are safe. Tree children in attachment order.
+- [x] Mermaid: sufficiency edges link the real nodes, quotes are escaped, tree ids are safe and unique. Tree children, and the tree mermaid's node declarations, in attachment order.
 - [x] `starting_evaluations` / `generate_feedback` / `trees` take a criterion label only (resolved the TODO).
 - [x] Replacement chains are followed (with cycle protection).
 
@@ -60,6 +60,6 @@ Changes after the restructure, so they intentionally differ from the pre-restruc
 
 - [x] MIT `LICENSE`, `README.md` (PyPI long description), project metadata (readme, license, authors, classifiers, URLs).
 
-### Tests (10 → 61)
+### Tests (10 → 64)
 
 - [x] `test_regressions.py`, `test_feedback.py`, and `test_graph.py` (attach rules and errors, sufficiencies, replacement, breadth-first feedback, trees with RETURN leaves, renderings).
