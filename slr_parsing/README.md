@@ -50,7 +50,9 @@ Grammar symbols (`START`, `END`, `NULL` and the nonterminals) are declared as
 tokens too, because production strings are scanned with the same
 specifications. Each production is `(head, body, action)`; the action builds
 the output tree when the production is reduced. When productions conflict,
-the one listed later wins.
+the one listed later wins. Productions headed by the start symbol are never
+reduced (reaching their end accepts the input), so their action is never
+called and can be `None`.
 
 ```python
 import re
@@ -77,7 +79,7 @@ tokens = [
     ("n", "NUM", number),  # in productions "n"; in input, whatever `number` matches
 ]
 productions = [
-    ("START", "E", proceed),
+    ("START", "E", None),  # start productions accept; their action never runs
     ("E", "E+T", infix),
     ("E", "T", proceed),
     ("T", "T*F", infix),
@@ -101,7 +103,7 @@ All exceptions derive from `SLRError` and `ValueError`:
 
 | Exception | Raised when |
 |---|---|
-| `GrammarError` | the grammar is invalid (undeclared symbol, empty body, duplicate production, missing action, ...) |
+| `GrammarError` | the grammar is invalid (malformed production or error handler, undeclared symbol, empty body, duplicate production, missing action, ...) |
 | `ScanError` | the input contains text no token matches (and the grammar has no catch-all) |
 | `ParseError` | the input does not match the grammar; the message is one line, and `details()` gives the full parser state |
 
@@ -114,6 +116,11 @@ the input as further roots.
 `tag_handler` (default `inherit_tags`, the union of the children's tags)
 computes each new node's `tags` set. `add_tag`, `remove_tag` and
 `replace_tag` modify them.
+
+Only actions that build a new node (`create_node`, `group`, `operate`,
+`infix`, `insert_infix`) run the tag handler. Actions that change an existing
+node in place (`append`, `append_last`, `join`, `relabel`, `flatten`) leave
+its tags unchanged.
 
 ## Equality
 

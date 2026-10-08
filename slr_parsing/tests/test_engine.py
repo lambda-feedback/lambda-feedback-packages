@@ -19,6 +19,7 @@ from lambdafeedback.slr_parsing import (
     create_node,
     group,
     infix,
+    new_root_on_error,
     proceed,
 )
 
@@ -194,7 +195,7 @@ class TestErrors:
             seen.append(("".join(t.content for t in items[0][0]), next_symbol.label))
             return False
 
-        make_parser(error_handler=[(condition, None)])
+        make_parser(error_handler=[(condition, new_root_on_error)])  # action unused: condition is False
         assert ("E+", "END") in seen
 
 

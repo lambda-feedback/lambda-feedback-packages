@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeAlias
 
 from .tokens import ExprNode
 
-TagRule = Callable[[set[Any], set[Any]], set[Any]]
-TagCondition = Callable[[set[Any]], bool]
+TagRule: TypeAlias = Callable[[set[Any], set[Any]], set[Any]]
+"""Combines two tag sets (see :func:`union_rule`, :func:`intersection_rule`)."""
+
+TagCondition: TypeAlias = Callable[[set[Any]], bool]
+"""Decides from a node's tags whether a tag helper applies."""
 
 
 def union_rule(x: set[Any], y: set[Any]) -> set[Any]:

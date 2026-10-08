@@ -30,9 +30,11 @@ The first release after the extraction refactor. The import path is now `lambdaf
   - a production body containing text that is not a declared symbol (with a catch-all token it used to become a catch-all symbol silently);
   - an empty body (ε-productions were never supported and crashed while parsing);
   - a head that isn't exactly one symbol (only the first symbol was used);
-  - an undeclared start, end or null symbol (was `ScanError`).
+  - an undeclared start, end or null symbol (was `ScanError`);
+  - a production that isn't a `(head, body, action-or-None)` triple (a 2-tuple raised `IndexError`; a non-callable action raised `TypeError` on the first parse);
+  - an error handler that isn't a `(condition, action)` pair of callables (was `TypeError`).
 - `repr(ExprNode)` matches `str(ExprNode)`.
-- Modules: `tokens`, `actions`, `tags`, `grammar` (with the grammar format documented), `errors`, `parser`, `builder`. Fully type-annotated (`py.typed`).
+- Modules: `tokens`, `actions`, `tags`, `grammar` (with the grammar format documented), `errors`, `parser`, `builder`. Fully type-annotated (`py.typed`). The type aliases used in public signatures (`ErrorCondition`, `ErrorAction`, `TraverseStep`, `TagRule`, `TagCondition`) are exported from the package root.
 
 ### Fixed
 
@@ -48,6 +50,7 @@ The first release after the extraction refactor. The import path is now `lambdaf
 - `new_root_on_error` works: parsing resumes at the offending token and the extra roots are appended to the output. Before, the offending token was dropped and `parse()` crashed on the remaining tokens. When no root can be finished (empty input, a bad first token, or an error at the end of input), it raises `ParseError` instead of looping forever.
 - Recovered roots are parsed in a loop rather than recursively, so inputs with many roots no longer hit `RecursionError`.
 - `append`, `append_last` and `join` work on one-symbol production bodies; they used to raise `IndexError` (their slices selected the whole output stack). `append_last` no longer makes a node its own child there.
+- `relabel` keeps a tree node's children and tags. It used to replace the node with a plain `Token`, discarding its subtree. Only start productions used it, and those are never reduced, so no grammar here was affected.
 - `ExprNode.copy()` and `tree_string()` are iterative, so deeply nested input (such as a thousand nested brackets) no longer raises `RecursionError`. The parser and `traverse` already were.
 
 ### Removed

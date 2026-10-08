@@ -50,7 +50,8 @@ class SLRParser:
         self.start_symbol = start_symbol
         self.end_symbol = end_symbol
         self.null_symbol = null_symbol
-        self.error_handler = [ErrorHandler(*handler) for handler in error_handler]
+        self._check_production_shapes()
+        self.error_handler = [self._error_handler(handler) for handler in error_handler]
         self.tag_handler = tag_handler
 
         self._prepare_scanner()
@@ -158,6 +159,23 @@ class SLRParser:
     # ------------------------------------------------------------------
     # Table construction
     # ------------------------------------------------------------------
+
+    def _check_production_shapes(self) -> None:
+        for production in self.productions:
+            if not (
+                isinstance(production, tuple | list)
+                and len(production) == 3
+                and isinstance(production[0], str)
+                and isinstance(production[1], str)
+                and (production[2] is None or callable(production[2]))
+            ):
+                raise GrammarError(f"Production {production!r} is not a (head, body, action-or-None) triple.")
+
+    @staticmethod
+    def _error_handler(handler: ErrorHandler | tuple[Any, Any]) -> ErrorHandler:
+        if not (isinstance(handler, tuple | list) and len(handler) == 2 and all(callable(part) for part in handler)):
+            raise GrammarError(f"Error handler {handler!r} is not a (condition, action) pair of callables.")
+        return ErrorHandler(*handler)
 
     def _check_duplicate_productions(self) -> None:
         seen: set[tuple[str, str]] = set()

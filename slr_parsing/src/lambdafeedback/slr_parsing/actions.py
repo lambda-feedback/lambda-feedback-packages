@@ -3,6 +3,11 @@
 Every action has the signature ``action(production, output, tag_handler) ->
 output`` (see :data:`~lambdafeedback.slr_parsing.grammar.Action`); the
 functions taking parameters (``group``, ``operate``, ...) return one.
+
+Only actions that build a new node (``create_node``, ``group``, ``operate``,
+``infix``, ``insert_infix``) run the tag handler. Actions that change an
+existing node in place (``append``, ``append_last``, ``join``, ``relabel``,
+``flatten``) leave its tags as they were.
 """
 
 from __future__ import annotations
@@ -66,9 +71,16 @@ def create_node(_production: TokenProduction, output: list[Any], tag_handler: Ta
 
 
 def relabel(production: TokenProduction, output: list[Any], _tag_handler: TagHandler | None) -> list[Any]:
-    """Replace the last item with a plain token labelled as the production head."""
-    a = output.pop()
-    output.append(Token(production[0].label, a.content, a.original, a.start, a.end))
+    """Relabel the last item as the production head.
+
+    A tree node keeps its children and tags; a plain token is replaced by a
+    relabelled copy.
+    """
+    a = output[-1]
+    if isinstance(a, ExprNode):
+        a.label = production[0].label
+    else:
+        output[-1] = Token(production[0].label, a.content, a.original, a.start, a.end)
     return output
 
 

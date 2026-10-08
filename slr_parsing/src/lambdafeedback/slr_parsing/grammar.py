@@ -24,6 +24,9 @@ Productions are ``(head, body, action)`` triples (or :class:`Production`),
 where ``head`` and ``body`` are scanned into grammar symbols and ``action``
 builds the output tree when the production is reduced. When productions
 conflict, the one listed later wins.
+
+Productions headed by the start symbol are never reduced: reaching their end
+accepts the input, so their action is never called (``None`` is fine).
 """
 
 from __future__ import annotations

@@ -8,11 +8,18 @@ from lambdafeedback.slr_parsing import (
     ParseError,
     SLRParser,
     Token,
+    append,
+    append_last,
     build_expression_parser,
+    create_node,
     group,
+    infix,
     inherit_tags,
+    join,
     new_root_on_error,
     operate,
+    proceed,
+    relabel,
 )
 
 
@@ -190,6 +197,97 @@ class TestExprNodeEquality:
         assert token != node
         assert node != token
         assert token == Token("A", "y", "y", 0, 0)
+
+
+class TestOneSymbolBodies:
+    # A one-symbol body made output[:1 - 1] select nothing (IndexError).
+    @pytest.mark.parametrize(("action", "label"), [(append, "X"), (append_last, "X"), (join, "E")])
+    def test_action_on_one_symbol_body(self, action, label):
+        symbols = [("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "X")]
+        parser = SLRParser(symbols, [("START", "E", proceed), ("E", "x", action)], "START", "END", "NULL")
+        (root,) = parser.parse(parser.scan("x"))
+        assert (root.label, root.content, root.children) == (label, "x", [])
+
+
+class TestShapeValidation:
+    SYMBOLS = (("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "X"))
+
+    @pytest.mark.parametrize(
+        ("productions", "error_handler"),
+        [
+            pytest.param([("START", "E"), ("E", "x", create_node)], (), id="two-tuple production"),
+            pytest.param([("START", "E", None), ("E", "x", "create_node")], (), id="non-callable action"),
+            pytest.param([("START", "E", None), ("E", "x", create_node)], [(1, 2, 3)], id="three-tuple handler"),
+            pytest.param(
+                [("START", "E", None), ("E", "x", create_node)],
+                [(True, new_root_on_error)],
+                id="non-callable condition",
+            ),
+        ],
+    )
+    def test_malformed_grammar_entries_are_grammar_errors(self, productions, error_handler):
+        # These used to raise IndexError/TypeError, the non-callable action only on the first parse.
+        with pytest.raises(GrammarError):
+            SLRParser(self.SYMBOLS, productions, "START", "END", "NULL", error_handler=error_handler)
+
+
+class TestRelabel:
+    def test_relabel_keeps_the_subtree(self):
+        # relabel used to replace the node with a plain Token, dropping its children.
+        symbols = [
+            ("START", "START"),
+            ("END", "END"),
+            ("NULL", "NULL"),
+            ("E", "E"),
+            ("F", "F"),
+            ("x", "X"),
+            (r"\+", "P"),
+        ]
+        parser = SLRParser(
+            symbols, [("START", "E", None), ("E", "F", relabel), ("F", "x+x", infix)], "START", "END", "NULL"
+        )
+        (root,) = parser.parse(parser.scan("x+x"))
+        assert isinstance(root, ExprNode)
+        assert (root.label, root.content_string()) == ("E", "x+x")
+
+
+def test_public_type_aliases_are_exported():
+    import lambdafeedback.slr_parsing as package
+
+    for name in ("ErrorAction", "ErrorCondition", "TagCondition", "TagRule", "TraverseStep"):
+        assert name in package.__all__
+        assert hasattr(package, name)
+
+
+class TestDeepNesting:
+    DEPTH = 5000
+
+    def deep_tree(self):
+        parser = build_expression_parser(delimiters=[(("(", ")"), group(1))])
+        return parser.parse(parser.scan("(" * self.DEPTH + "x" + ")" * self.DEPTH))[0]
+
+    def test_copy_does_not_hit_the_recursion_limit(self):
+        root = self.deep_tree()
+        clone = root.copy()
+        assert clone is not root
+        assert clone.content_string() == root.content_string()
+        clone.tags.add("T")
+        assert root.tags == set()
+
+    def test_tree_string_does_not_hit_the_recursion_limit(self):
+        assert self.deep_tree().tree_string().count("\n") == self.DEPTH
+
+    def test_tree_string_format(self):
+        parser = build_expression_parser(infix_operators=[("+", "ADD")], delimiters=[(("(", ")"), group(1))])
+        root = parser.parse(parser.scan("(a+b)+c"))[0]
+        assert root.tree_string() == (
+            "ADD: + tags: {}\n"
+            "0: GROUP: ['(', ')'] tags: {}\n"
+            "|   0: ADD: + tags: {}\n"
+            "|       0: UNDEFINED: a tags: {}\n"
+            "|       1: UNDEFINED: b tags: {}\n"
+            "1: UNDEFINED: c tags: {}"
+        )
 
 
 class TestTraversal:
