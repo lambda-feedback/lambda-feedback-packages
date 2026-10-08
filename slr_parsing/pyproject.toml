@@ -5,9 +5,28 @@ build-backend = "poetry.core.masonry.api"
 [project]
 name = "lambdafeedback-slr-parsing"
 version = "0.2.0"
-description = "Generic SLR(1) parser engine extracted from compareExpressions."
+description = "Dependency-free SLR(1) parser generator for Lambda Feedback evaluation functions."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Marcus Messer", email = "marcus.messer@kcl.ac.uk" }]
+keywords = ["parser", "slr", "lr-parser", "parser-generator", "lambda-feedback"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Compilers",
+    "Typing :: Typed",
+]
 requires-python = ">=3.11"
 dependencies = []
+
+[project.urls]
+Repository = "https://github.com/m-messer/lambda-feedback-packages"
+Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/slr_parsing/CHANGELOG.md"
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/slr_parsing", from = "src" }]

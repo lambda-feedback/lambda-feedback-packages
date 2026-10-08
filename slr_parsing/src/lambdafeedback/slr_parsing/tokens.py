@@ -38,7 +38,8 @@ class Token:
     """A scanned lexeme, or a grammar symbol.
 
     Tokens compare equal (and hash) by ``label`` only: the parser uses them as
-    grammar symbols, where the content is irrelevant.
+    grammar symbols, where the content is irrelevant. This does not extend to
+    :class:`ExprNode`, which compares by identity.
     """
 
     def __init__(self, label: str, content: Any, original: str, start: int, end: int) -> None:
@@ -49,6 +50,8 @@ class Token:
         self.end = end
 
     def __eq__(self, other: object) -> bool:
+        if isinstance(other, ExprNode):
+            return NotImplemented
         return isinstance(other, Token) and self.label == other.label
 
     def __hash__(self) -> int:
@@ -63,7 +66,14 @@ class Token:
 
 
 class ExprNode(Token):
-    """A node of the expression tree built by the parser."""
+    """A node of the expression tree built by the parser.
+
+    Unlike :class:`Token`, nodes compare equal (and hash) by identity: two
+    distinct trees are never equal just because their roots share a label.
+    """
+
+    __eq__ = object.__eq__
+    __hash__ = object.__hash__
 
     def __init__(
         self,
@@ -132,5 +142,4 @@ class ExprNode(Token):
         tags = str(self.tags) if self.tags else "{}"
         return f"{self.label}: {self.content} tags: {tags}"
 
-    def __repr__(self) -> str:
-        return f"{self.label}: {self.content} tags: {self.tags}"
+    __repr__ = __str__

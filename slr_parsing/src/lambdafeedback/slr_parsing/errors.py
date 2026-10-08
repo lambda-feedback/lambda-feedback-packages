@@ -75,6 +75,10 @@ def new_root_on_error(
     """Error action: finish the current root here and parse the rest as new roots.
 
     The offending token is put back, so parsing resumes with it; ``parse``
-    then returns one root per recovered segment.
+    then returns one root per recovered segment. If no root can be finished
+    here (nothing parsed yet, or the input already ended) the error is raised
+    as a :class:`ParseError` instead.
     """
+    if len(stack) == 1 or a == parser.end_token:
+        raise parser._parse_error(stack, a, input_tokens, tokens, output)
     return stack, parser.end_token, input_tokens, [a, *tokens], output

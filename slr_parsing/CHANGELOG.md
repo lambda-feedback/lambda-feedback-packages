@@ -25,6 +25,13 @@ The first release after the extraction refactor. The import path is now `lambdaf
 - `SLRParser` keeps its construction internals private. The public surface is `scan`, `parse`, `parsing_action`, `parsing_table`, `states` (now a list of kernel item tuples, was a dict of kernel → closure), `productions`, `token_list`, `start_token`/`end_token`/`null_token`, `error_handler`, `tag_handler` and the debug helpers `state_string` and `parsing_table_to_string`. `state_string_list` is removed.
 - Error handlers are normalised to `ErrorHandler(condition, action)` named tuples; plain 2-tuples are still accepted.
 - `replace_tag(node, t, t)` keeps the tag (it used to remove it).
+- **`ExprNode` equality is by identity.** Nodes used to inherit `Token`'s label-only equality, so any two trees with the same root label compared equal (`x+x == x+(x+x)`). `Token`s still compare by label, and a `Token` never equals an `ExprNode`. Compare trees by content (e.g. `content_string()`) instead.
+- **Stricter grammar checks:** `SLRParser` raises `GrammarError` for:
+  - a production body containing text that is not a declared symbol (with a catch-all token it used to become a catch-all symbol silently);
+  - an empty body (ε-productions were never supported and crashed while parsing);
+  - a head that isn't exactly one symbol (only the first symbol was used);
+  - an undeclared start, end or null symbol (was `ScanError`).
+- `repr(ExprNode)` matches `str(ExprNode)`.
 - Modules: `tokens`, `actions`, `tags`, `grammar` (with the grammar format documented), `errors`, `parser`, `builder`. Fully type-annotated (`py.typed`).
 
 ### Fixed
@@ -38,7 +45,8 @@ The first release after the extraction refactor. The import path is now `lambdaf
 - `group(0)` and `operate(0)` raise `ValueError`. `operate(0)` was accepted and would have consumed the entire output stack.
 - Each production runs its own reduction action. Actions used to be looked up by production *body*, so two productions with the same body but different heads (such as `A -> x` and `B -> x`) both ran whichever action was defined last. None of the grammars in these packages had such a pair.
 - Traversing a `GROUP` node calls the action once, not twice. Actions with side effects ran twice per group: units recorded every reverted unit group as two identical `REVERTED_UNIT` messages.
-- `new_root_on_error` works: parsing resumes at the offending token and the extra roots are appended to the output. Before, the offending token was dropped and `parse()` crashed on the remaining tokens.
+- `new_root_on_error` works: parsing resumes at the offending token and the extra roots are appended to the output. Before, the offending token was dropped and `parse()` crashed on the remaining tokens. When no root can be finished (empty input, a bad first token, or an error at the end of input), it raises `ParseError` instead of looping forever.
+- Recovered roots are parsed in a loop rather than recursively, so inputs with many roots no longer hit `RecursionError`.
 
 ### Removed
 

@@ -53,9 +53,9 @@ class SLRParser:
         self.tag_handler = tag_handler
 
         self._prepare_scanner()
-        self.start_token = self.scan(start_symbol, mode="bnf")[0]
-        self.end_token = self.scan(end_symbol, mode="bnf")[0]
-        self.null_token = self.scan(null_symbol, mode="bnf")[0]
+        self.start_token = self._grammar_symbol(start_symbol, "Start symbol")
+        self.end_token = self._grammar_symbol(end_symbol, "End symbol")
+        self.null_token = self._grammar_symbol(null_symbol, "Null symbol")
 
         self._closures: dict[State, tuple[Item, ...]] = {}
         self._check_duplicate_productions()
@@ -89,6 +89,8 @@ class SLRParser:
 
         ``mode="bnf"`` scans production strings into grammar symbols: every
         token specification is used as a plain pattern and no matchers run.
+        Text that no specification matches is a :class:`GrammarError` in bnf
+        mode (the catch-all only applies to expressions).
         """
         if mode == "expression":
             symbols, rules = self._expression_symbols, self._expression_rules
@@ -125,6 +127,8 @@ class SLRParser:
             else:
                 token = Token(label, content, expr, index, index + length - 1)
             if undefined and (token is not None or index >= len(expr)):
+                if mode == "bnf":
+                    raise GrammarError(f"Undeclared grammar symbol {undefined!r} in {expr!r}.")
                 tokens.append(self._undefined_token(undefined, expr, index))
                 undefined = ""
             if token is not None:
@@ -136,6 +140,15 @@ class SLRParser:
         if self._catch_undefined is None:
             raise ScanError(f"Undefined input: {text}")
         return catch_undefined(self._catch_undefined[1], text, expr, index - len(text), index - 1)
+
+    def _grammar_symbol(self, symbol: str, role: str) -> Token:
+        try:
+            tokens = self.scan(symbol, mode="bnf")
+        except GrammarError:
+            tokens = []
+        if len(tokens) != 1:
+            raise GrammarError(f"{role} {symbol!r} is not exactly one declared grammar symbol.")
+        return tokens[0]
 
     # ------------------------------------------------------------------
     # Table construction
@@ -152,9 +165,12 @@ class SLRParser:
             raise GrammarError("There are duplicate productions:\n" + "\n".join(duplicates))
 
     def _tokenise_productions(self) -> None:
-        self._productions_token: list[tuple[Token, list[Token]]] = [
-            (self.scan(head, mode="bnf")[0], self.scan(body, mode="bnf")) for head, body, *_ in self.productions
-        ]
+        self._productions_token: list[tuple[Token, list[Token]]] = []
+        for head, body, *_ in self.productions:
+            body_tokens = self.scan(body, mode="bnf")
+            if not body_tokens:
+                raise GrammarError(f"Production {(head, body)} has an empty body; ε-productions are not supported.")
+            self._productions_token.append((self._grammar_symbol(head, "Production head"), body_tokens))
         # Indexed like the productions: productions sharing a body keep their own actions.
         self._reductions: list[Action | None] = [production[2] for production in self.productions]
 
@@ -391,17 +407,26 @@ class SLRParser:
         recovers from. Set the ``lambdafeedback.slr_parsing.parser``
         logger to DEBUG to trace shifts and reductions.
         """
-        input_tokens = list(input_tokens)
-        tokens = list(input_tokens)
-        if not tokens or tokens[-1] != self.end_token:
-            tokens.append(self.end_token)
+        roots, remaining = self._parse_root(list(input_tokens))
+        # An error handler (such as new_root_on_error) can accept before the
+        # end of the input; the tokens left over are parsed as further roots.
+        while remaining and remaining != [self.end_token]:
+            more, remaining = self._parse_root(remaining)
+            roots += more
+        return roots
+
+    def _parse_root(self, input_tokens: list[Token]) -> tuple[list[Any], list[Token]]:
+        """Parse from the start state until accept; returns the output and the tokens left after it."""
+        if input_tokens and input_tokens[-1] == self.end_token:
+            input_tokens = input_tokens[:-1]
+        tokens = [*input_tokens, self.end_token]
         n_states = len(self.states)
         trace = logger.isEnabledFor(logging.DEBUG)
         a = tokens.pop(0)
         stack = [0]
         output: list[Any] = []
-        result: list[Any] | None = None
-        while result is None:
+        accepted = False
+        while not accepted:
             action = self.parsing_action(stack[-1], a)
             stack, a, input_tokens, tokens, output, action = self._run_error_handlers(
                 action, stack, a, input_tokens, tokens, output
@@ -410,16 +435,14 @@ class SLRParser:
                 a = self._shift(action, a, stack, tokens, output, trace)
             elif action == n_states:
                 logger.debug("accept")
-                result = output
-                if tokens and tokens != [self.end_token]:
-                    result = result + self.parse(tokens)
+                accepted = True
             elif action < n_states + len(self._productions_token):
                 output = self._reduce(action, n_states, stack, output, trace)
             else:
                 raise ParseError(
                     f"Invalid parse table entry {action}.", lookahead=a, remaining=tokens, stack=stack, output=output
                 )
-        return result
+        return output, tokens
 
     def _parse_error(
         self, stack: list[int], a: Token, input_tokens: list[Token], tokens: list[Token], output: list[Any]

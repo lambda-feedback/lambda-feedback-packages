@@ -2,7 +2,7 @@
 
 A grammar is a list of token specifications plus a list of productions.
 
-Token specifications are tuples in one of three shapes:
+Token specifications are tuples in one of four shapes:
 
 ``(pattern, label)``
     A regular expression; input text matching it becomes a ``label`` token.
