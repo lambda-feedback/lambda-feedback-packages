@@ -4,6 +4,8 @@ import pytest
 
 from lambdafeedback.slr_parsing import (
     ExprNode,
+    GrammarError,
+    ParseError,
     SLRParser,
     Token,
     build_expression_parser,
@@ -115,7 +117,41 @@ class TestParserConstruction:
             action(0)
 
 
+class TestGrammarValidation:
+    SYMBOLS = (("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "x"))
+
+    def build(self, productions, start="START"):
+        return SLRParser(self.SYMBOLS, productions, start, "END", "NULL")
+
+    def test_empty_production_body_is_rejected(self):
+        # Used to build, then crash with IndexError when parsing.
+        with pytest.raises(GrammarError, match="empty body"):
+            self.build([("START", "E", None), ("E", "", None), ("E", "x", None)])
+
+    def test_production_head_must_be_one_symbol(self):
+        # Used to silently use only the first symbol of "EE".
+        with pytest.raises(GrammarError, match="Production head"):
+            self.build([("START", "E", None), ("EE", "x", None)])
+
+    def test_undeclared_symbol_in_a_body_is_rejected(self):
+        # With a catch-all token, the typo "#Y" used to become an UNDEFINED symbol.
+        with pytest.raises(GrammarError, match="#Y"):
+            build_expression_parser(custom_productions=[("EXPRESSION_NODE", "EXPRESSION_NODE#Y", None)])
+
+    def test_undeclared_start_symbol_is_a_grammar_error(self):
+        # Used to raise ScanError.
+        with pytest.raises(GrammarError, match="Start symbol"):
+            self.build([("E", "x", None)], start="S")
+
+
 class TestErrorRecovery:
+    def new_root_parser(self):
+        return build_expression_parser(
+            infix_operators=[("+", "ADD")],
+            delimiters=[(("(", ")"), group(1))],
+            error_handler=[(lambda items, next_symbol: True, new_root_on_error)],
+        )
+
     def test_new_root_on_error_starts_a_new_root_at_the_offending_token(self):
         parser = build_expression_parser(
             infix_operators=[("+", "ADD")],
@@ -124,6 +160,36 @@ class TestErrorRecovery:
         )
         output = parser.parse(parser.scan("(1+2)(3)"))
         assert [node.content_string() for node in output] == ["(1+2)", "(3)"]
+
+    @pytest.mark.parametrize("text", ["", ")x", "x+", "x+)"])
+    def test_new_root_on_error_raises_when_no_root_can_be_finished(self, text):
+        # These used to loop forever.
+        parser = self.new_root_parser()
+        with pytest.raises(ParseError):
+            parser.parse(parser.scan(text))
+
+    def test_many_roots_do_not_exhaust_the_stack(self):
+        # Each extra root used to add a level of recursion.
+        parser = self.new_root_parser()
+        output = parser.parse(parser.scan("(x)" * 2000))
+        assert len(output) == 2000
+
+
+class TestExprNodeEquality:
+    def test_distinct_trees_with_the_same_root_label_are_not_equal(self):
+        parser = build_expression_parser(infix_operators=[("+", "ADD")], delimiters=[(("(", ")"), group(1))])
+        a = parser.parse(parser.scan("x+x"))[0]
+        b = parser.parse(parser.scan("x+(x+x)"))[0]
+        assert a != b
+        assert a == a
+        assert len({a, b}) == 2
+
+    def test_tokens_never_equal_nodes(self):
+        token = Token("A", "x", "x", 0, 0)
+        node = ExprNode(token, [])
+        assert token != node
+        assert node != token
+        assert token == Token("A", "y", "y", 0, 0)
 
 
 class TestTraversal:
