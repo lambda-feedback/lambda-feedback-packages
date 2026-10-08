@@ -282,21 +282,25 @@ def _evaluate(expr: str, config: SympyParsingConfig, transformations: tuple[Any,
         raise ExpressionParsingError(f"An expression can contain at most one '=': {expr}", expression=expr)
     parsed: Any
     if "=" in expr:
-        lhs, rhs = expr.split("=")
-        parsed = Equality(
-            _parse_expr(lhs, transformations=transformations, local_dict=symbol_dict),
-            _parse_expr(rhs, transformations=transformations, local_dict=symbol_dict),
-            evaluate=False,
-        )
-    elif config.simplify:
-        parsed = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict)
-        if not isinstance(parsed, Equality):
-            parsed = parsed.simplify()
+        # Each side as if it were a whole expression: unevaluated unless simplifying
+        # (evaluating 9**9**9 = x would never finish).
+        lhs, rhs = (_parse_side(side, config, transformations, symbol_dict) for side in expr.split("="))
+        parsed = Equality(lhs, rhs, evaluate=False)
     else:
-        parsed = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict, evaluate=False)
+        parsed = _parse_side(expr, config, transformations, symbol_dict)
     if not isinstance(parsed, Basic):
         raise ExpressionParsingError(f"Failed to parse Sympy expression `{expr}`", expression=expr)
     return parsed
+
+
+def _parse_side(
+    expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...], symbol_dict: dict[str, Any]
+) -> Any:
+    """An expression (or one side of an equation): simplified, or else left unevaluated."""
+    if not config.simplify:
+        return _parse_expr(expr, transformations=transformations, local_dict=symbol_dict, evaluate=False)
+    parsed = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict)
+    return parsed.simplify() if isinstance(parsed, Basic) else parsed
 
 
 def parse_expression(expr_string: str | Sequence[str], config: SympyParsingConfig) -> Basic | set[Basic]:

@@ -87,8 +87,14 @@ SymPy's mathematical functions and constants and no Python builtins.
 SymPy's printing, plotting, code-generation and `sympify` helpers aren't
 available, so names like `plot` are read as plain symbols.
 
-Parsing doesn't bound computation. Input such as `9**9**9` can still take a
-long time to evaluate, so run evaluation with a time or memory limit when
+Parsing isn't thread-safe: it briefly changes process-wide warning filters,
+and latex2sympy2 keeps module-level state. Parse from one thread at a time
+per process; one evaluation per process, as in a Lambda Feedback evaluation
+function, is fine.
+
+Expressions are parsed unevaluated, but `simplify` (and any later
+evaluation, such as comparing answers) computes: `9**9**9` would then take
+practically forever. Run evaluation with a time or memory limit when
 handling untrusted input.
 
 ## Licence

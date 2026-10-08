@@ -1,4 +1,4 @@
-"""Typed parameters for expression parsing and preview.
+"""Typed parameters for expression parsing.
 
 Evaluation functions receive their parameters as a JSON object. Use
 :meth:`ExpressionParams.from_dict` to turn it into an :class:`ExpressionParams`;
@@ -123,7 +123,7 @@ _ALIASES = {"complexNumbers": "complex_numbers", "specialFunctions": "special_fu
 
 @dataclass(frozen=True)
 class ExpressionParams:
-    """Parameters controlling how expressions are preprocessed, parsed and previewed.
+    """Parameters controlling how expressions are preprocessed and parsed.
 
     ``symbols`` is normalised on construction (see :func:`_normalise_symbols`),
     so every instance has a ``lamda`` symbol.
@@ -143,7 +143,7 @@ class ExpressionParams:
     rationalise: bool = True
     """Parse decimals as rationals."""
     is_latex: bool = False
-    """The response is LaTeX (preview only)."""
+    """The response is LaTeX: for callers to choose :func:`parse_latex` (this package doesn't read it)."""
     symbols: Mapping[str, SymbolSpec] = field(default_factory=dict)
     input_symbols: tuple[tuple[str, tuple[str, ...]], ...] = ()
     """Legacy ``[code, [alternatives]]`` symbol definitions."""
