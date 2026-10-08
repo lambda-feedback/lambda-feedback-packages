@@ -31,12 +31,13 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - The imperial pint was 0.00056826 m³; it is 0.00056826125 m³, so that 8 pints make a gallon.
 - `nautical_miles` is recognised as the plural of `nautical_mile`. Before, only `nauticalmiles` was, and in natural mode `2 nautical_miles` parsed as 2 nautical_mile·second.
 - The comment in `data.py` said the symbols of `COMMON_UNITS` were not accepted. They always have been, and the docs now say so.
+- The value's LaTeX preview no longer splits a function call that contains unit symbols. `sin(2)` was previewed as `s \cdot in \cdot 2` and `sqrt(11)` as `\frac{1}{s} \cdot q \cdot r \cdot t \cdot 11`, while the value itself was parsed as the function call. The preview now matches the value.
 
 ### Deprecated
 
 - `strictness="legacy"` (and constructing `QuantityParams(legacy_preprocessing=True)` directly) now emits a `DeprecationWarning`, and will be removed in 1.0. The behaviour is unchanged (natural strictness with the old `legacy` preprocessing rewrites), but new callers should use `strictness="natural"` (the default).
 
-## 0.2.0 (unreleased)
+## 0.2.0 (internal, not published)
 
 The first release after the extraction refactor. The import path is now `lambdafeedback.units` (was `units`).
 

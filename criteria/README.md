@@ -78,11 +78,17 @@ graph = CriteriaGraph("response = answer")
 graph.add_node(CriteriaGraph.END)
 graph.add_evaluation_node("COMPARE", "response = answer", "Compare the response with the answer", evaluate=compare)
 graph.attach(
-    "COMPARE", "EQUAL", summary="equal", details="The response equals the answer",
+    "COMPARE",
+    "EQUAL",
+    summary="equal",
+    details="The response equals the answer",
     feedback_string_generator=lambda inputs: "Correct.",
 )
 graph.attach(
-    "COMPARE", "NOT_EQUAL", summary="not equal", details="The response differs from the answer",
+    "COMPARE",
+    "NOT_EQUAL",
+    summary="not equal",
+    details="The response differs from the answer",
     feedback_string_generator=lambda inputs: f"{inputs['response']} is not the answer.",
 )
 graph.attach("EQUAL", "END")

@@ -135,6 +135,9 @@ except QuantityError as error:
 - `kΩ` is not recognised. Prefixed ohms must be written `kO` or `kiloohm`.
 - `reverted_units` also reports the group enclosing a unit, with garbled
   positions (e.g. for `2 kg + 3`). The entry for the unit itself is correct.
+- Function names that contain unit symbols are reported in `reverted_units`
+  (`sin` gives `s` and `in`), although the value is parsed, and previewed, as
+  the function call.
 - The unit's LaTeX preview removes whitespace, so in LaTeX input the value and
   unit must be separated with `~`.
 - `QuantityParams` instances aren't hashable.

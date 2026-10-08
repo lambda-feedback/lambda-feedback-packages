@@ -40,6 +40,24 @@ class TestParsing:
         assert quantity.value is None
         assert quantity.unit.content_string() == quantity.ast_root.content_string()
 
+    @pytest.mark.parametrize("elementary_functions", [False, True])
+    @pytest.mark.parametrize(
+        "expr, latex",
+        [
+            ("sin(2)", r"\sin{\left(2 \right)}"),
+            ("2 sin(x)", r"2 \cdot \sin{\left(x \right)}"),
+            ("sin(-10.5*4)", r"\sin{\left(\left(-10.5\right) \cdot 4 \right)}"),
+        ],
+    )
+    def test_value_preview_keeps_function_calls(self, expr, latex, elementary_functions):
+        # The preview reserved the unit symbols "s" and "in", showing sin(2) as s·in·2
+        # while the value itself was parsed (and graded) as sin(2).
+        params = QuantityParams(elementary_functions=elementary_functions)
+        assert parse_quantity(expr, params).value_latex == latex
+
+    def test_preview_without_calls_is_unchanged(self):
+        assert parse("2 kg + 3").value_latex == r"2 \cdot g \cdot k + 3"
+
     def test_unit_between_value_parts_raises_instead_of_recursing_forever(self):
         # v0.1 rotated left and right alternately until RecursionError.
         with pytest.raises(QuantityParseError, match="Cannot separate the value from the unit"):

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any
 
@@ -28,6 +29,8 @@ from .tags import QuantityTag
 
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
+_CALL = re.compile(r"([A-Za-z_]\w*)\s*\(")
+"""A name followed by ``(``: a function call."""
 
 
 @dataclass(frozen=True)
@@ -205,9 +208,17 @@ class PhysicalQuantity:
     def _value_latex(self) -> str | None:
         if self.value is None:
             return None
-        reserved = (*self.params.reserved_keywords, *_unsplittable_names(self.params, all_forms=True))
-        params = self.params.replace(reserved_keywords=reserved, rationalise=False)
         original = self.value.original_string()
+        # Unit forms inside a called name (``s`` and ``in`` in ``sin(2)``) would split
+        # the call in the preview, though the value itself is parsed as the call.
+        calls = _CALL.findall(original)
+        unit_forms = [
+            form
+            for form in _unsplittable_names(self.params, all_forms=True)
+            if not any(form in call and form != call for call in calls)
+        ]
+        reserved = (*self.params.reserved_keywords, *unit_forms)
+        params = self.params.replace(reserved_keywords=reserved, rationalise=False)
         if params.is_latex:
             # A LaTeX value is previewed as-is (as expression_parsing.preview_function used to).
             return original
