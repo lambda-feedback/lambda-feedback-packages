@@ -24,6 +24,10 @@ Removed (unused): `CriteriaGraph(identifier, entry_evaluations=)` (never read), 
 
 Signatures: `add_evaluation_node` no longer accepts `feedback_string_generator`, and `add_criterion_node` no longer accepts `sufficiencies` / `evaluate` (they only existed to serve `attach`). `attach` still takes all three and now raises `CriteriaGraphError` when one doesn't apply to the kind of node it creates; previously `evaluate` for a new criterion was silently ignored.
 
+Labels are unique across node kinds: adding a node whose label is already used by an evaluation, criterion or output raises `CriteriaGraphError` (previously a criterion could share an evaluation's label and wipe its sufficiencies). `add_node` now keeps an evaluation's `replacement`. An evaluation reporting a criterion not in the graph, a sufficiency naming a non-criterion, and `resolve_feedback` / `export_feedback` for an unknown tag without custom feedback raise `CriteriaGraphError` instead of `KeyError`.
+
+Rendering: `to_mermaid()` draws sufficiency edges between the real nodes (they pointed at new, unconnected boxes named after the labels) and escapes `"` in labels and text; tree mermaid ids are safe for labels with spaces or punctuation. Tree children are in attachment order (they were reversed). `Evaluate` and `FeedbackStringGenerator` are exported for type hints.
+
 Errors: graph misuse raises `CriteriaGraphError` (a `ValueError`) instead of bare `Exception`; `CriteriaError` is the common base.
 
 Modules: `grammar` (was `parsing`), `nodes`, `graph`, `tree`, `render`, `errors`. Fully type-annotated (`py.typed`).

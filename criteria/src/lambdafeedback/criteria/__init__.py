@@ -15,7 +15,17 @@ app/utility/criteria_graph_utilities.py).
 from .errors import CriteriaError, CriteriaEvaluationError, CriteriaGraphError
 from .grammar import build_criteria_parser
 from .graph import CriteriaGraph
-from .nodes import CriterionNode, Edge, EvaluationNode, Node, OutputNode, ReachedCriteria, ResultLike
+from .nodes import (
+    CriterionNode,
+    Edge,
+    Evaluate,
+    EvaluationNode,
+    FeedbackStringGenerator,
+    Node,
+    OutputNode,
+    ReachedCriteria,
+    ResultLike,
+)
 from .tree import CriteriaTree
 
 __all__ = [
@@ -26,7 +36,9 @@ __all__ = [
     "CriteriaTree",
     "CriterionNode",
     "Edge",
+    "Evaluate",
     "EvaluationNode",
+    "FeedbackStringGenerator",
     "Node",
     "OutputNode",
     "ReachedCriteria",

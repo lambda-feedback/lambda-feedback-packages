@@ -66,10 +66,9 @@ class CriteriaGraph:
         it reaches the node without one. ``sufficiencies`` lists criteria whose
         evaluations can stand in for this one (see ``starting_evaluations``).
 
-        Raises ``CriteriaGraphError`` if an evaluation labelled ``label`` exists.
+        Raises ``CriteriaGraphError`` if a node labelled ``label`` exists.
         """
-        if label in self.evaluations:
-            raise CriteriaGraphError(f"Evaluation node {label} is already defined.")
+        self._check_label_is_free(label)
         node = EvaluationNode(label, summary, details, evaluate)
         self.evaluations[label] = node
         self.sufficiencies[label] = list(sufficiencies) if sufficiencies is not None else None
@@ -87,30 +86,34 @@ class CriteriaGraph:
         ``feedback_string_generator`` renders the criterion's feedback text from
         the inputs its evaluation reports; by default the criterion has no text.
 
-        Raises ``CriteriaGraphError`` if a criterion labelled ``label`` exists.
+        Raises ``CriteriaGraphError`` if a node labelled ``label`` exists.
         """
-        if label in self.criteria:
-            raise CriteriaGraphError(f"Criterion node {label} is already defined.")
+        self._check_label_is_free(label)
         node = CriterionNode(label, summary, details, feedback_string_generator or no_feedback)
         self.criteria[label] = node
-        self.sufficiencies[label] = None
         return node
 
     def add_output_node(self, label: str, summary: str, details: str) -> OutputNode:
         """Add a terminal output node and return it.
 
-        Raises ``CriteriaGraphError`` if an output labelled ``label`` exists.
+        Raises ``CriteriaGraphError`` if a node labelled ``label`` exists.
         """
-        if label in self.outputs:
-            raise CriteriaGraphError(f"Output node {label} is already defined.")
+        self._check_label_is_free(label)
         node = OutputNode(label, summary, details)
         self.outputs[label] = node
         return node
 
+    def _check_label_is_free(self, label: str) -> None:
+        # Labels are unique across kinds: sufficiencies and renderings key on them.
+        for kind, nodes in (("Evaluation", self.evaluations), ("Criterion", self.criteria), ("Output", self.outputs)):
+            if label in nodes:
+                raise CriteriaGraphError(f"{kind} node {label} is already defined.")
+
     def add_node(self, node: Node) -> None:
-        """Add a copy of ``node`` (e.g. ``CriteriaGraph.END``) to this graph."""
+        """Add a copy of ``node`` (e.g. ``CriteriaGraph.END``) to this graph, without its edges."""
         if isinstance(node, EvaluationNode):
-            self.add_evaluation_node(node.label, node.summary, node.details, evaluate=node.evaluate)
+            copy = self.add_evaluation_node(node.label, node.summary, node.details, evaluate=node.evaluate)
+            copy.replacement = node.replacement
         elif isinstance(node, CriterionNode):
             self.add_criterion_node(
                 node.label, node.summary, node.details, feedback_string_generator=node.feedback_string_generator
@@ -159,6 +162,10 @@ class CriteriaGraph:
             wrong_kind, kind, other_kind = self.criteria, "criterion", "evaluation"
 
         if target is None:
+            if isinstance(source, EvaluationNode) and target_label in self.outputs:
+                raise CriteriaGraphError(
+                    f"{target_label} is an output node. Only criterion nodes can be attached to evaluation nodes."
+                )
             if target_label in wrong_kind:
                 raise CriteriaGraphError(
                     f"Both {source_label} and {target_label} are {kind} nodes. "
@@ -216,6 +223,9 @@ class CriteriaGraph:
 
         Evaluations with sufficiencies are replaced by the evaluations leading
         to those sufficient criteria, recursively.
+
+        Raises ``CriteriaGraphError`` if ``label`` is unknown or a sufficiency
+        names a label that is not a criterion.
         """
         # TODO: Consider if starting evaluations should only accept evaluation nodes
         #       instead of guessing the intent when using criteria nodes as targets
@@ -239,7 +249,12 @@ class CriteriaGraph:
                 starting.append(candidate)
             else:
                 for sufficiency in sufficiencies:
-                    candidates += [edge.source.label for edge in self.criteria[sufficiency].incoming]
+                    criterion = self.criteria.get(sufficiency)
+                    if criterion is None:
+                        raise CriteriaGraphError(
+                            f"Evaluation node {candidate} has sufficiency {sufficiency}, which is not a criterion."
+                        )
+                    candidates += [edge.source.label for edge in criterion.incoming]
         return starting or base
 
     def build_tree(self, starting_evaluation: str, main_criteria: Collection[str] = ()) -> CriteriaTree:
@@ -257,6 +272,10 @@ class CriteriaGraph:
         text, in the order reached (breadth-first, in attachment order); pass
         it to ``export_feedback`` or ``resolve_feedback`` for the text.
         Evaluations with a ``replacement`` are skipped in favour of it.
+
+        Raises ``CriteriaEvaluationError`` (chaining the cause) if an
+        ``evaluate`` function fails, and ``CriteriaGraphError`` if an evaluation
+        has no ``evaluate`` function or reports a criterion not in the graph.
         """
         queue = self.starting_evaluations(main_criteria)
         visited: set[str] = set()
@@ -277,6 +296,9 @@ class CriteriaGraph:
                 results = evaluate(response)
             except Exception as exc:
                 raise CriteriaEvaluationError(label) from exc
+            unknown = [criterion for criterion in results if criterion not in self.criteria]
+            if unknown:
+                raise CriteriaGraphError(f"Evaluation node {label} reported unknown criteria: {', '.join(unknown)}.")
             feedback.update(results)
             for criterion in results:
                 queue += [edge.target.label for edge in self.criteria[criterion].outgoing]
@@ -298,14 +320,19 @@ class CriteriaGraph:
         ``custom_feedback`` overrides the text for given tags. Text is stripped,
         and a generator returning ``None`` gives ``""``: the tag still counts as
         reached, it just has nothing to say.
+
+        Raises ``CriteriaGraphError`` for a tag that is neither a criterion of
+        the graph nor in ``custom_feedback``.
         """
         custom_feedback = custom_feedback or {}
         resolved = []
         for tag, inputs in reached.items():
             if tag in custom_feedback:
                 text: str | None = custom_feedback[tag]
-            else:
+            elif tag in self.criteria:
                 text = self.criteria[tag].feedback_string_generator(inputs or {})
+            else:
+                raise CriteriaGraphError(f"Unknown criterion {tag}, and no custom feedback was given for it.")
             resolved.append((tag, (text or "").strip()))
         return resolved
 

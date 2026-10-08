@@ -59,6 +59,7 @@ class TestBuilding:
             ("EQ_TRUE", "EQ_FALSE", {}, "Both EQ_TRUE and EQ_FALSE are criterion nodes"),
             ("EQ", "NEW", {"summary": "s"}, "summary and details must be specified"),
             ("EQ", "EQ_TRUE", {}, "EQ_TRUE is already attached to EQ"),
+            ("EQ", "END", {}, "END is an output node. Only criterion nodes"),
         ],
     )
     def test_invalid_attachments(self, source, target, kwargs, message):
@@ -74,6 +75,22 @@ class TestBuilding:
         with pytest.raises(CriteriaGraphError, match="cannot have an evaluate function"):
             graph.attach("EQ", "NEW_C", summary="s", details="d", evaluate=lambda response: {})
         assert "NEW_E" not in graph.evaluations and "NEW_C" not in graph.criteria
+
+    def test_labels_are_unique_across_node_kinds(self):
+        graph = equality_graph()
+        graph.add_sufficiencies("SIMPLIFIED", ["EQ_TRUE"])
+        with pytest.raises(CriteriaGraphError, match="Evaluation node SIMPLIFIED is already defined"):
+            graph.add_criterion_node("SIMPLIFIED", "s", "d")
+        with pytest.raises(CriteriaGraphError, match="Criterion node EQ_TRUE is already defined"):
+            graph.add_output_node("EQ_TRUE", "s", "d")
+        assert graph.sufficiencies["SIMPLIFIED"] == ["EQ_TRUE"]
+
+    def test_add_node_keeps_replacement(self):
+        node = EvaluationNode("X", "s", "d")
+        node.replacement = CriteriaGraph.END
+        graph = CriteriaGraph("g")
+        graph.add_node(node)
+        assert graph.evaluations["X"].replacement is CriteriaGraph.END
 
     def test_add_sufficiencies_extends_without_duplicates(self):
         graph = equality_graph()
@@ -113,6 +130,24 @@ class TestFeedback:
         graph.evaluations["SIMPLIFIED"].replacement = CriteriaGraph.END
         assert list(graph.generate_feedback("response", "EQ")) == ["EQ_TRUE"]
 
+    def test_unknown_criterion_reported_by_evaluate(self):
+        graph = CriteriaGraph("g")
+        graph.add_evaluation_node("E", "s", "d", evaluate=returns("TYPO"))
+        with pytest.raises(CriteriaGraphError, match="E reported unknown criteria: TYPO"):
+            graph.generate_feedback("x", "E")
+
+    def test_unknown_sufficiency(self):
+        graph = CriteriaGraph("g")
+        graph.add_evaluation_node("E", "s", "d", sufficiencies=["NOPE"])
+        with pytest.raises(CriteriaGraphError, match="sufficiency NOPE, which is not a criterion"):
+            graph.starting_evaluations("E")
+
+    def test_resolve_feedback_unknown_tag(self):
+        graph = equality_graph()
+        with pytest.raises(CriteriaGraphError, match="Unknown criterion NOPE"):
+            graph.resolve_feedback({"NOPE": None})
+        assert graph.resolve_feedback({"NOPE": None}, custom_feedback={"NOPE": " custom "}) == [("NOPE", "custom")]
+
     def test_evaluation_without_evaluate_function(self):
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E", "s", "d")
@@ -143,6 +178,13 @@ class TestTrees:
         assert leaf.label.startswith("RETURN")
         assert leaf.summary == "Go to: E"
         assert leaf.type_label == "output"
+
+    def test_children_are_in_attachment_order(self):
+        graph = CriteriaGraph("g")
+        graph.add_evaluation_node("E", "e", "d")
+        for criterion in "ABC":
+            graph.attach("E", criterion, summary=criterion, details=criterion)
+        assert [child.label for child in graph.build_tree("E").children] == ["A", "B", "C"]
 
     def test_trees_start_from_each_starting_evaluation(self):
         trees = equality_graph().trees("SIMPLIFIED_TRUE")
@@ -177,4 +219,15 @@ class TestGraphRenderings:
         assert lines[0] == "flowchart TD"
         assert 'N_0_0(["EQ<br/>---<br/>compare"])' in lines
         assert "N_0_0 --> N_1_0" in lines
-        assert "SIMPLIFIED -.-> EQ_TRUE" in lines
+        assert "N_0_1 -.-> N_1_0" in lines  # SIMPLIFIED -.-> EQ_TRUE, by node id
+
+    def test_mermaid_escapes_quotes(self):
+        graph = CriteriaGraph("g")
+        graph.add_output_node("O", "s", 'say "hi"')
+        assert 'N_2_0{{"O<br/>---<br/>say #quot;hi#quot;"}}' in graph.to_mermaid().split("\n\t")
+
+    def test_tree_mermaid_ids_are_safe_and_text_escaped(self):
+        graph = CriteriaGraph("g")
+        graph.add_evaluation_node("x = y", 'is "x" y?', "d")
+        mermaid = graph.build_tree("x = y").to_mermaid()
+        assert 'x___y_0>"is #quot;x#quot; y?"]' in mermaid.split("\n\t")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections.abc import Collection, Mapping
 from typing import TYPE_CHECKING, Any
 
@@ -17,6 +18,16 @@ STARTING_EVALUATION_STYLE = (">", "]")
 CRITERION_STYLE = ("[", "]")
 OUTPUT_STYLE = ("{{", "}}")
 SPECIAL_STYLE = ("[[", "]]")
+
+
+def _text(text: str) -> str:
+    """``text`` made safe inside a quoted mermaid label."""
+    return text.replace('"', "#quot;")
+
+
+def _identifier(label: str) -> str:
+    """``label`` made safe as (part of) a mermaid node id."""
+    return re.sub(r"\W", "_", label)
 
 
 def graph_to_json(graph: CriteriaGraph) -> str:
@@ -60,13 +71,14 @@ def graph_to_mermaid(graph: CriteriaGraph) -> str:
     sufficiencies: dict[tuple[str, str], None] = {}
     for nodes, (opening, closing) in node_groups:
         for label, node in nodes.items():
-            lines.append(f'{keys[label]}{opening}"{label}<br/>---<br/>{node.details}"{closing}')
+            lines.append(f'{keys[label]}{opening}"{_text(label)}<br/>---<br/>{_text(node.details)}"{closing}')
             edges.update(
                 dict.fromkeys((keys[e.source.label], keys[e.target.label]) for e in node.outgoing + node.incoming)
             )
             node_sufficiencies = graph.sufficiencies.get(label)
             if node_sufficiencies is not None:
-                sufficiencies.update(dict.fromkeys((label, sufficiency) for sufficiency in node_sufficiencies))
+                # A sufficiency naming no node has nothing to point at, so it is not drawn.
+                sufficiencies.update(dict.fromkeys((keys[label], keys[s]) for s in node_sufficiencies if s in keys))
     lines += [" --> ".join(edge) for edge in edges]
     lines += [" -.-> ".join(sufficiency) for sufficiency in sufficiencies]
     return "\n\t".join(lines)
@@ -75,17 +87,20 @@ def graph_to_mermaid(graph: CriteriaGraph) -> str:
 def tree_to_mermaid(tree: CriteriaTree, special_nodes: Collection[str] = ()) -> str:
     """Mermaid graph source for ``tree``; nodes labelled in ``special_nodes`` are highlighted."""
 
+    def tree_id(node: CriteriaTree) -> str:
+        return f"{_identifier(node.label)}{node.identifier}"
+
     def edges_from(node: CriteriaTree) -> list[str]:
-        return [f"{node.label}{node.identifier} --> {child.label}{child.identifier}" for child in node.children]
+        return [f"{tree_id(node)} --> {tree_id(child)}" for child in node.children]
 
     opening, closing = STARTING_EVALUATION_STYLE
-    nodes = [f'{tree.label}{tree.identifier}{opening}"{tree.summary}"{closing}']
+    nodes = [f'{tree_id(tree)}{opening}"{_text(tree.summary)}"{closing}']
     edges = edges_from(tree)
     stack = list(tree.children)
     while stack:
         child = stack.pop()
         opening, closing = SPECIAL_STYLE if child.label in special_nodes else child.style
-        nodes.append(f'{child.label}{child.identifier}{opening}"{child.summary}"{closing}')
+        nodes.append(f'{tree_id(child)}{opening}"{_text(child.summary)}"{closing}')
         edges += edges_from(child)
         stack += child.children
     return "\n\t".join(["graph TD", *nodes, *edges])

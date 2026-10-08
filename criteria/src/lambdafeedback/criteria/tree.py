@@ -75,8 +75,9 @@ def build_tree(graph: CriteriaGraph, starting_evaluation: str, main_criteria: Co
         raise CriteriaGraphError(f"Unknown evaluation node {starting_evaluation}.")
     identifier = 0
     root = _tree_node(node, identifier, main_criteria)
-    stack: list[tuple[Node, CriteriaTree]] = [(edge.target, root) for edge in node.outgoing]
-    visited = [node.label]
+    # Targets are pushed in reverse so that they are popped (and become children) in attachment order.
+    stack: list[tuple[Node, CriteriaTree]] = [(edge.target, root) for edge in reversed(node.outgoing)]
+    visited = {node.label}
     while stack:
         current, parent = stack.pop()
         if current.label in visited:
@@ -86,7 +87,7 @@ def build_tree(graph: CriteriaGraph, starting_evaluation: str, main_criteria: Co
             tree_node = _tree_node(current, identifier, main_criteria, parent)
             parent.children.append(tree_node)
             if not isinstance(current, OutputNode):
-                visited.append(current.label)
-            stack += [(edge.target, tree_node) for edge in current.outgoing]
+                visited.add(current.label)
+            stack += [(edge.target, tree_node) for edge in reversed(current.outgoing)]
         identifier += 1
     return root
