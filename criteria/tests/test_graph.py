@@ -234,6 +234,16 @@ class TestTrees:
             graph.attach("E", criterion, summary=criterion, details=criterion)
         assert [child.label for child in graph.build_tree("E").children] == ["A", "B", "C"]
 
+    def test_tree_mermaid_declares_nodes_in_tree_order(self):
+        graph = CriteriaGraph("g")
+        graph.add_evaluation_node("E", "e", "d")
+        for criterion in "ABC":
+            graph.attach("E", criterion, summary=criterion, details=criterion)
+        graph.attach("A", "EA", summary="ea", details="d")
+        lines = graph.build_tree("E").to_mermaid().split("\n\t")
+        declared = [line.split('"')[0].rstrip("[(>") for line in lines if '"' in line]
+        assert declared == ["E_0", "A_1", "EA_2", "B_3", "C_4"]
+
     def test_trees_start_from_each_starting_evaluation(self):
         trees = equality_graph().trees("SIMPLIFIED_TRUE")
         assert [tree.label for tree in trees] == ["SIMPLIFIED"]

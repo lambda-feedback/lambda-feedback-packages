@@ -73,8 +73,8 @@ def build_tree(graph: CriteriaGraph, starting_evaluation: str, main_criteria: Co
     node = graph.evaluations.get(starting_evaluation)
     if node is None:
         raise CriteriaGraphError(f"Unknown evaluation node {starting_evaluation}.")
-    identifier = 0
-    root = _tree_node(node, identifier, main_criteria)
+    root = _tree_node(node, 0, main_criteria)
+    identifier = 1
     # Targets are pushed in reverse so that they are popped (and become children) in attachment order.
     stack: list[tuple[Node, CriteriaTree]] = [(edge.target, root) for edge in reversed(node.outgoing)]
     visited = {node.label}

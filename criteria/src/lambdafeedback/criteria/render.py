@@ -96,11 +96,12 @@ def tree_to_mermaid(tree: CriteriaTree, special_nodes: Collection[str] = ()) -> 
     opening, closing = STARTING_EVALUATION_STYLE
     nodes = [f'{tree_id(tree)}{opening}"{_text(tree.summary)}"{closing}']
     edges = edges_from(tree)
-    stack = list(tree.children)
+    # Pre-order, children pushed in reverse: mermaid lays siblings out in declaration order.
+    stack = list(reversed(tree.children))
     while stack:
         child = stack.pop()
         opening, closing = SPECIAL_STYLE if child.label in special_nodes else child.style
         nodes.append(f'{tree_id(child)}{opening}"{_text(child.summary)}"{closing}')
         edges += edges_from(child)
-        stack += child.children
+        stack += reversed(child.children)
     return "\n\t".join(["graph TD", *nodes, *edges])
