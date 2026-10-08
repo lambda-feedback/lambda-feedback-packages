@@ -3,26 +3,54 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .symbol_tables import ELEMENTARY_FUNCTIONS, GREEK_SYMBOLS, UNICODE_DASHES
+from .symbol_tables import ELEMENTARY_FUNCTIONS, EMBEDDABLE_FUNCTION_NAMES, GREEK_SYMBOLS, UNICODE_DASHES
 
 if TYPE_CHECKING:
     from .params import ExpressionParams
 
+
+@dataclass(frozen=True)
+class FunctionName:
+    """An original that only matches when applied: followed (after any spaces) by ``(``, ``^`` or ``**``.
+
+    So ``re(z)``, ``xre(z)`` and ``re^2(z)`` match but ``area`` doesn't. A
+    whole-word test would not be reliable: each substitution pass pads the
+    names it replaces (``interval`` becomes ``int Erval``), so a later pass
+    would see word boundaries the learner never wrote.
+    """
+
+    text: str
+
+    def matches(self, string: str, index: int) -> bool:
+        end = index + len(self.text)
+        return string.startswith(self.text, index) and string[end:].lstrip(" ").startswith(("(", "^", "**"))
+
+
 # (original, replacement); an original of the form (text, lookaheads) only
 # matches when followed by one of the lookahead strings.
-Substitution = tuple[str | tuple[str, Sequence[str]], str]
+Substitution = tuple[str | tuple[str, Sequence[str]] | FunctionName, str]
 
 
-def substitutions_sort_key(pair: tuple[str, str]) -> float:
+def _original_text(original: str | tuple[str, Sequence[str]] | FunctionName) -> str:
+    if isinstance(original, FunctionName):
+        return original.text
+    return original if isinstance(original, str) else original[0]
+
+
+def substitutions_sort_key(pair: Substitution) -> float:
     """Longer originals first; among equal ones, longer replacements first."""
-    return -len(pair[0]) - len(pair[1]) / (10 ** (1 + len(str(len(pair[1])))))
+    return -len(_original_text(pair[0])) - len(pair[1]) / (10 ** (1 + len(str(len(pair[1])))))
 
 
-def _sorted(substitutions: Sequence[tuple[str, str]]) -> list[tuple[str, str]]:
-    # The pair itself breaks ties, so the order never depends on the hash seed.
-    return sorted(set(substitutions), key=lambda pair: (substitutions_sort_key(pair), pair))
+def _sorted(substitutions: Sequence[Substitution]) -> list[Substitution]:
+    # Ties are broken by content, so the order never depends on the hash seed.
+    def key(pair: Substitution) -> tuple[float, str, bool, str]:
+        return (substitutions_sort_key(pair), _original_text(pair[0]), not isinstance(pair[0], str), pair[1])
+
+    return sorted(set(substitutions), key=key)
 
 
 def substitute(string: str | Sequence[str | object], substitutions: Sequence[Substitution]) -> str:
@@ -50,7 +78,10 @@ def substitute(string: str | Sequence[str | object], substitutions: Sequence[Sub
         buffer = ""
         while index < len(part):
             for k, (original, _) in enumerate(substitutions):
-                if isinstance(original, tuple):
+                if isinstance(original, FunctionName):
+                    match = original.matches(part, index)
+                    length = len(original.text)
+                elif isinstance(original, tuple):
                     text, lookaheads = original
                     match = any(part.startswith(text + lookahead, index) for lookahead in lookaheads)
                     length = len(text)
@@ -73,23 +104,34 @@ def substitute(string: str | Sequence[str | object], substitutions: Sequence[Sub
     return "".join(substitutions[elem][1] if isinstance(elem, int) else str(elem) for elem in new_string)
 
 
-def greek_symbol_substitutions(expr: str) -> list[tuple[str, str]]:
+def greek_symbol_substitutions(expr: str) -> list[Substitution]:
     """Substitutions padding Greek names, and mapping Greek letters to names, found in ``expr``."""
-    return _named_substitutions(GREEK_SYMBOLS, expr)
+    return _named_substitutions(GREEK_SYMBOLS, expr, " {} ")
 
 
-def elementary_function_substitutions(expr: str) -> list[tuple[str, str]]:
-    """Substitutions padding function names, and mapping aliases to names, found in ``expr``."""
-    return _named_substitutions(ELEMENTARY_FUNCTIONS, expr)
+def elementary_function_substitutions(expr: str) -> list[Substitution]:
+    """Substitutions padding function names, and mapping aliases to names, found in ``expr``.
+
+    Names that are common inside ordinary words (``re`` in ``area``, ``int``
+    in ``interval``; see :data:`EMBEDDABLE_FUNCTION_NAMES`) only count where
+    they read as a function (see :class:`FunctionName`).
+    """
+    return _named_substitutions(ELEMENTARY_FUNCTIONS, expr, " {} ")
 
 
-def _named_substitutions(table: Sequence[tuple[str, Sequence[str]]], expr: str) -> list[tuple[str, str]]:
-    substitutions = []
-    for name, aliases in table:
-        if name in expr:
-            substitutions.append((name, f" {name} "))
-        substitutions += [(alias, f" {name} ") for alias in aliases if alias in expr]
-    return substitutions
+def _function_original(text: str) -> str | FunctionName:
+    return FunctionName(text) if text.casefold() in EMBEDDABLE_FUNCTION_NAMES else text
+
+
+def _named_substitutions(table: Sequence[tuple[str, Sequence[str]]], expr: str, padding: str) -> list[Substitution]:
+    """``(spelling, padded name)`` for each name and alias in ``table`` found in ``expr``."""
+    replacement = padding.format
+    return [
+        (_function_original(spelling), replacement(name))
+        for name, aliases in table
+        for spelling in (name, *aliases)
+        if spelling in expr
+    ]
 
 
 def unicode_dash_substitutions(expr: str) -> list[tuple[str, str]]:
@@ -107,7 +149,7 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
     """
     exprs = [exprs] if isinstance(exprs, str) else list(exprs)
 
-    substitutions: list[tuple[str, str]] = [(expr, expr) for expr in params.reserved_keywords]
+    substitutions: list[Substitution] = [(expr, expr) for expr in params.reserved_keywords]
     substitutions += [(expr, expr) for expr in params.unsplittable_symbols]
     if params.plus_minus is not None:
         substitutions.append((params.plus_minus, "plus_minus"))
@@ -117,14 +159,13 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
     symbol_aliases = {alias for spec in params.symbols.values() for alias in spec.aliases}
     if params.elementary_functions:
         for expr in exprs:
-            for name, aliases in (*ELEMENTARY_FUNCTIONS, *GREEK_SYMBOLS):
-                if name in symbol_aliases:
-                    continue  # the task uses this name for one of its own symbols
-                if name in expr:
-                    substitutions.append((name, " " + name))
-                substitutions += [
-                    (alias, " " + name) for alias in aliases if alias in expr and alias not in symbol_aliases
-                ]
+            for table, original in ((ELEMENTARY_FUNCTIONS, _function_original), (GREEK_SYMBOLS, str)):
+                for name, aliases in table:
+                    if name in symbol_aliases:
+                        continue  # the task uses this name for one of its own symbols
+                    spellings = [name] if name in expr else []
+                    spellings += [alias for alias in aliases if alias in expr and alias not in symbol_aliases]
+                    substitutions += [(original(spelling), " " + name) for spelling in spellings]
 
     for code, spec in params.symbols.items():
         substitutions.append((code, code))

@@ -45,6 +45,14 @@ ELEMENTARY_FUNCTIONS = _with_upper_case(
 )  # fmt: skip
 """Function (and constant) names with their aliases, used when ``elementary_functions`` is enabled."""
 
+EMBEDDABLE_FUNCTION_NAMES = frozenset({"re", "im", "int", "arg", "sum", "sign", "min", "max", "sec"})
+"""Function spellings common inside ordinary words (``area``, ``time``, ``interval``, ``design``).
+
+They only count as a function when followed by ``(``, ``^`` or ``**``
+(compared case-insensitively, so ``RE`` and ``Max`` too); anywhere else,
+including on their own, they are read as letters.
+"""
+
 GREEK_SYMBOLS: tuple[SymbolAliases, ...] = tuple(
     SymbolAliases(name, tuple(aliases))
     for name, aliases in [

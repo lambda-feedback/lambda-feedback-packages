@@ -6,8 +6,10 @@ import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import cached_property
+from io import StringIO
 from keyword import iskeyword
 from token import NAME, OP
+from tokenize import TokenError, generate_tokens
 from typing import Any
 
 from sympy import Basic, Equality, Function, Symbol
@@ -15,33 +17,48 @@ from sympy.parsing.sympy_parser import T as TRANSFORMATIONS
 from sympy.parsing.sympy_parser import _token_splittable, split_symbols_custom
 from sympy.utilities.exceptions import SymPyDeprecationWarning
 
-from ._safe_parse import safe_parse_expr
+from ._safe_parse import MATH_NAMESPACE, safe_parse_expr
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import Convention, ExpressionParams
 from .preprocessing import convert_bracket_notation, create_expression_set
-from .substitution import _sorted, elementary_function_substitutions, greek_symbol_substitutions, substitute
+from .substitution import (
+    Substitution,
+    _sorted,
+    elementary_function_substitutions,
+    greek_symbol_substitutions,
+    substitute,
+)
+from .symbol_tables import EMBEDDABLE_FUNCTION_NAMES
+
+_APPLIED = ("(", "**", "^")
 
 
 def _keywords_as_names(tokens: list[Any], local_dict: dict[str, Any], global_dict: Any) -> list[Any]:
-    """Read Python keywords (``in``, ``is``, ``as``, ``del``, ...) as ordinary names.
+    """Read Python keywords, and short function names not applied to anything, as ordinary names.
 
-    Python's grammar would reject them, so each becomes the ``Symbol('in')``
-    (``Function('in')`` before a bracket) that ``auto_symbol`` makes of any
-    other unknown name: without strict syntax it is then split like any
-    other word. A keyword that is a defined name (a task symbol with code
-    ``in``) is rebound to an identifier so it keeps its own object.
+    Python's grammar would reject a keyword (``in``, ``is``, ``as``, ``del``,
+    ...), so each becomes the ``Symbol('in')`` (``Function('in')`` before a
+    bracket) that ``auto_symbol`` makes of any other unknown name: without
+    strict syntax it is then split like any other word. A keyword that is a
+    defined name (a task symbol with code ``in``) is rebound to an identifier
+    so it keeps its own object.
+
+    A name in :data:`EMBEDDABLE_FUNCTION_NAMES` (``re``, ``sign``, ``max``,
+    ...) is only that function when followed by ``(``, ``**`` or ``^``;
+    otherwise it is letters too, like the ``re`` in ``area``.
     """
     result: list[Any] = []
     for index, (kind, value) in enumerate(tokens):
-        if kind != NAME or not iskeyword(value):
+        following = tokens[index + 1][1] if index + 1 < len(tokens) else ""
+        unapplied_function = value.casefold() in EMBEDDABLE_FUNCTION_NAMES and following not in _APPLIED
+        if kind != NAME or not (iskeyword(value) or (unapplied_function and value not in local_dict)):
             result.append((kind, value))
         elif value in local_dict:
             alias = f"{value}__keyword"
             local_dict[alias] = local_dict[value]
             result.append((NAME, alias))
         else:
-            following = tokens[index + 1][1] if index + 1 < len(tokens) else ""
             constructor = "Function" if following == "(" else "Symbol"
             result += [(NAME, constructor), (OP, "("), (NAME, repr(value)), (OP, ")")]
     return result
@@ -198,27 +215,52 @@ def _parse_expr(expr: str, **kwargs: Any) -> Any:
     return parsed
 
 
-def _parse_one(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
+def _unapplied_function(expr: str, symbol_dict: Mapping[str, Any]) -> str | None:
+    """The first function name in ``expr`` not followed by its bracketed arguments (``sin x``), if any."""
     try:
-        return _parse_one_unchecked(expr, config, transformations)
-    except ExpressionParsingError:
-        raise
+        tokens = [token for token in generate_tokens(StringIO(expr).readline) if token.type in (NAME, OP)]
+    except (TokenError, SyntaxError):
+        return None
+    for index, token in enumerate(tokens):
+        following = tokens[index + 1].string if index + 1 < len(tokens) else ""
+        if token.type != NAME or following in _APPLIED:
+            continue
+        if token.string not in symbol_dict and token.string.casefold() in EMBEDDABLE_FUNCTION_NAMES:
+            continue  # read as letters (see _keywords_as_names)
+        obj = symbol_dict[token.string] if token.string in symbol_dict else MATH_NAMESPACE.get(token.string)
+        if callable(obj) and not isinstance(obj, Basic):
+            return token.string
+    return None
+
+
+def _parse_one(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
+    if not config.strict_syntax:
+        expr = convert_bracket_notation(expr)
+    try:
+        expr = _substitute_names(apply_convention(expr, config.convention), config)
+        return _evaluate(expr, config, transformations)
     except Exception as e:
+        function = _unapplied_function(expr, config.symbol_dict)
+        if function is not None:
+            raise ExpressionParsingError(
+                f"{function} is a function, so its argument needs brackets: {function}(...)", expression=expr
+            ) from e
+        if isinstance(e, ExpressionParsingError):
+            raise
         # Tokenizer, convention-parser and evaluation failures all mean "not a valid expression".
         raise ExpressionParsingError(f"Failed to parse expression {expr!r}: {e}", expression=expr) from e
 
 
-def _parse_one_unchecked(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
-    if not config.strict_syntax:
-        expr = convert_bracket_notation(expr)
-    expr = apply_convention(expr, config.convention)
-
-    substitutions = [(name, f" {name} ") for name in config.unsplittable_symbols]
+def _substitute_names(expr: str, config: SympyParsingConfig) -> str:
+    """Pad unsplittable symbols and function names, and spell out Greek letters."""
+    substitutions: list[Substitution] = [(name, f" {name} ") for name in config.unsplittable_symbols]
     substitutions += greek_symbol_substitutions(expr)
     if config.elementary_functions:
         substitutions += elementary_function_substitutions(expr)
-    expr = " ".join(substitute(expr, _sorted(substitutions)).split())
+    return " ".join(substitute(expr, _sorted(substitutions)).split())
 
+
+def _evaluate(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
     symbol_dict = dict(config.symbol_dict)
     if expr.count("=") > 1:
         raise ExpressionParsingError(f"An expression can contain at most one '=': {expr}", expression=expr)
