@@ -27,8 +27,9 @@ def build_expression_parser(
     """Build a parser for expressions made of operands, infix operators and delimiters.
 
     The grammar has one expression nonterminal (``expression_node``, default
-    ``EXPRESSION_NODE``) with productions ``E -> node`` for each of ``nodes``
-    and for undefined text, ``E -> E op E`` for each ``(symbol, label)`` in
+    ``EXPRESSION_NODE``) with productions ``E -> label`` for each operand
+    token spec in ``nodes`` (``(pattern, label)`` or ``(symbol, label,
+    matcher)``) and ``E -> undefined`` for undefined text, ``E -> E op E`` for each ``(symbol, label)`` in
     ``infix_operators`` and ``E -> open E close`` for each
     ``((open, close), action)`` in ``delimiters``. ``custom_tokens`` and
     ``custom_productions`` extend the grammar; later productions win
@@ -66,11 +67,18 @@ def build_expression_parser(
     null = null or ("NULL", "NULL")
     e = expression_spec[0]
 
+    # Productions refer to nodes by label: a node's pattern (e.g. "[0-9]+") is
+    # not a usable grammar symbol. Tokens compare by label, so a grammar-only
+    # symbol spelled as the label matches every token the pattern scans.
+    node_labels = list(dict.fromkeys(node[1] for node in nodes))
+    node_symbols: list[TokenSpec] = [(re.escape(label), label, None) for label in node_labels]
+
     token_list: list[TokenSpec] = [undefined_spec, null, expression_spec, start, end, *nodes, *operator_tokens]
+    token_list += node_symbols
     token_list += custom_tokens
 
     productions: list[tuple[str, str, Action | None]] = [(start[0], e, relabel)]
-    productions += [(e, node[0], create_node) for node in nodes]
+    productions += [(e, label, create_node) for label in node_labels]
     productions += [(e, undefined_spec[0], create_node)]
     productions += [(e, e + operator + e, infix) for operator in operator_symbols]
     for (open_delimiter, close_delimiter), _ in delimiters:

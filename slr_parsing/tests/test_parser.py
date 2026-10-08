@@ -72,3 +72,22 @@ class TestSLRExpressionParser:
         root = output[0]
         assert root.label == "ADD"
         assert len(root.children) == 2
+
+    @pytest.mark.parametrize(
+        ("operators", "root_label"),
+        [
+            ([("+", "ADD"), ("*", "MUL")], "ADD"),  # * listed later binds tighter: a+(b*c)
+            ([("*", "MUL"), ("+", "ADD")], "MUL"),  # + listed later binds tighter: (a+b)*c
+        ],
+    )
+    def test_later_operators_bind_tighter(self, operators, root_label):
+        parser = build_expression_parser(infix_operators=operators)
+        assert parser.parse(parser.scan("a+b*c"))[0].label == root_label
+
+    def test_operators_are_left_associative(self):
+        parser = build_expression_parser(infix_operators=[("-", "SUB"), ("^", "POW")])
+        for text, label in (("a-b-c", "SUB"), ("a^b^c", "POW")):
+            root = parser.parse(parser.scan(text))[0]
+            assert root.label == label
+            assert root.children[0].label == label
+            assert root.children[1].label == "UNDEFINED"

@@ -1,6 +1,7 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
 import logging
+import re
 
 import pytest
 
@@ -56,6 +57,35 @@ class TestExprNodeTags:
 
 
 class TestExpressionParserBuilder:
+    @staticmethod
+    def number(text):
+        match = re.match(r"[0-9]+", text)
+        return (match.group(), match.group()) if match else (None, None)
+
+    @pytest.mark.parametrize(
+        "nodes",
+        [
+            pytest.param([(r"[0-9]+", "NUM")], id="regex pattern"),
+            pytest.param([("NUM", "NUM", number.__func__)], id="matcher"),
+            pytest.param([(r"[0-9]+", "NUM"), (r"[0-9]+\.[0-9]+", "NUM")], id="shared label"),
+        ],
+    )
+    def test_nodes_are_operands_whatever_their_pattern(self, nodes):
+        # The production used the pattern text as a grammar symbol, so a regex
+        # such as "[0-9]+" raised GrammarError (and before that never parsed).
+        parser = build_expression_parser(nodes=nodes, infix_operators=[("+", "ADD")])
+        root = parser.parse(parser.scan("12+x"))[0]
+        assert [(n.label, n.content) for n in (root, *root.children)] == [
+            ("ADD", "+"),
+            ("NUM", "12"),
+            ("UNDEFINED", "x"),
+        ]
+
+    def test_literal_node_still_parses(self):
+        parser = build_expression_parser(nodes=[("pi", "PI")], infix_operators=[("+", "ADD")])
+        root = parser.parse(parser.scan("pi+x"))[0]
+        assert [n.label for n in root.children] == ["PI", "UNDEFINED"]
+
     def test_several_delimiter_pairs_build_without_unreachable_warnings(self, caplog):
         # One production per pair left all but the last unreachable (a WARNING per build).
         with caplog.at_level(logging.WARNING, logger="lambdafeedback.slr_parsing.parser"):
