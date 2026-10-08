@@ -85,7 +85,7 @@ for c in "ABC":
     g.attach("START", c, summary=c, details=c)
     g.attach(c, "E" + c, summary=c, details=c, evaluate=(lambda c: lambda r: {c + "_OK": None})(c))
     g.attach("E" + c, c + "_OK", summary=c, details=c)
-print(list(g.generate_feedback("r", "START")))
+print(list(g.generate_feedback("r", "A")))
 print(g.to_mermaid())
 """
 

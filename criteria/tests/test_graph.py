@@ -105,9 +105,17 @@ class TestFeedback:
     def test_starting_evaluations(self):
         graph = equality_graph()
         assert graph.starting_evaluations("SIMPLIFIED_TRUE") == ["SIMPLIFIED"]
-        assert graph.starting_evaluations("EQ") == ["EQ"]
-        with pytest.raises(CriteriaGraphError):
+        assert graph.starting_evaluations("EQ_TRUE") == ["EQ"]
+        with pytest.raises(CriteriaGraphError, match="EQ is an evaluation node"):
+            graph.starting_evaluations("EQ")
+        with pytest.raises(CriteriaGraphError, match="Unknown criterion NOPE"):
             graph.starting_evaluations("NOPE")
+
+    def test_criterion_without_evaluations_cannot_be_decided(self):
+        graph = CriteriaGraph("g")
+        graph.add_criterion_node("C", "s", "d")
+        with pytest.raises(CriteriaGraphError, match="No evaluation leads to criterion C"):
+            graph.generate_feedback("x", "C")
 
     def test_sufficiencies_move_the_start_to_the_sufficient_criteria(self):
         graph = equality_graph()
@@ -115,32 +123,35 @@ class TestFeedback:
         assert graph.starting_evaluations("SIMPLIFIED_TRUE") == ["EQ"]
 
     def test_generate_feedback_follows_reached_criteria(self):
-        feedback = equality_graph().generate_feedback("response", "EQ")
+        feedback = equality_graph().generate_feedback("response", "EQ_TRUE")
         assert list(feedback) == ["EQ_TRUE", "SIMPLIFIED_TRUE"]
 
     def test_evaluations_receive_the_response(self):
         seen = []
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E", "s", "d", evaluate=lambda response: seen.append(response) or {})
-        graph.generate_feedback("x + 1", "E")
+        graph.attach("E", "C", summary="c", details="c")
+        graph.generate_feedback("x + 1", "C")
         assert seen == ["x + 1"]
 
     def test_replaced_evaluations_are_skipped(self):
         graph = equality_graph()
         graph.evaluations["SIMPLIFIED"].replacement = CriteriaGraph.END
-        assert list(graph.generate_feedback("response", "EQ")) == ["EQ_TRUE"]
+        assert list(graph.generate_feedback("response", "EQ_TRUE")) == ["EQ_TRUE"]
 
     def test_unknown_criterion_reported_by_evaluate(self):
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E", "s", "d", evaluate=returns("TYPO"))
+        graph.attach("E", "C", summary="c", details="c")
         with pytest.raises(CriteriaGraphError, match="E reported unknown criteria: TYPO"):
-            graph.generate_feedback("x", "E")
+            graph.generate_feedback("x", "C")
 
     def test_unknown_sufficiency(self):
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E", "s", "d", sufficiencies=["NOPE"])
+        graph.attach("E", "C", summary="c", details="c")
         with pytest.raises(CriteriaGraphError, match="sufficiency NOPE, which is not a criterion"):
-            graph.starting_evaluations("E")
+            graph.starting_evaluations("C")
 
     def test_resolve_feedback_unknown_tag(self):
         graph = equality_graph()
@@ -151,8 +162,9 @@ class TestFeedback:
     def test_evaluation_without_evaluate_function(self):
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E", "s", "d")
+        graph.attach("E", "C", summary="c", details="c")
         with pytest.raises(CriteriaGraphError, match="no evaluate function"):
-            graph.generate_feedback("x", "E")
+            graph.generate_feedback("x", "C")
 
 
 class TestTrees:

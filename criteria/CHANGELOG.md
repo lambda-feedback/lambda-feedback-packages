@@ -16,15 +16,18 @@ The first release after the extraction refactor. The import path is now `lambdaf
 | `graph.json()` / `graph.mermaid()` | `graph.to_json()` / `graph.to_mermaid()` |
 | `tree.json()` / `tree.mermaid(special_nodes)` / `tree.as_dictionary()` | `tree.to_json()` / `tree.to_mermaid(special_nodes)` / `tree.as_dict()` |
 | `graph.build_tree(start, return_node=..., main_criteria=None)` | `graph.build_tree(start, main_criteria=())` |
-| `graph.starting_evaluations(label)` returned a `set` | returns an ordered `list` |
+| `graph.starting_evaluations(label)` returned a `set` | `graph.starting_evaluations(criterion)` returns an ordered `list` |
+| `graph.generate_feedback(response, main_criteria)` | `graph.generate_feedback(response, main_criterion)` |
 
-`CriteriaGraph.END`, the graph-building methods (`add_evaluation_node`, `add_criterion_node`, `add_output_node`, `add_node`, `attach`, `add_sufficiencies`), `generate_feedback`, `trees`, and node attributes (`label`, `summary`, `details`, `incoming`, `outgoing`, `evaluate`, `replacement`, `feedback_string_generator`) keep their names.
+`CriteriaGraph.END`, the graph-building methods (`add_evaluation_node`, `add_criterion_node`, `add_output_node`, `add_node`, `attach`, `add_sufficiencies`), `generate_feedback` and `trees` (but see their parameters below), and node attributes (`label`, `summary`, `details`, `incoming`, `outgoing`, `evaluate`, `replacement`, `feedback_string_generator`) keep their names.
 
 Removed (unused): `CriteriaGraph(identifier, entry_evaluations=)` (never read), `CriteriaGraph.RETURN`, the `Evaluation.results` / `Criterion.consequences` aliases of `outgoing`, and the node `tags` attributes.
 
 Signatures: `add_evaluation_node` no longer accepts `feedback_string_generator`, and `add_criterion_node` no longer accepts `sufficiencies` / `evaluate` (they only existed to serve `attach`). `attach` still takes all three and now raises `CriteriaGraphError` when one doesn't apply to the kind of node it creates; previously `evaluate` for a new criterion was silently ignored.
 
 Labels are unique across node kinds: adding a node whose label is already used by an evaluation, criterion or output raises `CriteriaGraphError` (previously a criterion could share an evaluation's label and wipe its sufficiencies). `add_node` now keeps an evaluation's `replacement`. An evaluation reporting a criterion not in the graph, a sufficiency naming a non-criterion, and `resolve_feedback` / `export_feedback` for an unknown tag without custom feedback raise `CriteriaGraphError` instead of `KeyError`.
+
+Starting points: `starting_evaluations`, `generate_feedback` and `trees` take a criterion label only; they used to also accept an evaluation label and start there. Passing an evaluation label, or a criterion that no evaluation leads to (which used to give `[]` / no feedback), raises `CriteriaGraphError`. To run from an evaluation, pass a criterion it leads to.
 
 Rendering: `to_mermaid()` draws sufficiency edges between the real nodes (they pointed at new, unconnected boxes named after the labels) and escapes `"` in labels and text; tree mermaid ids are safe for labels with spaces or punctuation. Tree children are in attachment order (they were reversed). `Evaluate` and `FeedbackStringGenerator` are exported for type hints.
 

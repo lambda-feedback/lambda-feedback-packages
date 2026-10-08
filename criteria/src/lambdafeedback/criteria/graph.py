@@ -218,23 +218,26 @@ class CriteriaGraph:
     # Querying
     # ------------------------------------------------------------------
 
-    def starting_evaluations(self, label: str) -> list[str]:
-        """The evaluations to start from to decide criterion (or evaluation) ``label``.
+    def starting_evaluations(self, criterion: str) -> list[str]:
+        """The evaluations to start from to decide ``criterion``.
 
-        Evaluations with sufficiencies are replaced by the evaluations leading
+        These are the evaluations leading to ``criterion``, except that
+        evaluations with sufficiencies are replaced by the evaluations leading
         to those sufficient criteria, recursively.
 
-        Raises ``CriteriaGraphError`` if ``label`` is unknown or a sufficiency
-        names a label that is not a criterion.
+        Raises ``CriteriaGraphError`` if ``criterion`` is not a criterion of the
+        graph, no evaluation leads to it, or a sufficiency names a label that is
+        not a criterion.
         """
-        # TODO: Consider if starting evaluations should only accept evaluation nodes
-        #       instead of guessing the intent when using criteria nodes as targets
-        if label in self.criteria:
-            base = list(dict.fromkeys(edge.source.label for edge in self.criteria[label].incoming))
-        elif label in self.evaluations:
-            base = [label]
-        else:
-            raise CriteriaGraphError(f"No criterion or evaluation with label {label}.")
+        if criterion not in self.criteria:
+            if criterion in self.evaluations:
+                raise CriteriaGraphError(
+                    f"{criterion} is an evaluation node; starting evaluations are found for criteria."
+                )
+            raise CriteriaGraphError(f"Unknown criterion {criterion}.")
+        base = list(dict.fromkeys(edge.source.label for edge in self.criteria[criterion].incoming))
+        if not base:
+            raise CriteriaGraphError(f"No evaluation leads to criterion {criterion}.")
         # Ordered worklist (not a set): the result must not depend on the hash seed.
         starting: list[str] = []
         candidates = list(base)
@@ -249,24 +252,24 @@ class CriteriaGraph:
                 starting.append(candidate)
             else:
                 for sufficiency in sufficiencies:
-                    criterion = self.criteria.get(sufficiency)
-                    if criterion is None:
+                    sufficient = self.criteria.get(sufficiency)
+                    if sufficient is None:
                         raise CriteriaGraphError(
                             f"Evaluation node {candidate} has sufficiency {sufficiency}, which is not a criterion."
                         )
-                    candidates += [edge.source.label for edge in criterion.incoming]
+                    candidates += [edge.source.label for edge in sufficient.incoming]
         return starting or base
 
     def build_tree(self, starting_evaluation: str, main_criteria: Collection[str] = ()) -> CriteriaTree:
         """The graph unrolled from ``starting_evaluation`` as a tree (for display)."""
         return build_tree(self, starting_evaluation, main_criteria)
 
-    def trees(self, label: str) -> list[CriteriaTree]:
-        """One tree per starting evaluation for criterion ``label``."""
-        return [self.build_tree(start, main_criteria=[label]) for start in self.starting_evaluations(label)]
+    def trees(self, criterion: str) -> list[CriteriaTree]:
+        """One tree per starting evaluation for ``criterion``, with ``criterion`` marked as the main criterion."""
+        return [self.build_tree(start, main_criteria=[criterion]) for start in self.starting_evaluations(criterion)]
 
-    def generate_feedback(self, response: Any, main_criteria: str) -> dict[str, Mapping[str, Any] | None]:
-        """Run the evaluations reachable from ``main_criteria``'s starting evaluations.
+    def generate_feedback(self, response: Any, main_criterion: str) -> dict[str, Mapping[str, Any] | None]:
+        """Run the evaluations reachable from the starting evaluations for criterion ``main_criterion``.
 
         Returns every criterion reached, mapped to the inputs for its feedback
         text, in the order reached (breadth-first, in attachment order); pass
@@ -275,9 +278,10 @@ class CriteriaGraph:
 
         Raises ``CriteriaEvaluationError`` (chaining the cause) if an
         ``evaluate`` function fails, and ``CriteriaGraphError`` if an evaluation
-        has no ``evaluate`` function or reports a criterion not in the graph.
+        has no ``evaluate`` function or reports a criterion not in the graph,
+        and for the reasons ``starting_evaluations`` does.
         """
-        queue = self.starting_evaluations(main_criteria)
+        queue = self.starting_evaluations(main_criterion)
         visited: set[str] = set()
         feedback: dict[str, Mapping[str, Any] | None] = {}
         while queue:
