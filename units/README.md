@@ -5,8 +5,8 @@ value and a unit, convert them to SI base units, and compare dimensions. Built
 on [SymPy](https://www.sympy.org/) for
 [Lambda Feedback](https://github.com/lambda-feedback) evaluation functions,
 where the input is a learner's typed answer: the parser accepts natural
-spellings (`metres`, `kg m/s`, `μs`) and tells you which part is the value and
-which is the unit.
+spellings (`metres`, `kg m/s`, and `μs` after preprocessing) and tells you
+which part is the value and which is the unit.
 
 Originally extracted from the
 [compareExpressions](https://github.com/lambda-feedback/compareExpressions)
@@ -40,7 +40,19 @@ parse_quantity("9.81 m/s^2", QuantityParams()).dimension  # length/time**2
 ```
 
 Either part may be missing: `parse_quantity("kg", ...)` has `value is None`, and
-`parse_quantity("2x", ...)` has `unit is None`.
+`parse_quantity("2x", ...)` has `unit is None`. `·`, `⋅` and `×` are read as `*`.
+
+For learners' input, run `preprocess_quantity` first. It rewrites alternative
+prefix spellings such as `μ`, `µ` and `deka`, and collapses whitespace.
+Without it, `2 µm` is read as a value with no unit.
+
+```python
+from lambdafeedback.units import preprocess_quantity
+
+params = QuantityParams()
+text = preprocess_quantity("response", "2 µm", params)  # '2 microm'
+parse_quantity(text, params)  # PhysicalQuantity(value='2', unit='micrometre')
+```
 
 ### What a `PhysicalQuantity` holds
 
@@ -112,7 +124,7 @@ All errors derive from `QuantityError`, which is a `ValueError`, and carry
 
 | Exception | Raised when |
 |---|---|
-| `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
+| `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), a number inside the unit (`2 m 3 s`, `1 hour 30 minutes`), a temperature in °C or °F, or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
 | `UnitConversionError` | The unit can't be converted to SI base units. |
 | `QuantityParamsError` | A `QuantityParams` field is invalid. |
 
@@ -138,8 +150,17 @@ except QuantityError as error:
 - Function names that contain unit symbols are reported in `reverted_units`
   (`sin` gives `s` and `in`), although the value is parsed, and previewed, as
   the function call.
-- The unit's LaTeX preview removes whitespace, so in LaTeX input the value and
-  unit must be separated with `~`.
+- LaTeX input (`is_latex=True`) is only partly supported. LaTeX spacing (`~`,
+  `\,`) and `\mathrm{...}`/`\text{...}` are understood, so `2~\mathrm{m}`
+  works, but the unit must otherwise be written in plain syntax: `m/s^2`, not
+  `\frac{m}{s^{2}}` or `s^{-1}`.
+- In natural mode, a function call is split into units: `2 sqrt(m)` reads
+  `sqrt` as second·quecto-radian·tonne. Capitalisation matters too: `2 Kg` is
+  kelvin·gram, not kilogram.
+- Bracketed groups are kept whole, so `(2 m) s` reads the whole input as a unit,
+  with the `2` as a factor.
+- Temperatures are in kelvin only. Celsius and Fahrenheit raise an error,
+  because their conversions aren't proportional.
 - `QuantityParams` instances aren't hashable.
 
 ## Changelog

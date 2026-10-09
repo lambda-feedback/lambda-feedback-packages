@@ -55,6 +55,57 @@ class TestParsing:
         params = QuantityParams(elementary_functions=elementary_functions)
         assert parse_quantity(expr, params).value_latex == latex
 
+    @pytest.mark.parametrize("strictness", ["strict", "natural"])
+    @pytest.mark.parametrize("expr", ["2 m 3 s", "1 hour 30 minutes", "3 m 2", "m 2"])
+    def test_number_inside_unit_raises(self, expr, strictness):
+        # "2 m 3 s" was unit "metre 3 second", dimension length*3*time.
+        with pytest.raises(QuantityParseError, match="Cannot separate the value from the unit"):
+            parse_quantity(expr, QuantityParams(strictness=strictness))
+
+    @pytest.mark.parametrize(
+        "expr, unit",
+        [
+            ("2 1/s", "1/second"),
+            ("2 m^2 s", "metre^2 second"),
+            ("2 m^(1/2)", "metre^(1/2)"),
+            ("2 m s^-2", "metre second^-2"),
+            ("1/s", "1/second"),
+        ],
+    )
+    def test_numbers_allowed_in_units(self, expr, unit):
+        assert parse(expr).unit.content_string() == unit
+
+    @pytest.mark.parametrize("expr", ["2 °C", "20deg C", "5 degrees F", "3 ℃", "3 ℉"])
+    def test_celsius_and_fahrenheit_raise(self, expr):
+        # "2 °C" was read as 2 degree·coulomb.
+        with pytest.raises(QuantityParseError, match="Celsius or Fahrenheit"):
+            parse(expr)
+
+    @pytest.mark.parametrize("expr", ["2 °", "10 deg", "10 degrees"])
+    def test_plain_degrees_still_parse(self, expr):
+        assert parse(expr).unit.content_string() == "degree"
+
+    @pytest.mark.parametrize("sign", ["·", "⋅", "×"])
+    def test_product_signs(self, sign):
+        quantity = parse(f"2{sign}10^3 kg{sign}m")
+        assert (quantity.value.content_string(), quantity.unit.content_string()) == ("2*10^3", "kilogram*metre")
+
+    @pytest.mark.parametrize(
+        "expr, value, unit",
+        [
+            ("2~m", "2", "metre"),
+            (r"2~\mathrm{m}", "2", "metre"),
+            (r"2\,\mathrm{m}", "2", "metre"),
+            (r"\sqrt{2}~\text{m}", r"\sqrt{2}", "metre"),
+            (r"9.81~\mathrm{m}/\mathrm{s}^2", "9.81", "metre/second^2"),
+            (r"\frac{1}{2}~\mathrm{kg}", r"\frac{1}{2}", "kilogram"),
+        ],
+    )
+    def test_latex_spacing_and_upright_units(self, expr, value, unit):
+        # MathLive's "2~\mathrm{m}" raised; "2~m" was read as the value 2*m with no unit.
+        quantity = parse_quantity(expr, QuantityParams(is_latex=True))
+        assert (quantity.value.content_string(), quantity.unit.content_string()) == (value, unit)
+
     def test_preview_without_calls_is_unchanged(self):
         assert parse("2 kg + 3").value_latex == r"2 \cdot g \cdot k + 3"
 

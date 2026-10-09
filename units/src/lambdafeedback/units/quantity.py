@@ -31,6 +31,36 @@ _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
 _CALL = re.compile(r"([A-Za-z_]\w*)\s*\(")
 """A name followed by ``(``: a function call."""
+_PRODUCT_SIGNS = str.maketrans({"·": "*", "⋅": "*", "×": "*"})
+_CELSIUS_OR_FAHRENHEIT = re.compile(r"[℃℉]|(°|(?<![A-Za-z])deg(rees?)?)\s*[CF](?![A-Za-z])")
+"""Read as degree times coulomb (or farad) otherwise."""
+_LATEX_SPACE = re.compile(r"~|\\[,;: ]|\\q?quad\b")
+_LATEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|operatorname)\{([^{}]*)\}")
+
+
+def _normalise_latex(expr: str) -> str:
+    """LaTeX spacing (``~``, ``\\,``) as spaces and upright text (``\\mathrm{m}``) as plain text.
+
+    MathLive writes ``2~\\mathrm{m}``; the quantity grammar needs ``2 m``.
+    """
+    return _LATEX_UPRIGHT.sub(r"\1", _LATEX_SPACE.sub(" ", expr))
+
+
+def _has_stray_number(node: ExprNode) -> bool:
+    """Whether a unit subtree contains a number outside an exponent or the ``1`` of ``1/unit``.
+
+    Groups are not looked into: a bracketed group is kept whole (see
+    :meth:`PhysicalQuantity._rotate_until_root_is_split`).
+    """
+    if node.label == "NUMBER":
+        return True
+    if node.label == "GROUP":
+        return False
+    if node.label == "POWER":
+        return _has_stray_number(node.children[0])
+    if node.label == "SOLIDUS" and node.children[0].label == "NUMBER" and node.children[0].content == "1":
+        return _has_stray_number(node.children[1])
+    return any(_has_stray_number(child) for child in node.children)
 
 
 @dataclass(frozen=True)
@@ -186,6 +216,9 @@ class PhysicalQuantity:
             self.unit = root
         else:
             self.value = root
+        # e.g. "2 m 3 s" or "1 hour 30 minutes": the unit would contain a number.
+        if self.unit is not None and _has_stray_number(self.unit):
+            raise QuantityParseError(f"Cannot separate the value from the unit in {root.original!r}.")
 
     def _revert_content(self, node: ExprNode) -> list[str]:
         """Traversal action restoring the value's text as written, noting unit-like parts."""
@@ -292,15 +325,27 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
     """Read ``expr`` as a physical quantity (value and/or unit).
 
     ``name`` (e.g. ``"response"``) identifies the quantity in messages.
+    ``·``, ``⋅`` and ``×`` are read as ``*``. Alternative prefix spellings
+    (``μ``, ``deka``) need :func:`preprocess_quantity` first. With
+    ``params.is_latex``, LaTeX spacing and ``\\mathrm{...}``/``\\text{...}``
+    are read as plain spaces and text, so ``2~\\mathrm{m}`` is ``2 m``.
 
     Raises :class:`QuantityParseError` if ``expr`` can't be read as a
-    quantity (including a value SymPy can't parse), or
+    quantity (including a value SymPy can't parse, a number inside the unit,
+    or a temperature in degrees Celsius or Fahrenheit), or
     :class:`UnitConversionError` if its unit can't be converted to SI base
     units. Both are :class:`QuantityError`\\ s carrying ``expression`` and ``name``.
     """
+    if _CELSIUS_OR_FAHRENHEIT.search(expr):
+        raise QuantityParseError(
+            "Temperatures in degrees Celsius or Fahrenheit aren't supported; use kelvin.", expression=expr, name=name
+        )
+    text = expr.translate(_PRODUCT_SIGNS)
+    if params.is_latex:
+        text = _normalise_latex(text)
     parser = build_quantity_parser(params.unit_sets, params.strictness)
     try:
-        roots = parser.parse(parser.scan(expr.strip()))
+        roots = parser.parse(parser.scan(text.strip()))
         if len(roots) > 1:
             raise QuantityParseError("Parsed quantity does not have a single root.")
         return PhysicalQuantity(name, params, roots[0], parser)

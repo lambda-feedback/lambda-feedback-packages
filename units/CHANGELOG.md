@@ -32,6 +32,10 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - `nautical_miles` is recognised as the plural of `nautical_mile`. Before, only `nauticalmiles` was, and in natural mode `2 nautical_miles` parsed as 2 nautical_mile·second.
 - The comment in `data.py` said the symbols of `COMMON_UNITS` were not accepted. They always have been, and the docs now say so.
 - The value's LaTeX preview no longer splits a function call that contains unit symbols. `sin(2)` was previewed as `s \cdot in \cdot 2` and `sqrt(11)` as `\frac{1}{s} \cdot q \cdot r \cdot t \cdot 11`, while the value itself was parsed as the function call. The preview now matches the value.
+- A number inside the unit raises `QuantityParseError` ("Cannot separate the value from the unit"). Before, `2 m 3 s` gave the unit `metre 3 second`, with dimension `length*3*time`, and `1 hour 30 minutes` gave a dimension of time². Numbers in exponents (`m^2`) and the `1` of `1/s` are still accepted.
+- `°C`, `°F`, `deg C`, `℃` and `℉` raise `QuantityParseError` (temperatures are in kelvin only). Before, `2 °C` was read as 2 degree·coulomb.
+- `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
+- With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 
 ### Deprecated
 
