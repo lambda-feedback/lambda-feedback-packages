@@ -336,3 +336,29 @@ def test_apply_convention_raises_expression_parsing_error(expression):
 
     with pytest.raises(ExpressionParsingError):
         apply_convention(expression, "equal_precedence")
+
+
+class TestNumberForms:
+    def test_exponential_form_check_is_not_exponential_time(self):
+        # The number regex could match the empty string, and the check repeated it: 26 digits took >10 s.
+        from lambdafeedback.expression_parsing import is_complex_number_on_exponential_form
+
+        assert not is_complex_number_on_exponential_form("2*exp(" + "1" * 5000 + "x")
+
+    @pytest.mark.parametrize("string", ["", " ", "+"])
+    def test_nothing_is_not_a_cartesian_complex_number(self, string):
+        from lambdafeedback.expression_parsing import is_complex_number_on_cartesian_form
+
+        assert not is_complex_number_on_cartesian_form(string)
+
+    @pytest.mark.parametrize("string", ["1+2*I", "-1.5+2I", "3", "I", "2*I", "1e3+2*10^3*I"])
+    def test_cartesian_forms_still_match(self, string):
+        from lambdafeedback.expression_parsing import is_complex_number_on_cartesian_form
+
+        assert is_complex_number_on_cartesian_form(string)
+
+    def test_pattern_matcher_is_not_polynomial_time(self):
+        # Numbers separated only by spaces became adjacent slots that re-split long digit runs.
+        from lambdafeedback.expression_parsing import generate_arbitrary_number_pattern_matcher
+
+        assert not generate_arbitrary_number_pattern_matcher("1 2 3")("1" * 1000 + "x")

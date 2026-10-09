@@ -7,28 +7,37 @@ from collections.abc import Callable
 
 DEFAULT_SIGNIFICANT_FIGURES = 2
 
-NONNEGATIVE_NUMBER_REGEX = r"((0|[1-9]\d*)?(\.\d+)?(?<=\d)(e-?(0|[1-9]\d*))?)"
+# Never empty: an integer part and/or a fractional part. (A previous form
+# made both optional and checked for a digit with a lookbehind, which could
+# match an empty string after a digit; repeated, that backtracked
+# exponentially.)
+_MANTISSA = r"(?:(?:0|[1-9]\d*)(?:\.\d+)?|\.\d+)"
+
+NONNEGATIVE_NUMBER_REGEX = rf"({_MANTISSA}(?:e-?(?:0|[1-9]\d*))?)"
 """A non-negative decimal, optionally with an ``e`` exponent."""
 
-NUMBER_REGEX = r"(-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)( *(e|E|\*10\^|\*10\*\*)-?(0|[1-9]\d*))?)"
+NUMBER_REGEX = rf"(-?{_MANTISSA}(?: *(?:e|E|\*10\^|\*10\*\*)-?(?:0|[1-9]\d*))?)"
 """A decimal, optionally with an exponent written ``e``, ``E``, ``*10^`` or ``*10**``."""
+
+# Atomic, so a run of digits is never re-split between neighbouring numbers.
+_ATOMIC_NUMBER = rf"(?>{NUMBER_REGEX})"
+_CARTESIAN = re.compile(rf"{_ATOMIC_NUMBER}?\+?{_ATOMIC_NUMBER}?\*?I?")
+_EXPONENTIAL = re.compile(rf"{_ATOMIC_NUMBER}?\*?(?:E\^|E\*\*|exp)\(?{_ATOMIC_NUMBER}?\*?I\)?")
 
 
 def is_number(string: str) -> bool:
-    match = re.fullmatch(NUMBER_REGEX, string)
-    return match is not None and len(match.group(0)) > 0
+    return re.fullmatch(NUMBER_REGEX, string) is not None
 
 
 def is_complex_number_on_cartesian_form(string: str) -> bool:
-    """``a+b*I`` (either part may be missing)."""
+    """``a+b*I`` (either part may be missing, but not both)."""
     string = "".join(string.split())
-    return re.fullmatch(NUMBER_REGEX + r"?\+?" + NUMBER_REGEX + r"?\*?I?", string) is not None
+    return string not in ("", "+") and _CARTESIAN.fullmatch(string) is not None
 
 
 def is_complex_number_on_exponential_form(string: str) -> bool:
     """``a*E^(b*I)``, ``a*E**(b*I)`` or ``a*exp(b*I)``."""
-    string = "".join(string.split())
-    return re.fullmatch(NUMBER_REGEX + r"?\*?(E\^|E\*\*|exp)\(?" + NUMBER_REGEX + r"*\*?I\)?", string) is not None
+    return _EXPONENTIAL.fullmatch("".join(string.split())) is not None
 
 
 def escape_regex_reserved_characters(string: str) -> str:
@@ -53,7 +62,10 @@ def generate_arbitrary_number_pattern_matcher(string: str) -> Callable[[str], bo
     """
     non_numbers = []
     number_pattern = "(\\(" + NUMBER_REGEX + "\\))"
-    full_pattern = "(" + number_pattern + "|" + NONNEGATIVE_NUMBER_REGEX + ")"
+    # Atomic: once a number is matched, its digits aren't re-split. Otherwise a
+    # pattern whose numbers are only separated by spaces ("1 2 3", adjacent once
+    # spaces are removed) tries every split of a long digit run: polynomial time.
+    full_pattern = "(?>" + number_pattern + "|" + NONNEGATIVE_NUMBER_REGEX + ")"
     number = re.search(number_pattern, string)
     nonneg_number = re.search(NONNEGATIVE_NUMBER_REGEX, string)
     offset = 0
