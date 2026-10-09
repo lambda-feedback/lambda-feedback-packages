@@ -39,6 +39,8 @@ Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/expr
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/expression_parsing", from = "src" }]
+# The source distribution also carries the changelog and the tests.
+include = [{ path = "CHANGELOG.md", format = "sdist" }, { path = "tests", format = "sdist" }]
 
 # Resolve sibling packages from the monorepo during development; published
 # metadata keeps the plain requirements from [project.dependencies].

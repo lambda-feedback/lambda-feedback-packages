@@ -92,7 +92,9 @@ Parsing isn't thread-safe: it briefly changes process-wide warning
 filters. Parse from one thread at a time per process; one evaluation per
 process, as in a Lambda Feedback evaluation function, is fine.
 
-LaTeX nested more than 10 brackets deep is rejected: the LaTeX parser takes
+Number literals are limited to 1000 digits and exponents to ±1000
+(`MAX_NUMBER_DIGITS`, `MAX_NUMBER_EXPONENT`): larger ones take SymPy minutes
+to read. LaTeX nested more than 10 brackets deep is rejected: the LaTeX parser takes
 exponential time in nesting depth.
 
 Expressions are parsed unevaluated, but `simplify` (and any later
@@ -102,5 +104,5 @@ handling untrusted input.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE). The changelog, including migration notes, is
-in [CHANGELOG.md](CHANGELOG.md).
+MIT. See [LICENSE](https://github.com/m-messer/lambda-feedback-packages/blob/main/expression_parsing/LICENSE). The changelog, including migration notes, is
+in [CHANGELOG.md](https://github.com/m-messer/lambda-feedback-packages/blob/main/expression_parsing/CHANGELOG.md).

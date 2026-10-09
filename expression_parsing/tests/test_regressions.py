@@ -590,3 +590,14 @@ class TestLatexBackend:
 
     def test_ordinary_nesting_is_accepted(self):
         assert parse_latex(r"\left(\frac{\left(x+1\right)^{2}}{\left(x-1\right)^{3}}\right)^{\frac{1}{2}}", {})
+
+
+@pytest.mark.parametrize(("digits", "allowed"), [(1000, True), (1001, False), (1003, False)])
+def test_digit_limit_is_exact(digits, allowed):
+    # The integer check estimated digits from bit_length, letting 1001-1002 digits through.
+    config = parsing_params()
+    if allowed:
+        parse_expression("9" * digits, config)
+    else:
+        with pytest.raises(ExpressionParsingError, match="at most 1000"):
+            parse_expression("1" + "0" * (digits - 1), config)

@@ -71,6 +71,8 @@ MAX_NUMBER_DIGITS = 1000
 MAX_NUMBER_EXPONENT = 1000
 """Largest exponent (``1e1000``) a number may have, of either sign."""
 
+_TOO_MANY_DIGITS = 10**MAX_NUMBER_DIGITS  # the smallest integer with one digit too many
+
 _EXPONENT = re.compile(r"[eE]([+-]?)(\d+)")
 
 
@@ -135,11 +137,7 @@ def _check_code(code: str, expr: str) -> None:
 
     string_arguments: dict[int, str] = {}  # id(argument node) -> constructor name
     for node in ast.walk(tree):
-        if (
-            isinstance(node, ast.Constant)
-            and isinstance(node.value, int)
-            and node.value.bit_length() > MAX_NUMBER_DIGITS * 3.33  # log2(10): about that many decimal digits
-        ):
+        if isinstance(node, ast.Constant) and isinstance(node.value, int) and abs(node.value) >= _TOO_MANY_DIGITS:
             raise ExpressionParsingError(
                 f"A number has too many digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
             )
