@@ -26,6 +26,7 @@ _EXPONENTIAL = re.compile(rf"{_ATOMIC_NUMBER}?\*?(?:E\^|E\*\*|exp)\(?{_ATOMIC_NU
 
 
 def is_number(string: str) -> bool:
+    """True if ``string`` is exactly one number as matched by :data:`NUMBER_REGEX` (e.g. ``-1.5e3``, ``2*10^3``)."""
     return re.fullmatch(NUMBER_REGEX, string) is not None
 
 
