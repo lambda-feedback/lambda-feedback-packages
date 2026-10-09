@@ -187,5 +187,18 @@ class ExpressionParams:
         """A copy with some fields changed."""
         return replace(self, **changes)
 
+    # ``symbols`` is a read-only MappingProxyType, which can't be pickled (or deep-copied):
+    # store it as a dict and wrap it again. The fields are set directly rather than through
+    # __init__, so unpickling doesn't validate again or repeat deprecation warnings.
+    def __getstate__(self) -> dict[str, Any]:
+        state = dict(vars(self))
+        state["symbols"] = dict(self.symbols)
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        for name, value in state.items():
+            object.__setattr__(self, name, value)
+        object.__setattr__(self, "symbols", MappingProxyType(dict(state["symbols"])))
+
 
 _BOOL_FIELDS = tuple(f.name for f in fields(ExpressionParams) if f.type == "bool")

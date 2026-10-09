@@ -38,7 +38,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - Any whitespace between value and unit is a separator, including tabs, newlines, no-break and thin spaces, and zero-width characters are ignored. Before, `2\xa0m` (pasted with a no-break space) was the value `2\xa0m` with no unit.
 - Natural mode scans a long run of letters in linear time. It tried every prefix of the rest of the word at each position, which is cubic, so 5000 letters took minutes.
 - Input nested too deeply for the recursive steps (thousands of operators, such as `m*m*…*m`) raises `QuantityParseError`. Before, `RecursionError` escaped.
-- `PhysicalQuantity` leaves its parser out when pickled or deep-copied, and rebuilds it from the cache. The parser holds closures, so pickling always failed. (Pickling a quantity also needs `ExpressionParams` to be picklable; see that package.)
+- `PhysicalQuantity` leaves its parser out when pickled or deep-copied, and rebuilds it from the cache. The parser holds closures, so pickling always failed. This needs `lambdafeedback-expression-parsing` with picklable `ExpressionParams`.
 - `QuantityParamsError` can be unpickled. It used to raise `TypeError`, because unpickling called it with one argument instead of two.
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.

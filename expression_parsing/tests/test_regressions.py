@@ -433,3 +433,36 @@ class TestLatexEulerLetter:
         from lambdafeedback.expression_parsing import SymbolSpec
 
         assert parse_latex("E_{k} + 1", {"Ek": SymbolSpec("E_{k}")}) == "Ek + 1"
+
+
+class TestPickling:
+    """``symbols`` is a read-only mappingproxy, which pickle and deepcopy couldn't handle."""
+
+    def params(self):
+        return ExpressionParams(
+            symbols={"x": {"latex": r"\chi", "aliases": ["X"]}},
+            symbol_assumptions=(("f", "function"),),
+            elementary_functions=True,
+        )
+
+    def test_params_round_trip(self):
+        import pickle
+
+        params = self.params()
+        copy = pickle.loads(pickle.dumps(params))
+        assert copy == params
+        with pytest.raises(TypeError):
+            copy.symbols["y"] = None  # still read-only
+
+    def test_params_deepcopy(self):
+        import copy
+
+        params = self.params()
+        assert copy.deepcopy(params) == params
+
+    def test_config_round_trip_parses_the_same(self):
+        import pickle
+
+        config = SympyParsingConfig.from_params(self.params())
+        expected = parse_expression("f(x) + sin(x)", config)  # also fills the cached substitution_params
+        assert parse_expression("f(x) + sin(x)", pickle.loads(pickle.dumps(config))) == expected

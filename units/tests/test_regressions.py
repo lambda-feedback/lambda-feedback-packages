@@ -178,13 +178,25 @@ class TestPickling:
         copy.__setstate__(state)
         assert copy.parser is build_quantity_parser(quantity.params.unit_sets, quantity.params.strictness)
 
-    @pytest.mark.xfail(
-        reason="ExpressionParams.symbols is a mappingproxy, which can't be pickled (expression_parsing)",
-        raises=TypeError,
-        strict=True,
-    )
     def test_quantity_round_trips(self):
         import pickle
 
-        quantity = pickle.loads(pickle.dumps(parse("5 km/h")))
-        assert str(quantity.base_dimension) == "length/time"
+        quantity = parse("5 km/h")
+        copy = pickle.loads(pickle.dumps(quantity))
+        assert repr(copy) == repr(quantity)
+        assert str(copy.base_dimension) == "length/time" and copy.unit_factor == quantity.unit_factor
+
+    def test_quantity_deepcopy(self):
+        import copy
+
+        assert repr(copy.deepcopy(parse("5 km/h"))) == "PhysicalQuantity(value='5', unit='kilometre/hour')"
+
+    def test_legacy_params_round_trip_without_warning_again(self):
+        import pickle
+        import warnings
+
+        with pytest.deprecated_call():
+            params = QuantityParams(legacy_preprocessing=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            assert pickle.loads(pickle.dumps(params)) == params
