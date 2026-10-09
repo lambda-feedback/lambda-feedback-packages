@@ -36,6 +36,8 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - `°C`, `°F`, `deg C`, `℃` and `℉` raise `QuantityParseError` (temperatures are in kelvin only). Before, `2 °C` was read as 2 degree·coulomb.
 - `Ω` is recognised as the ohm's symbol in both modes, with prefixes (`2 kΩ`, `2 MΩ`). Before, strict mode only accepted `O`, and the only prefixed form in either mode was `kO`. `O` still works.
 - Any whitespace between value and unit is a separator, including tabs, newlines, no-break and thin spaces, and zero-width characters are ignored. Before, `2\xa0m` (pasted with a no-break space) was the value `2\xa0m` with no unit.
+- Natural mode scans a long run of letters in linear time. It tried every prefix of the rest of the word at each position, which is cubic, so 5000 letters took minutes.
+- Input nested too deeply for the recursive steps (thousands of operators, such as `m*m*…*m`) raises `QuantityParseError`. Before, `RecursionError` escaped.
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 

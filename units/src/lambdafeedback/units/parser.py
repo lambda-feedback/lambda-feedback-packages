@@ -173,11 +173,15 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
         units = {**dictionaries.prefixed_units, **dictionaries.units}
         units_end = {**dictionaries.prefixed_units_end, **dictionaries.units_end}
         unit_chars = set("".join([*units, *units_end]))
+        # Only this much of the input can matter: no spelling is longer. Looking further
+        # made scanning a long run of letters cubic in its length.
+        window = max(map(len, [*units, *units_end]), default=0) + 1
 
         def starts_with_unit(string: str) -> tuple[str | None, str | None]:
             """Within the leading run of unit characters: a whole-word form, else the longest prefix that is a unit."""
-            end = next((k for k, char in enumerate(string) if char not in unit_chars), len(string))
-            word = string[:end]
+            head = string[:window]
+            end = next((k for k, char in enumerate(head) if char not in unit_chars), len(head))
+            word = head[:end]
             if not word:
                 return None, None
             if word in units_end:

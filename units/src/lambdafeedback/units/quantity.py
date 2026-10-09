@@ -53,15 +53,20 @@ def _has_stray_number(node: ExprNode) -> bool:
     Groups are not looked into: a bracketed group is kept whole (see
     :meth:`PhysicalQuantity._rotate_until_root_is_split`).
     """
-    if node.label == "NUMBER":
-        return True
-    if node.label == "GROUP":
-        return False
-    if node.label == "POWER":
-        return _has_stray_number(node.children[0])
-    if node.label == "SOLIDUS" and node.children[0].label == "NUMBER" and node.children[0].content == "1":
-        return _has_stray_number(node.children[1])
-    return any(_has_stray_number(child) for child in node.children)
+    stack = [node]  # iterative: a long unit such as m*m*...*m is a deep tree
+    while stack:
+        node = stack.pop()
+        if node.label == "NUMBER":
+            return True
+        if node.label == "GROUP":
+            continue
+        if node.label == "POWER":
+            stack.append(node.children[0])
+        elif node.label == "SOLIDUS" and node.children[0].label == "NUMBER" and node.children[0].content == "1":
+            stack.append(node.children[1])
+        else:
+            stack.extend(node.children)
+    return False
 
 
 @dataclass(frozen=True)
@@ -361,3 +366,6 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
         raise QuantityParseError(str(exc), expression=expr, name=name) from exc
     except ExpressionParsingError as exc:
         raise QuantityParseError(f"Could not read the {name}'s value: {exc}", expression=expr, name=name) from exc
+    except RecursionError as exc:
+        # Thousands of operators (m*m*...*m) nest deeper than the recursive steps (here and in SymPy) allow.
+        raise QuantityParseError(f"The {name} is too long or too deeply nested.", expression=expr, name=name) from exc

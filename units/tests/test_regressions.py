@@ -133,6 +133,22 @@ class TestParsing:
     def test_zero_width_characters_are_ignored(self):
         assert parse("﻿2 m​").unit.content_string() == "metre"
 
+    def test_long_run_of_letters_scans_quickly(self):
+        # Natural mode tried every prefix of the rest of the word at each position:
+        # cubic in its length, so 5000 letters took minutes.
+        import time
+
+        start = time.perf_counter()
+        with pytest.raises(QuantityParseError):
+            parse("x" * 5000 + " m")
+        assert time.perf_counter() - start < 5
+
+    @pytest.mark.parametrize("expr", ["2 " + "m*" * 2000 + "m", "2 " + " ".join(["m"] * 1500), "kg" * 3000])
+    def test_deeply_nested_input_raises_quantity_parse_error(self, expr):
+        # RecursionError escaped from the recursive steps.
+        with pytest.raises(QuantityParseError, match="too long or too deeply nested"):
+            parse(expr)
+
     def test_preview_without_calls_is_unchanged(self):
         assert parse("2 kg + 3").value_latex == r"2 \cdot g \cdot k + 3"
 
