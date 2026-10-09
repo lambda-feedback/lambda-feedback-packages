@@ -6,9 +6,9 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
-from latex2sympy2_extended import NormalizationConfig, latex2sympy
-from latex2sympy2_extended.latex2sympy2 import ConversionConfig
-from sympy import Basic, FiniteSet, Float, Function, Rational, Symbol
+from latex2sympy2_extended import NormalizationConfig, normalize_latex
+from latex2sympy2_extended.latex2sympy2 import ConversionConfig, _Latex2Sympy
+from sympy import Basic, FiniteSet, Float, Function, Rational, Symbol, binomial
 from sympy.core.function import AppliedUndef
 from sympy.core.parameters import evaluate
 from sympy.parsing.sympy_parser import implicit_multiplication_application, standard_transformations
@@ -142,6 +142,20 @@ def postprocess_E(expr: Any, replacements: Mapping[str, str]) -> Any:  # noqa: N
     return expr.xreplace(subs)
 
 
+class _Converter(_Latex2Sympy):
+    """latex2sympy2_extended's converter, building ``\\binom`` unevaluated.
+
+    It built ``sympy.binomial`` evaluated, so ``\\binom{100000000}{50000000}``
+    computed a 30-million-digit number. (Its other functions, ``factorial``
+    included, are already unevaluated; a global ``evaluate(False)`` would
+    change too much else, e.g. mixed numbers.) This is the private class its
+    ``latex2sympy()`` wraps, so the dependency is pinned below 2.0.
+    """
+
+    def convert_binom(self, binom: Any) -> Any:
+        return binomial(self.convert_expr(binom.upper), self.convert_expr(binom.lower), evaluate=False)
+
+
 # latex2sympy2_extended is tuned for grading free-form answers; keep it literal:
 # case-sensitive symbols, 2\frac{1}{2} read as a mixed number, "=" and "\in"
 # as relations (never assignments), and only the basic LaTeX normalisation
@@ -160,7 +174,7 @@ _NORMALISATION = NormalizationConfig(
 def _latex2sympy(latex: str) -> Any:
     """latex2sympy2_extended with ``E``/``e``/``\\gamma`` as plain symbols and decimals as exact rationals."""
     protected, replacements = preprocess_E(latex)
-    parsed = latex2sympy(protected, normalization_config=_NORMALISATION, conversion_config=_CONVERSION)
+    parsed = _Converter(config=_CONVERSION).parse(normalize_latex(protected, _NORMALISATION))
     if isinstance(parsed, list):
         parsed = parsed.pop()
     if isinstance(parsed, Basic):

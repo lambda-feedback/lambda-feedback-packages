@@ -613,3 +613,12 @@ def test_integer_functions_are_not_computed_while_parsing(response):
     parsed = parse_expression(response, parsing_params(elementary_functions=True))
     assert time.monotonic() - start < 2
     assert str(parsed).startswith("factorial(")
+
+
+def test_latex_binomial_is_not_computed_while_parsing():
+    # latex2sympy2_extended built \binom evaluated: this computed a 30-million-digit number.
+    import time
+
+    start = time.monotonic()
+    assert parse_latex(r"\binom{100000000}{50000000}", {}) == "binomial(100000000, 50000000)"
+    assert time.monotonic() - start < 2
