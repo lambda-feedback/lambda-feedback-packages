@@ -21,6 +21,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Added
 
+- `PhysicalQuantity.base_dimension`: the dimension without the unit's factor (`5 km/h` gives `length/time`, where `dimension` is `10**3*length/((3600*time))`), and `same_dimension(a, b)` to compare two quantities' dimensions.
 - `QuantityParamsError`, `AnyUnit` and `__version__` are exported.
 - `PhysicalQuantity` declares typed attributes (SymPy `Basic` for the SI forms) and has a readable `repr`, e.g. `PhysicalQuantity(value='5', unit='kilometre/hour')`.
 - `README.md` documents usage, parameters, unit sets, errors and known limitations.

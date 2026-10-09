@@ -174,11 +174,24 @@ class TestSanitiseLatex:
 
 
 class TestLatexEquations:
-    def test_equation_parses_to_eq_on_any_latex2sympy_build(self):
-        # PyPI's latex2sympy2 reads "x = 2" as an assignment (returning 2); the
-        # lambda-feedback fork compareExpressions uses returns Eq(x, 2).
-        assert parse_latex("x = 2", {}) == "Eq(x, 2)"
-        assert parse_latex(r"\frac{x}{2} = y + 1", {}) == "Eq(x/2, y + 1)"
+    def test_equation_parses_on_any_latex2sympy_build(self):
+        # PyPI's latex2sympy2 reads "x = 2" as an assignment (returning 2).
+        assert parse_latex("x = 2", {}) == "x = 2"
+        assert parse_latex(r"\frac{x}{2} = y + 1", {}) == "x/2 = y + 1"
+
+    @pytest.mark.parametrize("elementary_functions", [False, True])
+    def test_equation_round_trips_through_parse_expression(self, elementary_functions):
+        # "Eq(x, 2)" didn't: with elementary_functions the E of Eq is Euler's number.
+        params = ExpressionParams(elementary_functions=elementary_functions)
+        text = parse_latex(r"y = 2x + 1", params.symbols)
+        parsed = parse_expression(
+            preprocess_expression("response", text, params), SympyParsingConfig.from_params(params)
+        )
+        assert str(parsed) == "Eq(y, 2*x + 1)"
+
+    def test_simplify_keeps_an_equation(self):
+        # Simplifying the Eq as a whole turned "x = x" into "True".
+        assert parse_latex("x = x", {}, simplify=True) == "x = x"
 
     def test_more_than_one_equals_sign_is_rejected(self):
         with pytest.raises(LatexParseError, match="=") as info:
@@ -391,3 +404,32 @@ def test_unicode_operators_parse_like_ascii(unicode, ascii):
     config = SympyParsingConfig.from_params(params)
     parse = lambda text: parse_expression(preprocess_expression("response", text, params), config)  # noqa: E731
     assert parse(unicode) == parse(ascii)
+
+
+class TestLatexEulerLetter:
+    """latex2sympy2 read E/e inconsistently, and the E/e workaround corrupted commands and leaked its placeholder."""
+
+    @pytest.mark.parametrize(
+        ("latex", "expected"),
+        [
+            ("2E", "2*E"),  # read as an empty exponent: 2
+            (r"\epsilon E", "E*epsilon"),  # E dropped
+            ("e_1 e_2", "e_1*e_2"),  # read as Euler's number: E
+            ("x_{E}", "x_E"),  # placeholder leaked: x_a
+            (r"E_0 \times 2", "2*E_0"),  # \times corrupted to \timas: failed
+            ("e^{x}", "e**x"),  # Euler's number is left to parse_expression's elementary_functions
+        ],
+    )
+    def test_e_and_E_are_symbols(self, latex, expected):
+        assert parse_latex(latex, {}) == expected
+
+    @pytest.mark.parametrize("latex", ["2E5", "2e5", "1.5e-3", "1.5E-3"])
+    def test_scientific_notation_is_a_number(self, latex):
+        assert parse_latex(latex, {}) == str(
+            parse_expression(latex.replace("e", "E").replace("E", "e"), parsing_params())
+        )
+
+    def test_task_symbols_with_e_in_their_latex(self):
+        from lambdafeedback.expression_parsing import SymbolSpec
+
+        assert parse_latex("E_{k} + 1", {"Ek": SymbolSpec("E_{k}")}) == "Ek + 1"

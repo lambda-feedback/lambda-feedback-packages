@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from sympy import Basic
+from sympy import Basic, simplify
 
 from lambdafeedback.expression_parsing import (
     AbsoluteValueNotationError,
@@ -29,6 +29,7 @@ from .tags import QuantityTag
 
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
+_DIMENSION_NAMES = frozenset(unit.dimension for unit in SI_BASE_UNITS)
 _CALL = re.compile(r"([A-Za-z_]\w*)\s*\(")
 """A name followed by ``(``: a function call."""
 _PRODUCT_SIGNS = str.maketrans({"·": "*", "⋅": "*", "×": "*", "​": None, "‌": None, "‍": None, "﻿": None})
@@ -67,6 +68,12 @@ def _has_stray_number(node: ExprNode) -> bool:
         else:
             stack.extend(node.children)
     return False
+
+
+def _without_factor(dimension: Basic) -> Basic:
+    """The dimension with its numeric factor removed: ``10**3*length/(3600*time)`` → ``length/time``."""
+    factor = dimension.subs({symbol: 1 for symbol in dimension.free_symbols if str(symbol) in _DIMENSION_NAMES})
+    return simplify(dimension / factor)
 
 
 @dataclass(frozen=True)
@@ -113,7 +120,10 @@ class PhysicalQuantity:
             set of them for a value such as ``{1, 2}``.
         standard_unit: the unit in SI base units without its factor.
         expanded_unit: the unit in SI base units.
-        dimension: the unit's dimension (e.g. ``length/time``), ``1`` without a unit.
+        dimension: the unit's dimension, keeping the unit's factor (``km/h``
+            gives ``10**3*length/(3600*time)``), ``1`` without a unit.
+        base_dimension: the dimension without the factor (``length/time``);
+            see :func:`same_dimension`.
         unit_factor: the numeric factor between the unit and SI base units.
         parsing_config: the SymPy parsing configuration used.
     """
@@ -133,6 +143,7 @@ class PhysicalQuantity:
     standard_unit: Basic | None
     expanded_unit: Basic | None
     dimension: Basic
+    base_dimension: Basic
     unit_factor: Basic
 
     def __init__(self, name: str, params: QuantityParams, ast_root: ExprNode, parser: SLRParser) -> None:
@@ -164,6 +175,7 @@ class PhysicalQuantity:
             self.dimension,
             self.unit_factor,
         ) = self._all_forms()
+        self.base_dimension = _without_factor(self.dimension)
 
     def __repr__(self) -> str:
         value = None if self.value is None else self.value.content_string()
@@ -369,3 +381,13 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
     except RecursionError as exc:
         # Thousands of operators (m*m*...*m) nest deeper than the recursive steps (here and in SymPy) allow.
         raise QuantityParseError(f"The {name} is too long or too deeply nested.", expression=expr, name=name) from exc
+
+
+def same_dimension(first: PhysicalQuantity, second: PhysicalQuantity) -> bool:
+    """Whether two quantities have the same dimension, whatever their units' factors.
+
+    ``5 km/h`` and ``3 m/s`` have the same dimension (``length/time``); so do
+    ``1 L`` and ``1 m^3``. Quantities without units are dimensionless, as are
+    angles (``2 deg`` has the same dimension as ``2``).
+    """
+    return bool(simplify(first.base_dimension - second.base_dimension) == 0)

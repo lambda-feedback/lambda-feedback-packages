@@ -25,7 +25,7 @@ old ANTLR runtime. The import root is `lambdafeedback.units`.
 ## Quick start
 
 ```python
-from lambdafeedback.units import QuantityParams, parse_quantity
+from lambdafeedback.units import QuantityParams, parse_quantity, same_dimension
 
 q = parse_quantity("5 km/h", QuantityParams())
 q  # PhysicalQuantity(value='5', unit='kilometre/hour')
@@ -36,7 +36,10 @@ q.standard_unit  # metre/second
 q.unit_factor  # 5/18
 q.latex  # 5~\frac{\mathrm{kilometre}}{\mathrm{hour}}
 
-parse_quantity("9.81 m/s^2", QuantityParams()).dimension  # length/time**2
+q.base_dimension  # length/time
+
+same_dimension(q, parse_quantity("3 m/s", QuantityParams()))  # True
+same_dimension(q, parse_quantity("3 m", QuantityParams()))  # False
 ```
 
 Either part may be missing: `parse_quantity("kg", ...)` has `value is None`, and
@@ -64,7 +67,8 @@ parse_quantity(text, params)  # PhysicalQuantity(value='2', unit='micrometre')
 | `standard_unit` | The unit in SI base units, without its numeric factor. |
 | `expanded_unit` | The unit in SI base units, with its factor. |
 | `unit_factor` | The factor between the unit and SI base units. |
-| `dimension` | The unit in terms of `length`, `mass`, `time`, `electric_current`, `temperature`, `amount_of_substance` and `luminous_intensity`. It keeps the unit's factor (`km/h` gives `5*length/(18*time)`), so compare dimensions with that factor removed. |
+| `base_dimension` | The unit's dimension in terms of `length`, `mass`, `time`, `electric_current`, `temperature`, `amount_of_substance` and `luminous_intensity` (`km/h` gives `length/time`). `1` for a quantity without a unit, and for angles. Compare two quantities with `same_dimension(a, b)`. |
+| `dimension` | The same, but keeping the unit's factor: `km/h` gives `10**3*length/((3600*time))`. |
 | `value_latex`, `unit_latex`, `latex` | LaTeX previews. |
 | `reverted_units` | `RevertedUnit(before, marked, after)` records for unit-like text that was read as part of the value (e.g. `kg` in `2 kg + 3`). |
 

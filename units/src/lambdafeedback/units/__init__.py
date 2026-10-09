@@ -4,7 +4,8 @@ Typical use::
 
     params = QuantityParams.from_dict(evaluation_params)
     quantity = parse_quantity("9.81 m/s^2", params)
-    quantity.value, quantity.unit, quantity.dimension, quantity.standard_value
+    quantity.value, quantity.unit, quantity.base_dimension, quantity.standard_value
+    same_dimension(quantity, parse_quantity("1 N/kg", params))  # True
 
 Extracted from compareExpressions; unit-like text read as part of a value is
 reported as :class:`RevertedUnit` facts in ``quantity.reverted_units``.
@@ -34,7 +35,7 @@ from .errors import QuantityError, QuantityParamsError, QuantityParseError, Unit
 from .params import QuantityParams, Strictness
 from .parser import build_quantity_parser
 from .preprocessing import preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
-from .quantity import PhysicalQuantity, RevertedUnit, parse_quantity
+from .quantity import PhysicalQuantity, RevertedUnit, parse_quantity, same_dimension
 from .tags import QuantityTag
 
 try:
@@ -70,6 +71,7 @@ __all__ = [
     "parse_quantity",
     "preprocess_legacy",
     "preprocess_quantity",
+    "same_dimension",
     "transform_prefixes_to_standard",
     "units_in",
 ]

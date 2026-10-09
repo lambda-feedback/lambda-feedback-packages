@@ -20,6 +20,7 @@ from lambdafeedback.units import (
     build_quantity_parser,
     parse_quantity,
     preprocess_quantity,
+    same_dimension,
     units_in,
 )
 
@@ -128,6 +129,53 @@ class TestData:
 
 def _si_value(text):
     return parse_quantity(text, QuantityParams()).standard_value
+
+
+class TestDimensions:
+    @pytest.mark.parametrize(
+        "text, base_dimension",
+        [
+            ("5 km/h", "length/time"),
+            ("kg", "mass"),
+            ("10 N", "length*mass/time**2"),
+            ("1 L", "length**3"),
+            ("2 m^(1/2)", "sqrt(length)"),
+            ("2 kΩ", "length**2*mass/(electric_current**2*time**3)"),
+            ("10 deg", "1"),
+            ("2 x", "1"),
+        ],
+    )
+    def test_base_dimension_drops_the_factor(self, text, base_dimension):
+        quantity = parse_quantity(text, QuantityParams())
+        assert str(quantity.base_dimension) == base_dimension
+
+    def test_dimension_keeps_the_factor(self):
+        quantity = parse_quantity("5 km/h", QuantityParams())
+        assert simplify(quantity.dimension / quantity.base_dimension) == Rational(5, 18)
+
+    @pytest.mark.parametrize(
+        "left, right",
+        [
+            ("5 km/h", "3 m/s"),
+            ("1 mi/h", "2 knot"),
+            ("1 L", "1 m^3"),
+            ("1 dm^3", "2 gal"),
+            ("1 N", "1 kg m/s^2"),
+            ("1 J", "1 eV"),
+            ("1 Hz", "1/s"),
+            ("2 m^0.5", "3 m^(1/2)"),
+            ("10 deg", "2"),
+            ("kg", "3 lb"),
+        ],
+    )
+    def test_same_dimension(self, left, right):
+        params = QuantityParams()
+        assert same_dimension(parse_quantity(left, params), parse_quantity(right, params))
+
+    @pytest.mark.parametrize("left, right", [("1 m", "1 s"), ("1 J", "1 N"), ("1 m^2", "1 m"), ("1 kg", "2")])
+    def test_different_dimension(self, left, right):
+        params = QuantityParams()
+        assert not same_dimension(parse_quantity(left, params), parse_quantity(right, params))
 
 
 class TestConversions:
