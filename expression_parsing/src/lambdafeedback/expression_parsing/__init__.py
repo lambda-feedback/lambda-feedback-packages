@@ -43,7 +43,7 @@ from .preprocessing import (
     is_multiple_answers_wrapper,
     preprocess_expression,
 )
-from .substitution import substitute, substitute_input_symbols, substitutions_sort_key
+from .substitution import normalise_unicode_operators, substitute, substitute_input_symbols, substitutions_sort_key
 from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
 
 __all__ = [
@@ -73,6 +73,7 @@ __all__ = [
     "is_multiple_answers_wrapper",
     "is_number",
     "latex_symbols",
+    "normalise_unicode_operators",
     "parse_expression",
     "parse_latex",
     "parse_symbol_assumptions",

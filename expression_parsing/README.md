@@ -47,7 +47,9 @@ The pipeline has three steps:
 3. **`parse_expression`** applies the implicit-multiplication `convention`,
    Greek letters and function names, and returns a SymPy expression. A
    response that stands for several answers (`{a, b}` or `±`) gives a `set`,
-   and `a = b` gives an unevaluated `Equality`.
+   and `a = b` gives an unevaluated `Equality`. Greek letter names are
+   recognised inside words, so `2pir` is 2πr (and `spin` is s·π·n). Unicode
+   operators (`−`, `×`, `÷`, `x²`) are read as their ASCII forms.
 
 ## Errors
 

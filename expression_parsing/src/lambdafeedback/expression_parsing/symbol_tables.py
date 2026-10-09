@@ -118,3 +118,20 @@ UNICODE_DASHES = (
     "﹣",  # SMALL HYPHEN-MINUS
     "－",  # FULLWIDTH HYPHEN-MINUS
 )
+
+UNICODE_OPERATORS: dict[str, str] = {
+    **dict.fromkeys(UNICODE_DASHES, "-"),
+    "×": "*",  # MULTIPLICATION SIGN
+    "·": "*",  # MIDDLE DOT
+    "⋅": "*",  # DOT OPERATOR
+    "∙": "*",  # BULLET OPERATOR
+    "÷": "/",  # DIVISION SIGN
+    "∕": "/",  # DIVISION SLASH
+}
+"""Unicode operators (as typed on phones or pasted from documents) and their ASCII forms."""
+
+SUPERSCRIPTS: dict[str, str] = {
+    "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9",
+    "⁻": "-", "⁺": "+",
+}  # fmt: skip
+"""Superscript characters; a run of them is an exponent (``x²`` is ``x**(2)``)."""

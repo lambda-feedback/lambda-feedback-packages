@@ -362,3 +362,32 @@ class TestNumberForms:
         from lambdafeedback.expression_parsing import generate_arbitrary_number_pattern_matcher
 
         assert not generate_arbitrary_number_pattern_matcher("1 2 3")("1" * 1000 + "x")
+
+
+@pytest.mark.parametrize(("response", "character"), [("√x", "√"), ("½", "½"), ("2∠x", "∠")])
+def test_unreadable_characters_are_reported_as_unrecognised(response, character):
+    # They used to fail as "A string or other literal is not allowed", which the learner didn't write.
+    with pytest.raises(ExpressionParsingError, match=re.escape(f"Unrecognised character {character!r}")):
+        parse_expression(response, parsing_params())
+
+
+@pytest.mark.parametrize(
+    ("unicode", "ascii"),
+    [
+        ("x − 1", "x - 1"),
+        ("x – 1", "x - 1"),
+        ("2×3", "2*3"),
+        ("6÷2", "6/2"),
+        ("2·x", "2*x"),
+        ("2x² + 3x − 1", "2x**2 + 3x - 1"),
+        ("x⁻¹", "x**(-1)"),
+        ("x^²", "x**2"),
+        ("(x+1)³", "(x+1)**3"),
+        ("sin²(x)", "sin(x)**2"),
+    ],
+)
+def test_unicode_operators_parse_like_ascii(unicode, ascii):
+    params = ExpressionParams(elementary_functions=True)
+    config = SympyParsingConfig.from_params(params)
+    parse = lambda text: parse_expression(preprocess_expression("response", text, params), config)  # noqa: E731
+    assert parse(unicode) == parse(ascii)

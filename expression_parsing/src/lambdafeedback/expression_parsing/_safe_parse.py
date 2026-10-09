@@ -111,7 +111,22 @@ def _check_code(code: str, expr: str) -> None:
         if isinstance(node, ast.Constant) and not isinstance(node.value, int | float | complex | bool | None):
             constructor = string_arguments.get(id(node))
             if not (isinstance(node.value, str) and constructor and _allowed_string(constructor, node.value)):
+                character = _unreadable_character(constructor, node.value)
+                if character is not None:
+                    # SymPy wrapped a character Python can't read (e.g. '−', '×', the '²' of 'x²').
+                    raise ExpressionParsingError(f"Unrecognised character {character!r} in {expr!r}", expression=expr)
                 raise reject("A string or other literal")
+
+
+def _unreadable_character(constructor: str | None, value: object) -> str | None:
+    """For a symbol name or number SymPy generated, the first character that makes it invalid."""
+    if not isinstance(value, str):
+        return None
+    if constructor in _NAME_CONSTRUCTORS:
+        return next((char for char in value if not f"a{char}".isidentifier()), None)
+    if constructor in _NUMBER_CONSTRUCTORS:
+        return next((char for char in value if not _NUMBER_STRING.fullmatch(char)), None)
+    return None
 
 
 def safe_parse_expr(

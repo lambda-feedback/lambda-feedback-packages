@@ -2,11 +2,19 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from .symbol_tables import ELEMENTARY_FUNCTIONS, EMBEDDABLE_FUNCTION_NAMES, GREEK_SYMBOLS, UNICODE_DASHES
+from .symbol_tables import (
+    ELEMENTARY_FUNCTIONS,
+    EMBEDDABLE_FUNCTION_NAMES,
+    GREEK_SYMBOLS,
+    SUPERSCRIPTS,
+    UNICODE_DASHES,
+    UNICODE_OPERATORS,
+)
 
 if TYPE_CHECKING:
     from .params import ExpressionParams
@@ -139,6 +147,22 @@ def unicode_dash_substitutions(expr: str) -> list[tuple[str, str]]:
     return [(dash, "-") for dash in UNICODE_DASHES if dash in expr]
 
 
+_UNICODE_OPERATOR_TABLE = str.maketrans(UNICODE_OPERATORS)
+# Including a redundant ^ or ** before it (x^²).
+_SUPERSCRIPT_RUN = re.compile(rf"(?:\^|\*\*)? *([{''.join(SUPERSCRIPTS)}]+)")
+
+
+def normalise_unicode_operators(expr: str) -> str:
+    """Write Unicode operators in ASCII: ``−`` → ``-``, ``×``/``·`` → ``*``, ``÷`` → ``/``, ``x²`` → ``x**(2)``.
+
+    Only operators with one unambiguous meaning (see
+    :data:`UNICODE_OPERATORS` and :data:`SUPERSCRIPTS`); others, such as
+    ``√`` or ``½``, are left for parsing to report.
+    """
+    expr = expr.translate(_UNICODE_OPERATOR_TABLE)
+    return _SUPERSCRIPT_RUN.sub(lambda run: "**(" + "".join(SUPERSCRIPTS[c] for c in run.group(1)) + ")", expr)
+
+
 def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParams) -> list[str]:
     """Replace symbol aliases (and related spellings) with symbol codes.
 
@@ -146,8 +170,10 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
     text, and (with ``elementary_functions``) function and Greek aliases;
     ``lambda`` becomes ``lamda``, a Python keyword's usual stand-in (other
     keywords are handled when parsing). Longer originals take precedence.
+    Unicode operators are written in ASCII first (see
+    :func:`normalise_unicode_operators`).
     """
-    exprs = [exprs] if isinstance(exprs, str) else list(exprs)
+    exprs = [normalise_unicode_operators(expr) for expr in ([exprs] if isinstance(exprs, str) else exprs)]
 
     substitutions: list[Substitution] = [(expr, expr) for expr in params.reserved_keywords]
     substitutions += [(expr, expr) for expr in params.unsplittable_symbols]
