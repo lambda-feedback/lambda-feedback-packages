@@ -172,6 +172,30 @@ def _latex2sympy(latex: str) -> Any:
     return postprocess_E(parsed, replacements)
 
 
+MAX_LATEX_NESTING = 10
+"""Deepest bracket nesting ``parse_latex`` accepts (``(``, ``[``, ``{`` combined).
+
+latex2sympy2_extended's parser takes exponential time in the nesting depth
+of brackets: 15 nested ``{`` take seconds and 20 take most of a minute.
+Real answers rarely nest more than 3 or 4 deep.
+"""
+
+
+def _check_nesting(latex: str) -> None:
+    depth = deepest = 0
+    for char in latex:
+        if char in "([{":
+            depth += 1
+            deepest = max(deepest, depth)
+        elif char in ")]}":
+            depth -= 1
+    if deepest > MAX_LATEX_NESTING:
+        raise LatexParseError(
+            f"Brackets are nested {deepest} deep; at most {MAX_LATEX_NESTING} levels are supported.",
+            expression=latex,
+        )
+
+
 def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool = False) -> str:
     """Parse LaTeX into a SymPy-syntax string, mapping task symbols to their codes.
 
@@ -180,7 +204,8 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     ``{a, b}``, and an equation gives ``lhs = rhs`` (each side simplified
     separately with ``simplify``). The result is text for
     :func:`parse_expression`. Raises :class:`LatexParseError` if the
-    response or a symbol's LaTeX can't be parsed.
+    response or a symbol's LaTeX can't be parsed, or if brackets are nested
+    more than :data:`MAX_LATEX_NESTING` deep.
     """
     substitutions: dict[Any, Any] = {}
 

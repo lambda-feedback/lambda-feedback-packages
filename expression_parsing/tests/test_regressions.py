@@ -569,3 +569,18 @@ class TestLatexBackend:
         out = parse_latex(r"2 \pm \theta, -e", {})
         assert out == "{-e, 2 - theta, theta + 2}"
         assert len(parse_expression(out, parsing_params())) == 3
+
+    @pytest.mark.parametrize(
+        "latex", ["{" * 20 + "x" + "}" * 20, "(" * 100 + "x" + ")" * 100, "x^{" * 30 + "2" + "}" * 30]
+    )
+    def test_deep_nesting_is_rejected_quickly(self, latex):
+        # latex2sympy2_extended's parser is exponential in nesting depth: 20 nested { took ~40 s.
+        import time
+
+        start = time.monotonic()
+        with pytest.raises(LatexParseError, match="nested"):
+            parse_latex(latex, {})
+        assert time.monotonic() - start < 1
+
+    def test_ordinary_nesting_is_accepted(self):
+        assert parse_latex(r"\left(\frac{\left(x+1\right)^{2}}{\left(x-1\right)^{3}}\right)^{\frac{1}{2}}", {})

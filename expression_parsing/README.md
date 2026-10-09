@@ -92,6 +92,9 @@ Parsing isn't thread-safe: it briefly changes process-wide warning
 filters. Parse from one thread at a time per process; one evaluation per
 process, as in a Lambda Feedback evaluation function, is fine.
 
+LaTeX nested more than 10 brackets deep is rejected: the LaTeX parser takes
+exponential time in nesting depth.
+
 Expressions are parsed unevaluated, but `simplify` (and any later
 evaluation, such as comparing answers) computes: `9**9**9` would then take
 practically forever. Run evaluation with a time or memory limit when
