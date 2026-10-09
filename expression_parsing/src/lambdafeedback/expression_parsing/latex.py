@@ -188,7 +188,7 @@ def _check_nesting(latex: str) -> None:
             depth += 1
             deepest = max(deepest, depth)
         elif char in ")]}":
-            depth -= 1
+            depth = max(depth - 1, 0)  # stray closers mustn't hide the nesting after them
     if deepest > MAX_LATEX_NESTING:
         raise LatexParseError(
             f"Brackets are nested {deepest} deep; at most {MAX_LATEX_NESTING} levels are supported.",
@@ -207,6 +207,7 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     response or a symbol's LaTeX can't be parsed, or if brackets are nested
     more than :data:`MAX_LATEX_NESTING` deep.
     """
+    _check_nesting(response)
     substitutions: dict[Any, Any] = {}
 
     expanded = _MP_RE.sub("minus_plus", _PM_RE.sub("plus_minus", response))

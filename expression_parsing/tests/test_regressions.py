@@ -571,7 +571,13 @@ class TestLatexBackend:
         assert len(parse_expression(out, parsing_params())) == 3
 
     @pytest.mark.parametrize(
-        "latex", ["{" * 20 + "x" + "}" * 20, "(" * 100 + "x" + ")" * 100, "x^{" * 30 + "2" + "}" * 30]
+        "latex",
+        [
+            "{" * 20 + "x" + "}" * 20,
+            "(" * 100 + "x" + ")" * 100,
+            "x^{" * 30 + "2" + "}" * 30,
+            "}" * 20 + "{" * 20 + "x" + "}" * 20,  # stray closers used to hide the nesting after them
+        ],
     )
     def test_deep_nesting_is_rejected_quickly(self, latex):
         # latex2sympy2_extended's parser is exponential in nesting depth: 20 nested { took ~40 s.
