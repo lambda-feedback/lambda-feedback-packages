@@ -34,6 +34,8 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - The value's LaTeX preview no longer splits a function call that contains unit symbols. `sin(2)` was previewed as `s \cdot in \cdot 2` and `sqrt(11)` as `\frac{1}{s} \cdot q \cdot r \cdot t \cdot 11`, while the value itself was parsed as the function call. The preview now matches the value.
 - A number inside the unit raises `QuantityParseError` ("Cannot separate the value from the unit"). Before, `2 m 3 s` gave the unit `metre 3 second`, with dimension `length*3*time`, and `1 hour 30 minutes` gave a dimension of time². Numbers in exponents (`m^2`) and the `1` of `1/s` are still accepted.
 - `°C`, `°F`, `deg C`, `℃` and `℉` raise `QuantityParseError` (temperatures are in kelvin only). Before, `2 °C` was read as 2 degree·coulomb.
+- In natural mode, prefixes attach to `Ω` (`2 kΩ`, `2 MΩ`). Before, only `2 kO` was recognised.
+- Any whitespace between value and unit is a separator, including tabs, newlines, no-break and thin spaces, and zero-width characters are ignored. Before, `2\xa0m` (pasted with a no-break space) was the value `2\xa0m` with no unit.
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 

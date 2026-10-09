@@ -40,7 +40,8 @@ parse_quantity("9.81 m/s^2", QuantityParams()).dimension  # length/time**2
 ```
 
 Either part may be missing: `parse_quantity("kg", ...)` has `value is None`, and
-`parse_quantity("2x", ...)` has `unit is None`. `·`, `⋅` and `×` are read as `*`.
+`parse_quantity("2x", ...)` has `unit is None`. `·`, `⋅` and `×` are read as `*`,
+and any whitespace (tabs, newlines, no-break or thin spaces) as a space.
 
 For learners' input, run `preprocess_quantity` first. It rewrites alternative
 prefix spellings such as `μ`, `µ` and `deka`, and collapses whitespace.
@@ -144,7 +145,8 @@ except QuantityError as error:
   `common` units, `min` is a minute; without them, it is a milli-inch.
 - With the `common` set, `d` is a day, `a` is an are and `h` is an hour, even
   though they are also prefix symbols.
-- `kΩ` is not recognised. Prefixed ohms must be written `kO` or `kiloohm`.
+- In strict mode, the ohm is only recognised as `O` (`2 kO`), not `Ω`; natural
+  mode accepts both (`2 kΩ`).
 - `reverted_units` also reports the group enclosing a unit, with garbled
   positions (e.g. for `2 kg + 3`). The entry for the unit itself is correct.
 - Function names that contain unit symbols are reported in `reverted_units`

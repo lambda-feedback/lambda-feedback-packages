@@ -31,7 +31,8 @@ _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
 _CALL = re.compile(r"([A-Za-z_]\w*)\s*\(")
 """A name followed by ``(``: a function call."""
-_PRODUCT_SIGNS = str.maketrans({"·": "*", "⋅": "*", "×": "*"})
+_PRODUCT_SIGNS = str.maketrans({"·": "*", "⋅": "*", "×": "*", "​": None, "‌": None, "‍": None, "﻿": None})
+_WHITESPACE = re.compile(r"\s+")
 _CELSIUS_OR_FAHRENHEIT = re.compile(r"[℃℉]|(°|(?<![A-Za-z])deg(rees?)?)\s*[CF](?![A-Za-z])")
 """Read as degree times coulomb (or farad) otherwise."""
 _LATEX_SPACE = re.compile(r"~|\\[,;: ]|\\q?quad\b")
@@ -340,7 +341,8 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
         raise QuantityParseError(
             "Temperatures in degrees Celsius or Fahrenheit aren't supported; use kelvin.", expression=expr, name=name
         )
-    text = expr.translate(_PRODUCT_SIGNS)
+    # Any whitespace (tabs, newlines, no-break and thin spaces) as one space; drop zero-width characters.
+    text = _WHITESPACE.sub(" ", expr.translate(_PRODUCT_SIGNS))
     if params.is_latex:
         text = _normalise_latex(text)
     parser = build_quantity_parser(params.unit_sets, params.strictness)

@@ -63,6 +63,14 @@ def unit_dictionaries(unit_sets: frozenset[str], strictness: Strictness) -> Unit
                 prefixed_units[prefix.symbol + short] = prefix.name + name
             if prefix.name + short not in short_to_long:
                 prefixed_units[prefix.name + short] = prefix.name + name
+    if strictness == "natural":
+        # Prefixed symbol alternatives: "kΩ" for the ohm, whose symbol is "O".
+        for unit in selected:
+            for alternative in unit.alternatives:
+                if len(alternative) == 1 and alternative.isalpha() and not alternative.isascii():
+                    for prefix in SI_PREFIXES:
+                        if prefix.symbol + alternative not in short_to_long:
+                            prefixed_units[prefix.symbol + alternative] = prefix.name + unit.name
     prefixed_units_end = dict(units_end)
     for form, name in units_end.items():
         for prefix in SI_PREFIXES:
