@@ -156,3 +156,35 @@ class TestParsing:
         # v0.1 rotated left and right alternately until RecursionError.
         with pytest.raises(QuantityParseError, match="Cannot separate the value from the unit"):
             parse("5 m/s x")
+
+
+class TestPickling:
+    def test_params_error_round_trips(self):
+        import pickle
+
+        from lambdafeedback.units import QuantityParamsError
+
+        # The default reduce called QuantityParamsError(formatted_message), which needs two arguments.
+        error = pickle.loads(pickle.dumps(QuantityParamsError("strictness", "bad")))
+        assert (error.field, error.message, str(error)) == ("strictness", "bad", "Invalid parameter 'strictness': bad")
+
+    def test_parser_is_left_out_and_rebuilt(self):
+        from lambdafeedback.units import build_quantity_parser
+
+        quantity = parse("5 km/h")
+        state = quantity.__getstate__()
+        assert "parser" not in state  # it holds closures, which can't be pickled
+        copy = object.__new__(type(quantity))
+        copy.__setstate__(state)
+        assert copy.parser is build_quantity_parser(quantity.params.unit_sets, quantity.params.strictness)
+
+    @pytest.mark.xfail(
+        reason="ExpressionParams.symbols is a mappingproxy, which can't be pickled (expression_parsing)",
+        raises=TypeError,
+        strict=True,
+    )
+    def test_quantity_round_trips(self):
+        import pickle
+
+        quantity = pickle.loads(pickle.dumps(parse("5 km/h")))
+        assert str(quantity.base_dimension) == "length/time"

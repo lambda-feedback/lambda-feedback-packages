@@ -129,7 +129,7 @@ All errors derive from `QuantityError`, which is a `ValueError`, and carry
 
 | Exception | Raised when |
 |---|---|
-| `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), a number inside the unit (`2 m 3 s`, `1 hour 30 minutes`), a temperature in °C or °F, or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
+| `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), a number inside the unit (`2 m 3 s`, `1 hour 30 minutes`), a temperature in °C or °F, input too long or deeply nested to process, or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
 | `UnitConversionError` | The unit can't be converted to SI base units. |
 | `QuantityParamsError` | A `QuantityParams` field is invalid. |
 

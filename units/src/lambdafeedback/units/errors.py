@@ -36,3 +36,8 @@ class QuantityParamsError(QuantityError, ExpressionParsingError):
     def __init__(self, field: str, message: str) -> None:
         super().__init__(f"Invalid parameter {field!r}: {message}")
         self.field = field
+        self.message = message
+
+    def __reduce__(self) -> tuple[type[QuantityParamsError], tuple[str, str], dict[str, object]]:
+        # The default would call cls(formatted_message), which doesn't match __init__.
+        return type(self), (self.field, self.message), self.__dict__

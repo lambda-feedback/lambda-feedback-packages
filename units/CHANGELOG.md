@@ -11,7 +11,6 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - `QuantityParams` validates `unit_sets`: an unknown name (such as `"si"`) raises `QuantityParamsError`. Before, it was silently ignored, and no units were recognised. `from_dict` splits `units_string` on spaces and commas instead of testing for substrings, so `"SIcommon"` is rejected rather than read as both sets.
 - An unknown `strictness` raises `QuantityParamsError` (with `.field`). It is still an `ExpressionParsingError`, so existing handlers keep working.
 - `UNIT_SETS` and `CONVERSION_TO_BASE_SI` are read-only mappings (`MappingProxyType`). Assigning to them raises `TypeError`, where before it would have silently changed every cached parser.
-
 - `parse_quantity` and `preprocess_quantity` now take `QuantityParams` only; the `Mapping[str, Any]` (raw dict) fallback is gone, along with the `as_quantity_params` helper. Convert evaluation-function parameters explicitly at the call site with `QuantityParams.from_dict(evaluation_params)`.
 - `preview_function` and `fix_exponents` have moved out of this package entirely, to compareExpressions (`app/context/physical_quantity_preview.py`): building a LaTeX/SymPy preview string is an app-layer display concern, not unit conversion. Import them from there instead of `lambdafeedback.units`.
 - `preprocess_quantity` now returns a plain `str` (`expression_parsing.preprocess_expression`, which it matches the shape of, no longer returns `Preprocessed`).
@@ -39,6 +38,8 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - Any whitespace between value and unit is a separator, including tabs, newlines, no-break and thin spaces, and zero-width characters are ignored. Before, `2\xa0m` (pasted with a no-break space) was the value `2\xa0m` with no unit.
 - Natural mode scans a long run of letters in linear time. It tried every prefix of the rest of the word at each position, which is cubic, so 5000 letters took minutes.
 - Input nested too deeply for the recursive steps (thousands of operators, such as `m*m*…*m`) raises `QuantityParseError`. Before, `RecursionError` escaped.
+- `PhysicalQuantity` leaves its parser out when pickled or deep-copied, and rebuilds it from the cache. The parser holds closures, so pickling always failed. (Pickling a quantity also needs `ExpressionParams` to be picklable; see that package.)
+- `QuantityParamsError` can be unpickled. It used to raise `TypeError`, because unpickling called it with one argument instead of two.
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 

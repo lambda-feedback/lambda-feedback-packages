@@ -177,6 +177,16 @@ class PhysicalQuantity:
         ) = self._all_forms()
         self.base_dimension = _without_factor(self.dimension)
 
+    def __getstate__(self) -> dict[str, Any]:
+        # The parser holds closures, so it can't be pickled; it is rebuilt (from the cache) on unpickling.
+        state = dict(vars(self))
+        del state["parser"]
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        self.parser = build_quantity_parser(self.params.unit_sets, self.params.strictness)
+
     def __repr__(self) -> str:
         value = None if self.value is None else self.value.content_string()
         unit = None if self.unit is None else self.unit.content_string()
