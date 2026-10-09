@@ -525,3 +525,47 @@ class TestSubstitutionScaling:
         assert substitute("abc bc c", [("abc", "p"), ("bc", "q"), ("c", "r")]) == "p q r"
         assert substitute("abc", [("a", "1"), ("abc", "2")]) == "1bc"  # the listed order wins, not length
         assert substitute("sin(x) sinx", [(("sin", ["("]), "S")]) == "S(x) sinx"
+
+
+class TestLatexBackend:
+    """latex2sympy2 → latex2sympy2_extended: no module state, \\left/\\right, exact decimals, Greek gamma as symbols."""
+
+    def test_a_differential_does_not_break_later_parses(self):
+        # latex2sympy2 overwrote its module-level `var` on \mathrm{d}x; every later parse in the
+        # process then failed. A subprocess, so no earlier test can have masked it.
+        script = (
+            "from lambdafeedback.expression_parsing import parse_latex\n"
+            "parse_latex(r'\\int x \\mathrm{d}x', {})\n"
+            "print(parse_latex('2x', {}), parse_latex(r'\\hat{x} + 1', {}))\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=60)
+        assert result.stdout.split()[0] == "2*x", result.stderr
+
+    @pytest.mark.parametrize(
+        ("latex", "expected"),
+        [
+            (r"\tan\left(\frac{\pi}{4}\right)", "tan(pi/4)"),
+            (r"\left|x-1\right|", "Abs(x - 1)"),
+            ("9.81", "981/100"),  # not the Float 9.81000000000000
+            ("1.5e-3", "3/2000"),
+            (r"\gamma", "gamma"),  # not EulerGamma
+            (r"\gamma_1 + \Gamma", "Gamma + gamma_1"),  # \gamma_1 failed to parse
+            (r"\mathrm{kg}", "kg"),  # was "\mathrm{kg}", which parse_expression can't read
+            (r"2\frac{1}{2}", "5/2"),  # a mixed number (was 2*1/2)
+        ],
+    )
+    def test_latex_forms(self, latex, expected):
+        assert parse_latex(latex, {}) == expected
+
+    @pytest.mark.parametrize("latex", ["2)", r"\pi\right)", "y}"])
+    def test_malformed_latex_is_rejected(self, latex):
+        # latex2sympy2 silently dropped everything after the error (2) gave 2).
+        with pytest.raises(LatexParseError):
+            parse_latex(latex, {})
+
+    def test_comma_list_is_several_answers_merged_with_plus_minus(self):
+        # A LaTeX comma list is a set; with ± it used to come back nested ({{..}, {..}}), unreadable.
+        assert parse_latex("1, 2", {}) == "{1, 2}"
+        out = parse_latex(r"2 \pm \theta, -e", {})
+        assert out == "{-e, 2 - theta, theta + 2}"
+        assert len(parse_expression(out, parsing_params())) == 3

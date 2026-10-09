@@ -18,9 +18,7 @@ evaluation function.
 pip install lambdafeedback-units
 ```
 
-Requires Python 3.11 or 3.12. Python 3.13 isn't supported yet because
-`latex2sympy2`, a dependency of `lambdafeedback-expression-parsing`, needs an
-old ANTLR runtime. The import root is `lambdafeedback.units`.
+Requires Python 3.11 or later. The import root is `lambdafeedback.units`.
 
 ## Quick start
 

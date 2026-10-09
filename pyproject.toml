@@ -4,9 +4,7 @@
 
 [project]
 name = "lambdafeedback-packages"
-# <3.13: latex2sympy2 pins antlr4-python3-runtime 4.7.2, which imports the
-# `typing.io` module removed in Python 3.13.
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<4.0"  # <4.0: lf-toolkit (dev only) requires it
 
 [tool.poetry]
 package-mode = false
@@ -114,5 +112,5 @@ strict_equality = true
 
 # Neither ships type information.
 [[tool.mypy.overrides]]
-module = ["latex2sympy2", "sympy", "sympy.*"]
+module = ["latex2sympy2_extended", "latex2sympy2_extended.*", "sympy", "sympy.*"]
 ignore_missing_imports = true

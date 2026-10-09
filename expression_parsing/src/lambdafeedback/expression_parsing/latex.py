@@ -6,9 +6,11 @@ import re
 from collections.abc import Mapping
 from typing import Any
 
-from latex2sympy2 import latex2sympy
-from sympy import Function, Symbol
+from latex2sympy2_extended import NormalizationConfig, latex2sympy
+from latex2sympy2_extended.latex2sympy2 import ConversionConfig
+from sympy import Basic, FiniteSet, Float, Function, Rational, Symbol
 from sympy.core.function import AppliedUndef
+from sympy.core.parameters import evaluate
 from sympy.parsing.sympy_parser import implicit_multiplication_application, standard_transformations
 from sympy.printing.latex import LatexPrinter
 
@@ -83,33 +85,39 @@ def find_placeholder(exp: str) -> str | None:
     return None
 
 
-# A LaTeX command (left alone), scientific notation (2E5, 1.5e-3: the E is
-# kept, as an upper-case E, which latex2sympy reads as an exponent), or any
-# other E or e.
+# A LaTeX command (protected if it is \gamma or \Gamma, otherwise left alone),
+# scientific notation (2E5, 1.5e-3: the E is kept, as an upper-case E, which
+# latex2sympy reads as an exponent), or any other E or e.
 _E_OR_COMMAND = re.compile(r"(\\[A-Za-z]+)|(?<=[\d.])([Ee])(?=[+-]?\d)|([Ee])")
+
+# What a placeholder stands for, as written in LaTeX -> as a symbol name.
+_PROTECTED = {"E": "E", "e": "e", r"\gamma": "gamma", r"\Gamma": "Gamma"}
 
 
 def preprocess_E(latex_str: str) -> tuple[str, dict[str, str]]:  # noqa: N802
-    """Replace each ``E``/``e`` (outside commands and scientific notation) by a placeholder letter.
+    """Replace ``E``, ``e``, ``\\gamma`` and ``\\Gamma`` by placeholder letters, so they parse as plain symbols.
 
-    latex2sympy reads them inconsistently: ``e`` as Euler's number
-    (``e_1 e_2`` gives ``E``), and ``E`` after a digit as an exponent (``2E``
-    gives ``2``). As placeholders they are plain symbols, restored by
-    :func:`postprocess_E`, so whether ``e`` is Euler's number is left to
-    :func:`parse_expression` (``elementary_functions``), as for text input.
-    Returns the modified string and ``{"E" or "e": placeholder}``.
+    latex2sympy2_extended reads them as constants or inconsistently: ``e`` as
+    Euler's number, ``E`` after a digit as an exponent (``2E`` gives ``2``),
+    and both ``\\gamma`` and ``\\Gamma`` as the Euler-Mascheroni constant (and
+    fails on ``\\gamma_1``). As placeholders they are plain symbols, restored
+    by :func:`postprocess_E`, so whether they are constants is left to
+    :func:`parse_expression` (``elementary_functions``, ``special_functions``),
+    as for text input. Scientific notation (``2E5``) and other commands are
+    left alone. Returns the modified string and ``{original: placeholder}``.
     """
+    found = {match.group(3) or match.group(1) for match in _E_OR_COMMAND.finditer(latex_str)}
     replacements: dict[str, str] = {}
-    for char in "Ee":
-        if any(match.group(3) == char for match in _E_OR_COMMAND.finditer(latex_str)):
+    for original in _PROTECTED:
+        if original in found:
             placeholder = find_placeholder(latex_str + "".join(replacements.values()))
             if placeholder:
-                replacements[char] = placeholder
+                replacements[original] = placeholder
 
     def repl(match: re.Match[str]) -> str:
         command, exponent, letter = match.groups()
         if command:
-            return command
+            return replacements.get(command, command)
         if exponent:
             return "E"
         return replacements.get(letter, letter)
@@ -121,7 +129,7 @@ def postprocess_E(expr: Any, replacements: Mapping[str, str]) -> Any:  # noqa: N
     """Undo :func:`preprocess_E` on the symbols (and undefined functions) of a parsed expression."""
     if not replacements:
         return expr
-    restore = str.maketrans({placeholder: char for char, placeholder in replacements.items()})
+    restore = str.maketrans({placeholder: _PROTECTED[original] for original, placeholder in replacements.items()})
     subs: dict[Any, Any] = {}
     for symbol in expr.atoms(Symbol):
         name = symbol.name.translate(restore)
@@ -134,12 +142,33 @@ def postprocess_E(expr: Any, replacements: Mapping[str, str]) -> Any:  # noqa: N
     return expr.xreplace(subs)
 
 
-def _latex2sympy(latex: str, substitutions: Mapping[Any, Any] | None = None) -> Any:
-    """latex2sympy with ``E``/``e`` read as plain symbols (see :func:`preprocess_E`)."""
+# latex2sympy2_extended is tuned for grading free-form answers; keep it literal:
+# case-sensitive symbols, 2\frac{1}{2} read as a mixed number, "=" and "\in"
+# as relations (never assignments), and only the basic LaTeX normalisation
+# (\left/\right, \mathrm{d}, \dfrac, ...), not its answer extraction or units.
+_CONVERSION = ConversionConfig(
+    lowercase_symbols=False,
+    interpret_as_mixed_fractions=False,
+    interpret_simple_eq_as_assignment=False,
+    interpret_contains_as_eq=False,
+)
+_NORMALISATION = NormalizationConfig(
+    basic_latex=True, units=False, malformed_operators=False, nits=False, boxed="none", equations=False
+)
+
+
+def _latex2sympy(latex: str) -> Any:
+    """latex2sympy2_extended with ``E``/``e``/``\\gamma`` as plain symbols and decimals as exact rationals."""
     protected, replacements = preprocess_E(latex)
-    parsed = latex2sympy(protected, substitutions) if substitutions is not None else latex2sympy(protected)
+    parsed = latex2sympy(protected, normalization_config=_NORMALISATION, conversion_config=_CONVERSION)
     if isinstance(parsed, list):
         parsed = parsed.pop()
+    if isinstance(parsed, Basic):
+        # Decimals come back as Floats (9.81 as 9.81000000000000); as rationals they are exact
+        # and read back by parse_expression like the text it was given. Unevaluated, so
+        # the rest of the expression stays as written (5 \cdot 7 stays 5*7).
+        with evaluate(False):
+            parsed = parsed.xreplace({number: Rational(str(number)) for number in parsed.atoms(Float)})
     return postprocess_E(parsed, replacements)
 
 
@@ -179,8 +208,7 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
                 parsed_alias = Symbol(alias)  # not an expression: use the alias as a plain name
             substitutions[parsed_alias] = Symbol(code)
 
-    def side_text(latex: str) -> str:
-        parsed = _latex2sympy(latex, substitutions)
+    def text(parsed: Any) -> str:
         return str((parsed.simplify() if simplify else parsed).subs(substitutions))
 
     parsed_responses = set()
@@ -188,11 +216,16 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
         if expression.count("=") > 1:
             raise LatexParseError(f"An expression can contain at most one '=': {expression}", expression=expression)
         try:
-            # An equation is written "lhs = rhs", as parse_expression reads it. (PyPI's
-            # latex2sympy2 reads "x = 2" as an assignment, so the sides are parsed
-            # separately; and "Eq(x, 2)" would not survive parse_expression with
-            # elementary_functions, where the E of Eq is Euler's number.)
-            parsed_responses.add(" = ".join(side_text(side) for side in expression.split("=")))
+            if "=" in expression:
+                # An equation is written "lhs = rhs", as parse_expression reads it, with each
+                # side parsed separately ("Eq(x, 2)" would not survive parse_expression with
+                # elementary_functions, where the E of Eq is Euler's number).
+                parsed_responses.add(" = ".join(text(_latex2sympy(side)) for side in expression.split("=")))
+                continue
+            parsed = _latex2sympy(expression)
+            # A comma-separated list ("1, 2") is several answers, like "{1, 2}" in text;
+            # merged with the ± expansion rather than nested in it.
+            parsed_responses.update(text(item) for item in (parsed.args if isinstance(parsed, FiniteSet) else [parsed]))
         except Exception as e:
             raise LatexParseError(f"Failed to parse expression {expression!r}: {e}", expression=expression) from e
 

@@ -18,13 +18,13 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: Scientific/Engineering :: Physics",
     "Typing :: Typed",
 ]
-# <3.13: latex2sympy2 pins antlr4-python3-runtime 4.7.2, which imports the
-# `typing.io` module removed in Python 3.13.
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11"
 dependencies = [
     "lambdafeedback-slr-parsing (>=0.2.0,<0.3.0)",
     "lambdafeedback-expression-parsing (>=0.3.0,<0.4.0)",

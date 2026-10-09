@@ -18,7 +18,7 @@ logic stays in compareExpressions.
 |---|---|---|---|---|
 | `slr_parsing` | `lambdafeedback-slr-parsing` | `lambdafeedback.slr_parsing` | Generic SLR(1) parser engine | — |
 | `criteria` | `lambdafeedback-criteria` | `lambdafeedback.criteria` | Criteria DSL parser and evaluation graph | `slr_parsing` |
-| `expression_parsing` | `lambdafeedback-expression-parsing` | `lambdafeedback.expression_parsing` | Safe SymPy parsing, preprocessing and LaTeX input/output | `slr_parsing`, `sympy`, `latex2sympy2` |
+| `expression_parsing` | `lambdafeedback-expression-parsing` | `lambdafeedback.expression_parsing` | Safe SymPy parsing, preprocessing and LaTeX input/output | `slr_parsing`, `sympy`, `latex2sympy2_extended` |
 | `units` | `lambdafeedback-units` | `lambdafeedback.units` | Unit-system data, physical-quantity parsing and dimensional analysis | `slr_parsing`, `expression_parsing`, `sympy` |
 
 ```python
@@ -46,9 +46,7 @@ There is deliberately no `lambdafeedback/__init__.py`; the namespace is
 [PEP 420](https://peps.python.org/pep-0420/), so the separately installed
 packages merge under one import root.
 
-Python 3.11–3.12 is supported. `expression_parsing` and `units` can't run on
-3.13 yet: latex2sympy2 pins `antlr4-python3-runtime` 4.7.2, which imports the
-`typing.io` module removed in Python 3.13.
+Python 3.11 and later is supported.
 
 ## Development
 

@@ -1,3 +1,4 @@
+
 [build-system]
 requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
@@ -19,17 +20,17 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Education",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Typing :: Typed",
 ]
-# <3.13: latex2sympy2 pins antlr4-python3-runtime 4.7.2, which imports the
-# `typing.io` module removed in Python 3.13.
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11"
 dependencies = [
     "lambdafeedback-slr-parsing (>=0.2.0,<0.3.0)",
     "sympy (>=1.12,<2.0)",
-    "latex2sympy2 (>=1.9.1,<2.0)",
+    "latex2sympy2-extended[antlr4-13-2] (>=1.11.0,<2.0)",
 ]
 
 [project.urls]

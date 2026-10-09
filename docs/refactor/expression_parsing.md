@@ -20,7 +20,7 @@ Depends on `slr_parsing`, `sympy` and `latex2sympy2` (the PyPI release; see belo
 | `errors.py` | `ExpressionParsingError` (a `ValueError`) → `InvalidParameterError`, `UnknownConventionError`, `SymbolAssumptionError`, `LatexParseError`, `BracketNotationError`, `AbsoluteValueNotationError` |
 
 **Deviations from the plan:**
-- **latex2sympy2 stays on PyPI**, not the lambda-feedback fork (decided in Phase 3): a git pin would make the packages unpublishable. The fork's relevant behaviour (`x = 2` → `Eq(x, 2)`, where PyPI's release treats it as an assignment) is reproduced by `parse_latex` splitting `=` itself.
+- **latex2sympy2 stays on PyPI**, not the lambda-feedback fork (decided in Phase 3; in 0.3.0 both were replaced by latex2sympy2_extended, see the changelog): a git pin would make the packages unpublishable. The fork's relevant behaviour (`x = 2` → `Eq(x, 2)`, where PyPI's release treats it as an assignment) is reproduced by `parse_latex` splitting `=` itself.
 - **`preview_function` accepts a plain mapping** as well as `ExpressionParams`, since it is an evaluation-function entry point that receives JSON parameters. Internal functions take `ExpressionParams`.
 - **`Preview.feedback` is `NotRequired`** (lf_toolkit's is required). Adding `"feedback": ""` would change every preview's output, so a preview dict has the same keys as before.
 - **`parse_expression` still doesn't substitute symbol aliases**, as in v0.1: callers run `preprocess_expression` first. `SympyParsingConfig.substitution_params` records the narrow substitutions it does apply.

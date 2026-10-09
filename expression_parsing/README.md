@@ -12,9 +12,8 @@ functions such as compareExpressions.
 pip install lambdafeedback-expression-parsing
 ```
 
-Python 3.11–3.12 is supported. LaTeX input uses
-[latex2sympy2](https://pypi.org/project/latex2sympy2/), which pins an ANTLR
-runtime that imports the `typing.io` module removed in Python 3.13.
+Python 3.11 and later is supported. LaTeX input uses
+[latex2sympy2_extended](https://pypi.org/project/latex2sympy2-extended/).
 
 ## Quick start
 
@@ -89,10 +88,9 @@ SymPy's mathematical functions and constants and no Python builtins.
 SymPy's printing, plotting, code-generation and `sympify` helpers aren't
 available, so names like `plot` are read as plain symbols.
 
-Parsing isn't thread-safe: it briefly changes process-wide warning filters,
-and latex2sympy2 keeps module-level state. Parse from one thread at a time
-per process; one evaluation per process, as in a Lambda Feedback evaluation
-function, is fine.
+Parsing isn't thread-safe: it briefly changes process-wide warning
+filters. Parse from one thread at a time per process; one evaluation per
+process, as in a Lambda Feedback evaluation function, is fine.
 
 Expressions are parsed unevaluated, but `simplify` (and any later
 evaluation, such as comparing answers) computes: `9**9**9` would then take
