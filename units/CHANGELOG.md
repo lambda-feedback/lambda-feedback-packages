@@ -40,6 +40,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - Input nested too deeply for the recursive steps (thousands of operators, such as `m*m*…*m`) raises `QuantityParseError`. Before, `RecursionError` escaped.
 - `PhysicalQuantity` leaves its parser out when pickled or deep-copied, and rebuilds it from the cache. The parser holds closures, so pickling always failed. This needs `lambdafeedback-expression-parsing` with picklable `ExpressionParams`.
 - `QuantityParamsError` can be unpickled. It used to raise `TypeError`, because unpickling called it with one argument instead of two.
+- A number with a huge exponent or too many digits (`1e999999 m`) raises `QuantityParseError` at once. It hung: the value's preview parses without rationalising, and SymPy took minutes to build the float. The limits (1000 digits, exponent ±1000) are `lambdafeedback-expression-parsing`'s.
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 

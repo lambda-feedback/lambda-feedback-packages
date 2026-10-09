@@ -66,6 +66,37 @@ def _allowed_string(constructor: str, value: str) -> bool:
     return constructor in _NUMBER_CONSTRUCTORS and _NUMBER_STRING.fullmatch(value) is not None
 
 
+MAX_NUMBER_DIGITS = 1000
+"""Most digits a number may have (not counting its exponent)."""
+MAX_NUMBER_EXPONENT = 1000
+"""Largest exponent (``1e1000``) a number may have, of either sign."""
+
+_EXPONENT = re.compile(r"[eE]([+-]?)(\d+)")
+
+
+def _number_size_error(number: str, expr: str) -> ExpressionParsingError | None:
+    """Why ``number`` (a literal's text) is too large for SymPy to handle in reasonable time, if it is.
+
+    ``Float('1e999999')`` takes minutes (``Rational`` of it is an integer too
+    long for ``str()``), and so does a mantissa of 100000 digits.
+    """
+    mantissa, _, exponent = number.partition("e") if "e" in number else number.partition("E")
+    digits = sum(character.isdigit() for character in mantissa)
+    if digits > MAX_NUMBER_DIGITS:
+        return ExpressionParsingError(
+            f"A number has {digits} digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
+        )
+    match = _EXPONENT.fullmatch("e" + exponent) if exponent else None
+    if match is not None:
+        magnitude = match.group(2).lstrip("0")
+        if len(magnitude) > len(str(MAX_NUMBER_EXPONENT)) or int(magnitude or 0) > MAX_NUMBER_EXPONENT:
+            return ExpressionParsingError(
+                f"The exponent of {number[:30]!r} is out of range; at most ±{MAX_NUMBER_EXPONENT} is allowed.",
+                expression=expr,
+            )
+    return None
+
+
 _ALLOWED_NODES = (
     ast.Expression,
     ast.BinOp,
@@ -96,10 +127,22 @@ def _check_code(code: str, expr: str) -> None:
     try:
         tree = ast.parse(code, mode="eval")
     except SyntaxError as e:
+        if "integer string conversion" in str(e):  # an integer literal over Python's 4300-digit limit
+            raise ExpressionParsingError(
+                f"A number has too many digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
+            ) from e
         raise ExpressionParsingError(f"Invalid syntax in {expr!r}", expression=expr) from e
 
     string_arguments: dict[int, str] = {}  # id(argument node) -> constructor name
     for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Constant)
+            and isinstance(node.value, int)
+            and node.value.bit_length() > MAX_NUMBER_DIGITS * 3.33  # log2(10): about that many decimal digits
+        ):
+            raise ExpressionParsingError(
+                f"A number has too many digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
+            )
         if not isinstance(node, _ALLOWED_NODES):
             raise reject(type(node).__name__)
         if isinstance(node, ast.Name) and node.id.startswith("_"):
@@ -116,6 +159,8 @@ def _check_code(code: str, expr: str) -> None:
                     # SymPy wrapped a character Python can't read (e.g. '−', '×', the '²' of 'x²').
                     raise ExpressionParsingError(f"Unrecognised character {character!r} in {expr!r}", expression=expr)
                 raise reject("A string or other literal")
+            if constructor in _NUMBER_CONSTRUCTORS and (error := _number_size_error(node.value, expr)) is not None:
+                raise error
 
 
 def _unreadable_character(constructor: str | None, value: object) -> str | None:

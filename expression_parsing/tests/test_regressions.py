@@ -466,3 +466,62 @@ class TestPickling:
         config = SympyParsingConfig.from_params(self.params())
         expected = parse_expression("f(x) + sin(x)", config)  # also fills the cached substitution_params
         assert parse_expression("f(x) + sin(x)", pickle.loads(pickle.dumps(config))) == expected
+
+
+class TestNumberSizeLimits:
+    """Number literals SymPy can't handle in reasonable time are rejected before evaluation."""
+
+    @pytest.mark.parametrize("rationalise", [True, False])
+    @pytest.mark.parametrize(
+        "expr, message",
+        [
+            ("1e999999", "exponent"),  # Float: minutes; Rational: an integer too long for str()
+            ("1e-999999", "exponent"),
+            ("2.5e1001 + x", "exponent"),
+            ("a.5e5000", "exponent"),  # Python reads .5e5000 as a number after the name a
+            ("1e999999j", "exponent"),
+            ("1e" + "9" * 5000, "exponent"),
+            ("1." + "1" * 100000, "digits"),  # Float of a 100000-digit mantissa: minutes
+            ("1" * 5000, "digits"),  # over Python's 4300-digit limit: was "Invalid syntax"
+            ("1" * 1200, "digits"),
+        ],
+    )
+    def test_too_large(self, expr, message, rationalise):
+        config = SympyParsingConfig.from_params(ExpressionParams(rationalise=rationalise))
+        with pytest.raises(ExpressionParsingError, match=message):
+            parse_expression(expr, config)
+
+    @pytest.mark.parametrize("expr", ["1e1000", "1e-1000", "2.5E+1000", "6.022e23", "1" * 1000, "1_000_000", ".5e3"])
+    def test_within_the_limits(self, expr):
+        assert parse_expression(expr, parsing_params()) is not None
+
+    def test_names_that_look_like_numbers_are_not_checked(self):
+        config = SympyParsingConfig.from_params(ExpressionParams(symbols={"x2e9999": {"latex": "y"}}))
+        assert str(parse_expression("x2e9999", config)) == "x2e9999"
+
+    def test_powers_stay_unevaluated(self):
+        # Only literals are limited; 10^999999 is a Pow, not a computed number.
+        assert str(parse_expression("2*10^999999", parsing_params())) == "2*10**999999"
+
+
+class TestSubstitutionScaling:
+    def test_long_input_with_many_substitutions_is_fast(self):
+        # Every substitution was tried at every position, and FunctionName copied the
+        # rest of the input on each check: 100000 characters x 1000 names took over 10 s.
+        import time
+
+        from lambdafeedback.expression_parsing.substitution import FunctionName, substitute
+
+        substitutions = [(f"name{k}", f"N{k}") for k in range(1000)] + [(FunctionName("sin"), "SIN")]
+        text = "x" * 100000 + " sin(x) name7"
+        start = time.perf_counter()
+        result = substitute(text, substitutions)
+        assert time.perf_counter() - start < 2
+        assert result.endswith(" SIN(x) N7")
+
+    def test_first_match_order_is_kept(self):
+        from lambdafeedback.expression_parsing.substitution import substitute
+
+        assert substitute("abc bc c", [("abc", "p"), ("bc", "q"), ("c", "r")]) == "p q r"
+        assert substitute("abc", [("a", "1"), ("abc", "2")]) == "1bc"  # the listed order wins, not length
+        assert substitute("sin(x) sinx", [(("sin", ["("]), "S")]) == "S(x) sinx"

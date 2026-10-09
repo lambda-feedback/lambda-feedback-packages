@@ -33,8 +33,12 @@ class FunctionName:
     text: str
 
     def matches(self, string: str, index: int) -> bool:
+        if not string.startswith(self.text, index):
+            return False
         end = index + len(self.text)
-        return string.startswith(self.text, index) and string[end:].lstrip(" ").startswith(("(", "^", "**"))
+        while end < len(string) and string[end] == " ":  # not string[end:].lstrip(): that copies the rest
+            end += 1
+        return string.startswith(("(", "^", "**"), end)
 
 
 # (original, replacement); an original of the form (text, lookaheads) only
@@ -77,6 +81,21 @@ def substitute(string: str | Sequence[str | object], substitutions: Sequence[Sub
     """
     parts: Sequence[str | object] = [string] if isinstance(string, str) else string
 
+    # Only substitutions whose original starts with the character at hand can match there:
+    # trying all of them at every position made long inputs slow (length x substitutions).
+    # Each list keeps the substitutions' order, so the first match is the same.
+    by_first: dict[str, list[tuple[int, str | tuple[str, Sequence[str]] | FunctionName]]] = {}
+    always: list[tuple[int, str | tuple[str, Sequence[str]] | FunctionName]] = []  # empty originals
+    for k, (original, _) in enumerate(substitutions):
+        text = _original_text(original)
+        if text:
+            by_first.setdefault(text[0], []).append((k, original))
+        else:
+            always.append((k, original))
+    if always:
+        for first, candidates in by_first.items():
+            by_first[first] = sorted([*candidates, *always], key=lambda candidate: candidate[0])
+
     new_string: list[object] = []
     for part in parts:
         if not isinstance(part, str):
@@ -85,7 +104,7 @@ def substitute(string: str | Sequence[str | object], substitutions: Sequence[Sub
         index = 0
         buffer = ""
         while index < len(part):
-            for k, (original, _) in enumerate(substitutions):
+            for k, original in by_first.get(part[index], always):
                 if isinstance(original, FunctionName):
                     match = original.matches(part, index)
                     length = len(original.text)

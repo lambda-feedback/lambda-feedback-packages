@@ -200,3 +200,15 @@ class TestPickling:
         with warnings.catch_warnings():
             warnings.simplefilter("error")
             assert pickle.loads(pickle.dumps(params)) == params
+
+
+class TestHugeNumbers:
+    @pytest.mark.parametrize("expr", ["1e999999 m", "2e-999999 kg", "1." + "1" * 100000 + " s"])
+    def test_raise_quickly(self, expr):
+        # The value's preview parses without rationalising, and Float('1e999999') took minutes.
+        import time
+
+        start = time.perf_counter()
+        with pytest.raises(QuantityParseError):
+            parse(expr)
+        assert time.perf_counter() - start < 5
