@@ -28,7 +28,7 @@ requires-python = ">=3.11"
 dependencies = [
     "lambdafeedback-slr-parsing (>=0.2.0,<0.3.0)",
     "lambdafeedback-expression-parsing (>=0.3.0,<0.4.0)",
-    "sympy (>=1.12,<2.0)",
+    "sympy (>=1.14,<2.0)",
 ]
 
 [project.urls]
@@ -37,6 +37,8 @@ Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/unit
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/units", from = "src" }]
+# The source distribution also carries the changelog and the tests.
+include = [{ path = "CHANGELOG.md", format = "sdist" }, { path = "tests", format = "sdist" }]
 
 # Resolve sibling packages from the monorepo during development; published
 # metadata keeps the plain requirements from [project.dependencies].

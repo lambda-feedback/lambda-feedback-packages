@@ -54,7 +54,7 @@ def _original_text(original: str | tuple[str, Sequence[str]] | FunctionName) -> 
 
 def substitutions_sort_key(pair: Substitution) -> float:
     """Longer originals first; among equal ones, longer replacements first."""
-    return -len(_original_text(pair[0])) - len(pair[1]) / (10 ** (1 + len(str(len(pair[1])))))
+    return float(-len(_original_text(pair[0])) - len(pair[1]) / (10 ** (1 + len(str(len(pair[1]))))))
 
 
 def _sorted(substitutions: Sequence[Substitution]) -> list[Substitution]:

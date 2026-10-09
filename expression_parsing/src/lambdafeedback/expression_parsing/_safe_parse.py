@@ -27,7 +27,8 @@ from collections.abc import Mapping
 from typing import Any
 
 import sympy
-from sympy import Abs, Basic, Max, Min
+from sympy import Abs, Basic, Function, Max, Min
+from sympy.core.function import FunctionClass
 from sympy.parsing.sympy_parser import eval_expr, evaluateFalse, stringify_expr
 
 from .errors import ExpressionParsingError
@@ -188,5 +189,29 @@ def safe_parse_expr(
     namespace = {"__builtins__": {}, **global_dict}
     code = stringify_expr(expr, local_dict, namespace, transformations)
     _check_code(code, expr)
-    compiled = compile(evaluateFalse(code), "<string>", "eval") if not evaluate else code
-    return eval_expr(compiled, local_dict, namespace)
+    if evaluate:
+        return eval_expr(code, local_dict, namespace)
+    tree = _UnevaluatedCalls({**namespace, **local_dict}).visit(evaluateFalse(code))
+    return eval_expr(compile(ast.fix_missing_locations(tree), "<string>", "eval"), local_dict, namespace)
+
+
+class _UnevaluatedCalls(ast.NodeTransformer):
+    """Add ``evaluate=False`` to every call of a SymPy function class.
+
+    ``evaluateFalse`` only does so for a fixed list (trigonometric, ``exp``,
+    ``log``, ...), so ``factorial``, ``binomial`` and the number-theory
+    functions still computed: ``10000000!`` took minutes, and ``100000!`` gave
+    an integer too long to print.
+    """
+
+    def __init__(self, names: Mapping[str, Any]) -> None:
+        self.names = names
+
+    def visit_Call(self, node: ast.Call) -> ast.Call:
+        self.generic_visit(node)
+        target = self.names.get(node.func.id) if isinstance(node.func, ast.Name) else None
+        # Function itself (Function('f')) is a FunctionClass too, but it creates functions rather than evaluating.
+        is_function = isinstance(target, FunctionClass) and target is not Function
+        if is_function and not any(keyword.arg == "evaluate" for keyword in node.keywords):
+            node.keywords.append(ast.keyword(arg="evaluate", value=ast.Constant(False)))
+        return node

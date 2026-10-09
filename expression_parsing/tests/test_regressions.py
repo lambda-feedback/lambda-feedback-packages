@@ -601,3 +601,15 @@ def test_digit_limit_is_exact(digits, allowed):
     else:
         with pytest.raises(ExpressionParsingError, match="at most 1000"):
             parse_expression("1" + "0" * (digits - 1), config)
+
+
+@pytest.mark.parametrize("response", ["10000000!", "factorial(10000000)", "100000!"])
+def test_integer_functions_are_not_computed_while_parsing(response):
+    # SymPy's evaluate=False skipped factorial and friends: 10000000! took minutes and 100000!
+    # gave an integer too long to print.
+    import time
+
+    start = time.monotonic()
+    parsed = parse_expression(response, parsing_params(elementary_functions=True))
+    assert time.monotonic() - start < 2
+    assert str(parsed).startswith("factorial(")
