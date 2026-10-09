@@ -1353,7 +1353,7 @@ develop = true
 [package.dependencies]
 lambdafeedback-slr-parsing = ">=0.2.0,<0.3.0"
 latex2sympy2-extended = {version = ">=1.11.0,<2.0", extras = ["antlr4-13-2"]}
-sympy = ">=1.12,<2.0"
+sympy = ">=1.14,<2.0"
 
 [package.source]
 type = "directory"
@@ -1386,7 +1386,7 @@ develop = true
 [package.dependencies]
 lambdafeedback-expression-parsing = ">=0.3.0,<0.4.0"
 lambdafeedback-slr-parsing = ">=0.2.0,<0.3.0"
-sympy = ">=1.12,<2.0"
+sympy = ">=1.14,<2.0"
 
 [package.source]
 type = "directory"

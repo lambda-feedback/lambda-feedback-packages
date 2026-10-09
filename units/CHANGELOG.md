@@ -2,7 +2,7 @@
 
 ## 0.3.0 (unreleased)
 
-The first public release. This is a further tidy-up after the 0.2.0 extraction: the package now only does unit conversion. Package metadata (MIT licence, README, URLs) is in place for PyPI. Python 3.13 and later is supported, now that `lambdafeedback-expression-parsing` no longer depends on latex2sympy2.
+The first public release. This is a further tidy-up after the 0.2.0 extraction: the package now only does unit conversion. Package metadata (MIT licence, README, URLs) is in place for PyPI. Python 3.13 and later is supported, now that `lambdafeedback-expression-parsing` no longer depends on latex2sympy2. SymPy 1.14 or later is required (was 1.12): 1.12 predates Python 3.12, and a configuration with a declared function (`symbol_assumptions` `function`) can only be pickled from 1.14.
 
 ### Breaking
 
@@ -21,6 +21,8 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 ### Added
 
 - `PhysicalQuantity.base_dimension`: the dimension without the unit's factor (`5 km/h` gives `length/time`, where `dimension` is `10**3*length/((3600*time))`), and `same_dimension(a, b)` to compare two quantities' dimensions.
+- `MAX_INPUT_LENGTH` (10,000 characters): `parse_quantity` raises `QuantityParseError` for longer input, and `preprocess_quantity` returns it unchanged. This bounds the running time on any input.
+- `MAX_LEGACY_LENGTH` (1,000 characters): the deprecated legacy rewrites are skipped for longer input.
 - `QuantityParamsError`, `AnyUnit` and `__version__` are exported.
 - `PhysicalQuantity` declares typed attributes (SymPy `Basic` for the SI forms) and has a readable `repr`, e.g. `PhysicalQuantity(value='5', unit='kilometre/hour')`.
 - `README.md` documents usage, parameters, unit sets, errors and known limitations.
@@ -41,6 +43,9 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - `PhysicalQuantity` leaves its parser out when pickled or deep-copied, and rebuilds it from the cache. The parser holds closures, so pickling always failed. This needs `lambdafeedback-expression-parsing` with picklable `ExpressionParams`.
 - `QuantityParamsError` can be unpickled. It used to raise `TypeError`, because unpickling called it with one argument instead of two.
 - A number with a huge exponent or too many digits (`1e999999 m`) raises `QuantityParseError` at once. It hung: the value's preview parses without rationalising, and SymPy took minutes to build the float. The limits (1000 digits, exponent ±1000) are `lambdafeedback-expression-parsing`'s.
+- Legacy preprocessing searches on from each rewrite instead of restarting from the beginning of the input (same output). The rewrites themselves can still take time cubic in the length (`"μ " * 400` needs 80,000 of them), hence `MAX_LEGACY_LENGTH`; `"μ " * 20000` took hours and is now passed through at once.
+- The `marked` text of `reverted_units` is built from each node's children's text, computed once, instead of walking each unit's subtree again (same output). A value with a long chain of units took quadratic time: `"x m " * 2500` took 14 s and now takes under a second.
+- A unit's exponent must be numbers (combined with brackets, `*`, `/`), within ±`MAX_UNIT_EXPONENT` (100); otherwise `QuantityParseError`. `km^Pa^km` (a unit as an exponent) hung, computing about 1000^(1000^1000), and `2 km^99999999` hung computing its factor; `km^Pa` was accepted as a unit, and `2 km^1000` failed with an unrelated digit-limit error. `2 m^99999999`, which used to parse, is rejected too.
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 

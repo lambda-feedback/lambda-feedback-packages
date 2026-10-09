@@ -127,7 +127,7 @@ All errors derive from `QuantityError`, which is a `ValueError`, and carry
 
 | Exception | Raised when |
 |---|---|
-| `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), a number inside the unit (`2 m 3 s`, `1 hour 30 minutes`), a temperature in °C or °F, input too long or deeply nested to process, or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
+| `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), a number inside the unit (`2 m 3 s`, `1 hour 30 minutes`), a temperature in °C or °F, a number with more than 1000 digits or an exponent beyond ±1000, a unit's exponent that isn't a number or is beyond ±`MAX_UNIT_EXPONENT` (100), input longer than `MAX_INPUT_LENGTH` (10,000 characters) or too deeply nested to process, or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
 | `UnitConversionError` | The unit can't be converted to SI base units. |
 | `QuantityParamsError` | A `QuantityParams` field is invalid. |
 
@@ -164,6 +164,9 @@ except QuantityError as error:
 - Temperatures are in kelvin only. Celsius and Fahrenheit raise an error,
   because their conversions aren't proportional.
 - `QuantityParams` instances aren't hashable.
+- Legacy preprocessing (`strictness: "legacy"`, deprecated) is skipped for input
+  longer than `MAX_LEGACY_LENGTH` (1,000 characters): its rewrites take time
+  cubic in the length on some input.
 
 ## Changelog
 

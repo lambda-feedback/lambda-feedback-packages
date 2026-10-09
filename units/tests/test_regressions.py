@@ -212,3 +212,73 @@ class TestHugeNumbers:
         with pytest.raises(QuantityParseError):
             parse(expr)
         assert time.perf_counter() - start < 5
+
+
+class TestInputLimits:
+    def test_input_at_the_cap_is_read(self):
+        from lambdafeedback.units import MAX_INPUT_LENGTH
+
+        expr = "2 m".ljust(MAX_INPUT_LENGTH)
+        assert parse(expr).unit.content_string() == "metre"
+
+    def test_input_over_the_cap_raises(self):
+        from lambdafeedback.units import MAX_INPUT_LENGTH
+
+        with pytest.raises(QuantityParseError, match="too long"):
+            parse("2 m".ljust(MAX_INPUT_LENGTH + 1))
+
+    def test_preprocessing_passes_over_long_input_through(self):
+        import time
+
+        from lambdafeedback.units import MAX_INPUT_LENGTH, preprocess_quantity
+
+        expr = "5 μ s " * (MAX_INPUT_LENGTH // 6 + 1)
+        start = time.perf_counter()
+        assert preprocess_quantity("response", expr, NATURAL) == expr
+        assert time.perf_counter() - start < 1
+
+    def test_legacy_rewrites_skip_long_input(self):
+        # "μ " * n needs about n²/2 rewrites (each moves a space one step left): cubic time.
+        import time
+        import warnings
+
+        from lambdafeedback.units import MAX_LEGACY_LENGTH, preprocess_quantity
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            legacy = QuantityParams(legacy_preprocessing=True)
+        start = time.perf_counter()
+        assert preprocess_quantity("response", "μ " * (MAX_LEGACY_LENGTH // 2 + 1), legacy).startswith("μ μ")
+        assert preprocess_quantity("response", "100Pa", legacy) == "100 Pa"  # short input is still rewritten
+        assert time.perf_counter() - start < 1
+
+    def test_long_unit_chain_in_value_is_fast(self):
+        # Each unit-tagged node's marked text walked its whole subtree: quadratic.
+        import time
+
+        start = time.perf_counter()
+        with pytest.raises(QuantityParseError):
+            parse("x m " * 2400)
+        assert time.perf_counter() - start < 5
+
+
+class TestUnitExponents:
+    @pytest.mark.parametrize("expr", ["2 m^-1", "2 m^(-2)", "2 m^0.5", "2 m^(3/2)", "2 m^100", "2 km^2"])
+    def test_ordinary_exponents(self, expr):
+        assert parse(expr).unit is not None
+
+    @pytest.mark.parametrize("expr", ["km^Pa^km", "2 km^Pa", "km^Pa"])
+    def test_unit_as_exponent_raises(self, expr):
+        # km^Pa^km hung: converting it evaluated 1000^(1000^1000).
+        with pytest.raises(QuantityParseError, match="exponent must be a number"):
+            parse(expr)
+
+    @pytest.mark.parametrize("expr", ["2 km^101", "2 km^1000", "2 km^99999999", "2 m^99999999"])
+    def test_huge_exponent_raises(self, expr):
+        # 2 km^99999999 hung computing the factor 1000^99999999; 2 km^1000 failed with a digit-limit error.
+        import time
+
+        start = time.perf_counter()
+        with pytest.raises(QuantityParseError, match="too large"):
+            parse(expr)
+        assert time.perf_counter() - start < 2

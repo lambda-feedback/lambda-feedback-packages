@@ -34,8 +34,15 @@ from .data import (
 from .errors import QuantityError, QuantityParamsError, QuantityParseError, UnitConversionError
 from .params import QuantityParams, Strictness
 from .parser import build_quantity_parser
-from .preprocessing import preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
-from .quantity import PhysicalQuantity, RevertedUnit, parse_quantity, same_dimension
+from .preprocessing import MAX_LEGACY_LENGTH, preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
+from .quantity import (
+    MAX_INPUT_LENGTH,
+    MAX_UNIT_EXPONENT,
+    PhysicalQuantity,
+    RevertedUnit,
+    parse_quantity,
+    same_dimension,
+)
 from .tags import QuantityTag
 
 try:
@@ -48,6 +55,9 @@ __all__ = [
     "COMMON_UNITS",
     "CONVERSION_TO_BASE_SI",
     "IMPERIAL_UNITS",
+    "MAX_INPUT_LENGTH",
+    "MAX_LEGACY_LENGTH",
+    "MAX_UNIT_EXPONENT",
     "SI_BASE_UNITS",
     "SI_DERIVED_UNITS",
     "SI_PREFIXES",

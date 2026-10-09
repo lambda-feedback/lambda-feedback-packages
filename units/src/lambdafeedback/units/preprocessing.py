@@ -8,6 +8,15 @@ from functools import cache
 
 from .data import ALL_UNITS, SI_PREFIXES
 from .params import QuantityParams
+from .quantity import MAX_INPUT_LENGTH
+
+MAX_LEGACY_LENGTH = 1_000
+"""Longest input the legacy rewrites are applied to, in characters.
+
+They take time cubic in the length on some input (``"μ " * 500``, 1000
+characters, needs about 125000 rewrites, each moving a space one step left):
+about 0.4 s at this length, hours at 10000.
+"""
 
 
 def preprocess_quantity(name: str, expr: str, params: QuantityParams) -> str:
@@ -15,17 +24,42 @@ def preprocess_quantity(name: str, expr: str, params: QuantityParams) -> str:
 
     Same shape as ``expression_parsing.preprocess_expression``, so either can
     serve as a context's preprocessing step. ``name`` is unused.
+
+    Input longer than :data:`~lambdafeedback.units.MAX_INPUT_LENGTH` is
+    returned unchanged (:func:`~lambdafeedback.units.parse_quantity` rejects
+    it), and so is input longer than :data:`MAX_LEGACY_LENGTH` with legacy
+    preprocessing.
     """
+    if len(expr) > MAX_INPUT_LENGTH:
+        return expr
     if params.legacy_preprocessing:
-        return preprocess_legacy(expr)
+        return preprocess_legacy(expr) if len(expr) <= MAX_LEGACY_LENGTH else expr
     return transform_prefixes_to_standard(expr)
 
 
 def _rewrite_all(pattern: re.Pattern[str], expr: str, rewrite: Callable[[str, re.Match[str]], str]) -> str:
-    """Apply ``rewrite`` at the first match of ``pattern`` until nothing matches."""
-    while (match := pattern.search(expr)) is not None:
+    """Apply ``rewrite`` at the first match of ``pattern`` until nothing matches.
+
+    Text before a rewrite is unchanged and held no match, so the next search
+    starts just far enough back to catch a match reaching into the rewritten
+    part. Starting from the beginning each time was cubic on long input.
+    """
+    position = 0
+    while (match := pattern.search(expr, position)) is not None:
         expr = rewrite(expr, match)
+        position = max(0, match.start() - _longest_match())
     return expr
+
+
+@cache
+def _longest_match() -> int:
+    """At least as long as any match of the ``_rewrite_all`` patterns.
+
+    The longest is a prefix, a space and a unit form, plus a few marks.
+    """
+    forms = [form for prefix in SI_PREFIXES for form in (prefix.name, prefix.symbol, *prefix.alternatives)]
+    forms += [form for unit in ALL_UNITS for form in (unit.name, unit.symbol, *unit.alternatives, *unit.plurals)]
+    return 2 * max(map(len, forms)) + 8
 
 
 def _alternation(forms: list[str]) -> str:
@@ -55,10 +89,20 @@ def preprocess_legacy(expr: str) -> str:
     patterns = _legacy_patterns()
 
     # "newton*metre" -> "newton metre": "*UNIT" (but not "**UNIT") becomes " UNIT", after the first character
+    # Searched in expr[1:], whose lookbehind can't see expr[0], as before. The rewrite
+    # turns "*" into " ", so a "*" before the spaces it extends may now match: resume there.
     pattern = patterns["star_before_unit"]
-    while (match := pattern.search(expr[1:])) is not None:
+    head, tail = expr[:1], expr[1:]
+    position = 0
+    while (match := pattern.search(tail, position)) is not None:
         start, end = match.span()
-        expr = expr[: start + 1] + match.group().replace("*", " ") + expr[end + 1 :]
+        tail = tail[:start] + match.group().replace("*", " ") + tail[end:]
+        position = start
+        while position > 0 and tail[position - 1] == " ":
+            position -= 1
+        if position > 0 and tail[position - 1] == "*":
+            position -= 1
+    expr = head + tail
 
     # "kilo metre" -> "kilometre"
     expr = _rewrite_all(

@@ -27,6 +27,9 @@ from .params import QuantityParams
 from .parser import build_quantity_parser
 from .tags import QuantityTag
 
+MAX_INPUT_LENGTH = 10_000
+"""Longest input :func:`parse_quantity` reads, in characters: a bound on its running time."""
+
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
 _DIMENSION_NAMES = frozenset(unit.dimension for unit in SI_BASE_UNITS)
@@ -46,6 +49,40 @@ def _normalise_latex(expr: str) -> str:
     MathLive writes ``2~\\mathrm{m}``; the quantity grammar needs ``2 m``.
     """
     return _LATEX_UPRIGHT.sub(r"\1", _LATEX_SPACE.sub(" ", expr))
+
+
+MAX_UNIT_EXPONENT = 100
+"""Largest exponent a unit may have (``m^100``), of either sign."""
+
+_EXPONENT_LABELS = frozenset({"NUMBER", "GROUP", "SOLIDUS", "PRODUCT", "SPACE"})
+
+
+def _exponent_problem(unit: ExprNode) -> str | None:
+    """Why the exponents in a unit can't be used, if they can't.
+
+    An exponent must be numbers combined with brackets, ``*``, ``/`` or spaces,
+    and stay within :data:`MAX_UNIT_EXPONENT`. Otherwise converting the unit
+    could build an enormous number: ``km^(10^10)`` has the factor
+    ``1000^(10^10)``, and ``km^Pa^km`` (a unit as an exponent) hung.
+    """
+    stack = [unit]
+    while stack:
+        node = stack.pop()
+        stack.extend(node.children)
+        if node.label != "POWER":
+            continue
+        bound = 1.0  # at least the exponent's magnitude: the product of its numbers' sizes
+        exponent_nodes = [node.children[1]]
+        while exponent_nodes:
+            part = exponent_nodes.pop()
+            if part.label not in _EXPONENT_LABELS:
+                return f"A unit's exponent must be a number, not {part.original_string()!r}."
+            if part.label == "NUMBER":
+                bound *= max(1.0, abs(float(part.content)))
+            exponent_nodes.extend(part.children)
+        if bound > MAX_UNIT_EXPONENT:
+            return f"The exponent of {node.original_string()!r} is too large; at most {MAX_UNIT_EXPONENT} is allowed."
+    return None
 
 
 def _has_stray_number(node: ExprNode) -> bool:
@@ -68,6 +105,26 @@ def _has_stray_number(node: ExprNode) -> bool:
         else:
             stack.extend(node.children)
     return False
+
+
+def _content(node: ExprNode) -> Any:
+    return node.content
+
+
+def _subtree_texts(root: ExprNode) -> dict[int, str]:
+    """Each node's ``content_string()`` (by ``id``), computed bottom-up in one pass."""
+    order = []
+    stack = [root]
+    while stack:  # pre-order: every node before its descendants
+        node = stack.pop()
+        order.append(node)
+        stack.extend(node.children)
+    texts: dict[int, str] = {}
+    for node in reversed(order):  # so each node's children are done first
+        texts[id(node)] = "".join(
+            part if is_output else texts[id(part)] for is_output, part in node._traverse_step(node, _content)
+        )
+    return texts
 
 
 def _without_factor(dimension: Basic) -> Basic:
@@ -163,7 +220,8 @@ class PhysicalQuantity:
 
         self._split_value_and_unit()
         if self.value is not None:
-            self.value.traverse(self._revert_content)
+            texts = _subtree_texts(self.value)
+            self.value.traverse(lambda node: self._revert_content(node, texts))
         self.value_latex = self._value_latex()
         self.unit_latex = "".join(self._unit_latex(self.unit)) if self.unit is not None else None
         separator = "~" if self.value_latex is not None and self.unit_latex is not None else ""
@@ -247,18 +305,26 @@ class PhysicalQuantity:
         # e.g. "2 m 3 s" or "1 hour 30 minutes": the unit would contain a number.
         if self.unit is not None and _has_stray_number(self.unit):
             raise QuantityParseError(f"Cannot separate the value from the unit in {root.original!r}.")
+        if self.unit is not None and (problem := _exponent_problem(self.unit)) is not None:
+            raise QuantityParseError(problem)
 
-    def _revert_content(self, node: ExprNode) -> list[str]:
-        """Traversal action restoring the value's text as written, noting unit-like parts."""
+    def _revert_content(self, node: ExprNode, texts: dict[int, str]) -> list[str]:
+        """Traversal action restoring the value's text as written, noting unit-like parts.
+
+        ``texts`` holds each node's ``content_string()`` from before the traversal
+        (see :func:`_subtree_texts`). The traversal calls this action on a node
+        before visiting its children, so the marked text is the node's restored
+        content around its children's unchanged text: what ``content_string()``
+        gave, without walking the subtree again for every node (quadratic).
+        """
         if node.label != "GROUP":
             node.content = node.original[node.start : node.end + 1]
         if node.label == "UNIT" or QuantityTag.UNIT in node.tags:
+            marked = "".join(
+                part if is_output else texts[id(part)] for is_output, part in node._traverse_step(node, _content)
+            )
             self.reverted_units.append(
-                RevertedUnit(
-                    before=node.original[: node.start],
-                    marked=node.content_string(),
-                    after=node.original[node.end + 1 :],
-                )
+                RevertedUnit(before=node.original[: node.start], marked=marked, after=node.original[node.end + 1 :])
             )
         return ["", ""]
 
@@ -360,10 +426,17 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
 
     Raises :class:`QuantityParseError` if ``expr`` can't be read as a
     quantity (including a value SymPy can't parse, a number inside the unit,
-    or a temperature in degrees Celsius or Fahrenheit), or
+    a temperature in degrees Celsius or Fahrenheit, or input longer than
+    :data:`MAX_INPUT_LENGTH`), or
     :class:`UnitConversionError` if its unit can't be converted to SI base
     units. Both are :class:`QuantityError`\\ s carrying ``expression`` and ``name``.
     """
+    if len(expr) > MAX_INPUT_LENGTH:
+        raise QuantityParseError(
+            f"The {name} is too long: {len(expr)} characters; at most {MAX_INPUT_LENGTH} are allowed.",
+            expression=expr,
+            name=name,
+        )
     if _CELSIUS_OR_FAHRENHEIT.search(expr):
         raise QuantityParseError(
             "Temperatures in degrees Celsius or Fahrenheit aren't supported; use kelvin.", expression=expr, name=name
