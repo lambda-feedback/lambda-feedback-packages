@@ -15,6 +15,7 @@ compareExpressions, not here. Failures are raised as typed exceptions (see
 ``.expression``, for a caller that wants to continue with the guess.
 """
 
+from ._safe_parse import MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT
 from .conventions import apply_convention, convention_parser
 from .errors import (
     AbsoluteValueNotationError,
@@ -25,7 +26,7 @@ from .errors import (
     SymbolAssumptionError,
     UnknownConventionError,
 )
-from .latex import extract_latex, latex_symbols, parse_latex, sanitise_latex, sympy_to_latex
+from .latex import MAX_LATEX_NESTING, extract_latex, latex_symbols, parse_latex, sanitise_latex, sympy_to_latex
 from .numbers import (
     compute_relative_tolerance_from_significant_decimals,
     generate_arbitrary_number_pattern_matcher,
@@ -47,6 +48,9 @@ from .substitution import normalise_unicode_operators, substitute, substitute_in
 from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
 
 __all__ = [
+    "MAX_LATEX_NESTING",
+    "MAX_NUMBER_DIGITS",
+    "MAX_NUMBER_EXPONENT",
     "AbsoluteValueNotationError",
     "BracketNotationError",
     "Convention",

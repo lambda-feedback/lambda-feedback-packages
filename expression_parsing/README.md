@@ -94,7 +94,7 @@ process, as in a Lambda Feedback evaluation function, is fine.
 
 Number literals are limited to 1000 digits and exponents to ±1000
 (`MAX_NUMBER_DIGITS`, `MAX_NUMBER_EXPONENT`): larger ones take SymPy minutes
-to read. LaTeX nested more than 10 brackets deep is rejected: the LaTeX parser takes
+to read. LaTeX nested more than 10 brackets deep (`MAX_LATEX_NESTING`) is rejected: the LaTeX parser takes
 exponential time in nesting depth.
 
 Expressions are parsed unevaluated, but `simplify` (and any later
