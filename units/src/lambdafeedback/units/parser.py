@@ -63,19 +63,26 @@ def unit_dictionaries(unit_sets: frozenset[str], strictness: Strictness) -> Unit
                 prefixed_units[prefix.symbol + short] = prefix.name + name
             if prefix.name + short not in short_to_long:
                 prefixed_units[prefix.name + short] = prefix.name + name
-    if strictness == "natural":
-        # Prefixed symbol alternatives: "kΩ" for the ohm, whose symbol is "O".
-        for unit in selected:
-            for alternative in unit.alternatives:
-                if len(alternative) == 1 and alternative.isalpha() and not alternative.isascii():
-                    for prefix in SI_PREFIXES:
-                        if prefix.symbol + alternative not in short_to_long:
-                            prefixed_units[prefix.symbol + alternative] = prefix.name + unit.name
+    # Symbols written as one non-ASCII letter ("Ω" for the ohm, whose ASCII symbol
+    # is "O") are symbols in both modes, and take prefixes ("kΩ").
+    symbol_alternatives = {
+        alternative: unit.name
+        for unit in selected
+        for alternative in unit.alternatives
+        if len(alternative) == 1 and alternative.isalpha() and not alternative.isascii()
+    }
+    for alternative, name in symbol_alternatives.items():
+        prefixed_units.setdefault(alternative, name)
+        for prefix in SI_PREFIXES:
+            if prefix.symbol + alternative not in short_to_long:
+                prefixed_units[prefix.symbol + alternative] = prefix.name + name
     prefixed_units_end = dict(units_end)
     for form, name in units_end.items():
         for prefix in SI_PREFIXES:
             prefixed_units_end[prefix.name + form] = prefix.name + name
-    return UnitDictionaries({**units, **short_to_long}, prefixed_units, units_end, prefixed_units_end)
+    return UnitDictionaries(
+        {**units, **symbol_alternatives, **short_to_long}, prefixed_units, units_end, prefixed_units_end
+    )
 
 
 def quantity_tag_handler(strictness: Strictness) -> Callable[[ExprNode], set[Any]]:

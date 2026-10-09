@@ -9,7 +9,8 @@ Every unit set's symbols are recognised, and any SI prefix can be attached to
 any unit (``kft`` is a kilofoot). Where a prefixed form is also the symbol of
 another unit, the unit wins: with the ``common`` set, ``min`` is a minute, not
 a milli-inch. Some symbols differ from the SI ones to avoid collisions:
-``r`` is the radian (``rad`` is the absorbed-dose unit) and ``O`` is the ohm.
+``r`` is the radian (``rad`` is the absorbed-dose unit). The ohm's symbol is
+``O``, and ``Ω`` (an alternative) is accepted as a symbol too, in both modes.
 """
 
 from __future__ import annotations

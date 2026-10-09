@@ -106,10 +106,23 @@ class TestParsing:
         quantity = parse_quantity(expr, QuantityParams(is_latex=True))
         assert (quantity.value.content_string(), quantity.unit.content_string()) == (value, unit)
 
-    @pytest.mark.parametrize("expr, unit", [("2 kΩ", "kiloohm"), ("2 MΩ", "megaohm"), ("2 mΩ", "milliohm")])
-    def test_prefixed_ohm_symbol(self, expr, unit):
-        # Only "kO" was recognised: prefixes were attached to the symbol "O", not to "Ω".
-        assert parse(expr).unit.content_string() == unit
+    @pytest.mark.parametrize("strictness", ["strict", "natural"])
+    @pytest.mark.parametrize(
+        "expr, unit",
+        [
+            ("2 Ω", "ohm"),
+            ("2 𝛀", "ohm"),
+            ("2 kΩ", "kiloohm"),
+            ("2 MΩ", "megaohm"),
+            ("2 mΩ", "milliohm"),
+            ("2 O", "ohm"),
+            ("2 kO", "kiloohm"),
+            ("2 Ω m", "ohm metre"),
+        ],
+    )
+    def test_ohm_symbols(self, expr, unit, strictness):
+        # Only "O"/"kO" were recognised in strict mode, and only "kO" was a prefixed ohm in natural mode.
+        assert parse_quantity(expr, QuantityParams(strictness=strictness)).unit.content_string() == unit
 
     @pytest.mark.parametrize("space", ["\xa0", " ", "\t", "\n", " "])
     def test_unicode_whitespace_separates_value_and_unit(self, space):

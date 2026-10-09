@@ -79,7 +79,7 @@ expression options (`complex_numbers`, `symbols`, `strict_syntax`, ...).
 
 | Field | Default | Meaning |
 |---|---|---|
-| `strictness` | `"natural"` | `"strict"`: only unit names and symbols, separated by `*`, `/` or spaces. `"natural"` also accepts alternative spellings (`meter`, `Ω`) and plurals (`metres`), and units written together (`kgm`). |
+| `strictness` | `"natural"` | `"strict"`: only unit names and symbols, separated by `*`, `/` or spaces. `"natural"` also accepts alternative spellings (`meter`, `Ohm`) and plurals (`metres`), and units written together (`kgm`). |
 | `unit_sets` | `{"SI", "common", "imperial"}` | Which sets of units are recognised (see below). |
 
 ```python
@@ -115,8 +115,8 @@ expansion. Both are read-only.
 | `imperial` | inch, foot, yard, mile, fluid ounce, gill, pint, quart, gallon, ounce, pound, stone. |
 
 Some symbols differ from the SI ones, to avoid collisions: `r` is the radian
-(`rad` is the radiation-dose unit), and `O` is the ohm (`Ω` is accepted in
-natural mode).
+(`rad` is the radiation-dose unit). The ohm is `Ω` or, in plain ASCII, `O`, in
+both modes and with prefixes (`kΩ`, `kO`).
 
 ## Errors
 
@@ -145,8 +145,6 @@ except QuantityError as error:
   `common` units, `min` is a minute; without them, it is a milli-inch.
 - With the `common` set, `d` is a day, `a` is an are and `h` is an hour, even
   though they are also prefix symbols.
-- In strict mode, the ohm is only recognised as `O` (`2 kO`), not `Ω`; natural
-  mode accepts both (`2 kΩ`).
 - `reverted_units` also reports the group enclosing a unit, with garbled
   positions (e.g. for `2 kg + 3`). The entry for the unit itself is correct.
 - Function names that contain unit symbols are reported in `reverted_units`
