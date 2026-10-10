@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import re
-from collections.abc import Mapping
+from collections.abc import Iterator, Mapping
+from string import ascii_letters
 from typing import Any
 
 from latex2sympy2_extended import NormalizationConfig, normalize_latex
@@ -23,12 +23,22 @@ from .preprocessing import _expand_plus_minus, find_matching_parenthesis
 # needs anything more (a number, a function call) falls back to a plain name.
 _ALIAS_NAMESPACE = {"Symbol": Symbol}
 
-# \pm and \mp as commands (so not the start of e.g. \pmod), with any space after.
-_PM_RE = re.compile(r"\\pm(?![A-Za-z])\s*")
-_MP_RE = re.compile(r"\\mp(?![A-Za-z])\s*")
 
-SYMBOL_LATEX_RE = re.compile(r"(?P<start>\\\(|\$\$|\$)(?P<latex>.*?)(?P<end>\\\)|\$\$|\$)")
-"""Finds math-mode LaTeX (``\\(...\\)``, ``$$...$$`` or ``$...$``) in a symbol's LaTeX string."""
+def _replace_command(latex: str, command: str, replacement: str) -> str:
+    """``command`` (e.g. ``\\pm``, but not the start of ``\\pmod``) and any whitespace after it as ``replacement``."""
+    pieces = []
+    done = 0
+    index = latex.find(command)
+    while index != -1:
+        after = index + len(command)
+        if latex[after : after + 1] in tuple(ascii_letters):
+            index = latex.find(command, index + 1)
+            continue
+        pieces += [latex[done:index], replacement]
+        done = len(latex) - len(latex[after:].lstrip())
+        index = latex.find(command, done)
+    pieces.append(latex[done:])
+    return "".join(pieces)
 
 
 class _LatexPrinter(LatexPrinter):
@@ -44,9 +54,25 @@ class _LatexPrinter(LatexPrinter):
 
 
 def extract_latex(symbol: str) -> str:
-    """The math-mode part of a symbol's LaTeX string (the first one), or the whole string."""
-    match = SYMBOL_LATEX_RE.search(symbol)
-    return symbol if match is None else match.group("latex")
+    """The math-mode part of a symbol's LaTeX string (the first one), or the whole string.
+
+    Math mode is delimited by ``\\(...\\)``, ``$$...$$`` or ``$...$`` (any of
+    the closers ends any opener) and doesn't span lines.
+    """
+    for start in range(len(symbol)):
+        for opener in ("\\(", "$$", "$"):
+            if not symbol.startswith(opener, start):
+                continue
+            body = start + len(opener)
+            line_end = symbol.find("\n", body)
+            line_end = len(symbol) if line_end == -1 else line_end
+            # "$$" starts with "$", so the first "$" finds either.
+            closers = [
+                index for index in (symbol.find("\\)", body, line_end), symbol.find("$", body, line_end)) if index != -1
+            ]
+            if closers:
+                return symbol[body : min(closers)]
+    return symbol
 
 
 def latex_symbols(symbols: Mapping[str, SymbolSpec]) -> dict[Symbol, str]:
@@ -85,10 +111,32 @@ def find_placeholder(exp: str) -> str | None:
     return None
 
 
-# A LaTeX command (protected if it is \gamma or \Gamma, otherwise left alone),
-# scientific notation (2E5, 1.5e-3: the E is kept, as an upper-case E, which
-# latex2sympy reads as an exponent), or any other E or e.
-_E_OR_COMMAND = re.compile(r"(\\[A-Za-z]+)|(?<=[\d.])([Ee])(?=[+-]?\d)|([Ee])")
+def _e_tokens(latex: str) -> Iterator[tuple[int, int, str]]:
+    """``(start, end, kind)`` for each LaTeX command, ``E``/``e`` in scientific notation and other ``E``/``e``.
+
+    ``kind`` is ``"command"`` (protected if it is ``\\gamma`` or ``\\Gamma``,
+    otherwise left alone), ``"exponent"`` (``2E5``, ``1.5e-3``: the E is kept,
+    as an upper-case E, which latex2sympy reads as an exponent) or ``"letter"``.
+    """
+    index = 0
+    while index < len(latex):
+        char = latex[index]
+        if char == "\\" and latex[index + 1 : index + 2] in tuple(ascii_letters):
+            end = index + 1
+            while end < len(latex) and latex[end] in ascii_letters:
+                end += 1
+            yield index, end, "command"
+            index = end
+            continue
+        if char in "Ee":
+            exponent = latex[index + 1 : index + 2] in ("+", "-")
+            follows_number = index > 0 and (latex[index - 1].isdecimal() or latex[index - 1] == ".")
+            if follows_number and latex[index + 1 + exponent : index + 2 + exponent].isdecimal():
+                yield index, index + 1, "exponent"
+            else:
+                yield index, index + 1, "letter"
+        index += 1
+
 
 # What a placeholder stands for, as written in LaTeX -> as a symbol name.
 _PROTECTED = {"E": "E", "e": "e", r"\gamma": "gamma", r"\Gamma": "Gamma"}
@@ -106,7 +154,8 @@ def preprocess_E(latex_str: str) -> tuple[str, dict[str, str]]:  # noqa: N802
     as for text input. Scientific notation (``2E5``) and other commands are
     left alone. Returns the modified string and ``{original: placeholder}``.
     """
-    found = {match.group(3) or match.group(1) for match in _E_OR_COMMAND.finditer(latex_str)}
+    tokens = list(_e_tokens(latex_str))
+    found = {latex_str[start:end] for start, end, kind in tokens if kind != "exponent"}
     replacements: dict[str, str] = {}
     for original in _PROTECTED:
         if original in found:
@@ -114,15 +163,14 @@ def preprocess_E(latex_str: str) -> tuple[str, dict[str, str]]:  # noqa: N802
             if placeholder:
                 replacements[original] = placeholder
 
-    def repl(match: re.Match[str]) -> str:
-        command, exponent, letter = match.groups()
-        if command:
-            return replacements.get(command, command)
-        if exponent:
-            return "E"
-        return replacements.get(letter, letter)
-
-    return _E_OR_COMMAND.sub(repl, latex_str), replacements
+    pieces = []
+    done = 0
+    for start, end, kind in tokens:
+        token = latex_str[start:end]
+        pieces += [latex_str[done:start], "E" if kind == "exponent" else replacements.get(token, token)]
+        done = end
+    pieces.append(latex_str[done:])
+    return "".join(pieces), replacements
 
 
 def postprocess_E(expr: Any, replacements: Mapping[str, str]) -> Any:  # noqa: N802
@@ -224,7 +272,7 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     _check_nesting(response)
     substitutions: dict[Any, Any] = {}
 
-    expanded = _MP_RE.sub("minus_plus", _PM_RE.sub("plus_minus", response))
+    expanded = _replace_command(_replace_command(response, "\\pm", "plus_minus"), "\\mp", "minus_plus")
     responses = list(dict.fromkeys(_expand_plus_minus(expanded)))
 
     alias_transformations = (*standard_transformations, implicit_multiplication_application)

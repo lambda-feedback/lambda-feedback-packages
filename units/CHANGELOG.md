@@ -49,6 +49,10 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - `·`, `⋅` and `×` are read as `*`, so `2 kg·m` and `2×10^3 m` parse. Before, they raised errors.
 - With `is_latex=True`, LaTeX spacing (`~`, `\,`, `\ `, `\quad`) and upright text (`\mathrm{m}`, `\text{m}`) are read as plain spaces and text. Before, MathLive's `2~\mathrm{m}` raised an error, and `2~m` was read as the value `2*m` with no unit.
 
+### Changed
+
+- The regular expressions in preprocessing and parsing are replaced by string scanners, with the same results. The quantity grammar's tokens are `slr_parsing.Lexeme`s (requires `lambdafeedback-slr-parsing` with literal token patterns).
+
 ### Deprecated
 
 - `strictness="legacy"` (and constructing `QuantityParams(legacy_preprocessing=True)` directly) now emits a `DeprecationWarning`, and will be removed in 1.0. The behaviour is unchanged (natural strictness with the old `legacy` preprocessing rewrites), but new callers should use `strictness="natural"` (the default).

@@ -5,9 +5,11 @@ A grammar is a list of token specifications plus a list of productions.
 Token specifications are tuples in one of four shapes:
 
 ``(pattern, label)``
-    A regular expression; input text matching it becomes a ``label`` token.
-    Grammar symbols (``START``, nonterminals, ...) are declared this way too,
-    since production strings are scanned with the same specifications.
+    A literal string or a :class:`Lexeme`; input text matching it becomes a
+    ``label`` token. Grammar symbols (``START``, nonterminals, ...) are
+    declared this way too, since production strings are scanned with the same
+    specifications. Text that needs more than a :class:`Lexeme` (a run of
+    digits, say) is scanned by a matcher.
 ``(pattern, label, matcher)``
     ``matcher(text) -> (matched, content)`` is tried at each position:
     ``matched`` is the consumed text (or ``None``) and ``content`` the
@@ -56,7 +58,70 @@ the action replaces the items for the production body with the new node(s).
 Matcher: TypeAlias = Callable[[str], tuple[str | None, Any]]
 """Custom scanner rule: ``matcher(text) -> (matched_text_or_None, content)``."""
 
-TokenSpec: TypeAlias = tuple[str, str] | tuple[str, str, Any]
+
+def _skip_spaces(text: str, index: int) -> int:
+    """The index of the first character at or after ``index`` that isn't a space."""
+    return len(text) - len(text[index:].lstrip(" "))
+
+
+class Lexeme(NamedTuple):
+    """Any of ``forms`` (the first that matches), optionally with spaces around it.
+
+    A space inside a form matches a run of one or more spaces (``"written
+    as"`` matches ``"written   as"``). ``space_before`` and ``space_after``
+    allow a run of spaces (possibly empty) on that side, which becomes part of
+    the token's content.
+    """
+
+    forms: tuple[str, ...]
+    space_before: bool = False
+    space_after: bool = False
+
+    def match(self, text: str) -> int | None:
+        """The length of the lexeme at the start of ``text``, or ``None`` if it isn't there."""
+        start = _skip_spaces(text, 0) if self.space_before else 0
+        for form in self.forms:
+            # A form starting with a space can use the spaces already skipped.
+            if start > 0 and form.startswith(" "):
+                end = _match_form(form.lstrip(" "), text, start)
+            else:
+                end = _match_form(form, text, start)
+            if end is not None:
+                return _skip_spaces(text, end) if self.space_after else end
+        return None
+
+    @property
+    def weight(self) -> int:
+        """Orders specifications for ties: the length of the longest form, plus 2 per side allowing spaces."""
+        return max(map(len, self.forms)) + 2 * self.space_before + 2 * self.space_after
+
+
+def _match_form(form: str, text: str, index: int) -> int | None:
+    """Where ``form`` ends if it occurs in ``text`` at ``index`` (a space in it matching one or more spaces)."""
+    for part_index, part in enumerate(form.split(" ")):
+        if part_index > 0:
+            if not text.startswith(" ", index):
+                return None
+            index = _skip_spaces(text, index)
+        if not text.startswith(part, index):
+            return None
+        index += len(part)
+    return index
+
+
+def match_pattern(pattern: str | Lexeme, text: str) -> int | None:
+    """The length of ``pattern`` (a literal or :class:`Lexeme`) at the start of ``text``, or ``None``."""
+    if isinstance(pattern, Lexeme):
+        return pattern.match(text)
+    return len(pattern) if text.startswith(pattern) else None
+
+
+def pattern_weight(pattern: str | Lexeme) -> int:
+    """How a token specification's pattern ranks in ties between equally long matches (higher wins)."""
+    return pattern.weight if isinstance(pattern, Lexeme) else len(pattern)
+
+
+TokenSpec: TypeAlias = tuple["str | Lexeme", str] | tuple["str | Lexeme", str, Any]
 """A token specification; see the module docstring for the accepted shapes."""
 
 ErrorCondition: TypeAlias = Callable[[list[tuple[list[Token], list[Token]]], Token], bool]

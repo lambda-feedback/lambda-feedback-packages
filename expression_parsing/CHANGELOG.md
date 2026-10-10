@@ -27,6 +27,7 @@ Further tidy-up after the 0.2.0 extraction: previewing a response and mapping fa
 - Arithmetic on a bracketed list, such as an unrecognised function's arguments (`xmax(a, b)` or `int(x, x)` without `elementary_functions`), is reported as such and suggests checking the function name. It used to say "Arithmetic on a set ({...}) is not supported", though no set was written. Sets (`{x+1}*{x-1}` with `strict_syntax`) keep that message.
 - The two sides of an equation are parsed like a whole expression: unevaluated, or simplified with `simplify` (which equations used to ignore). They used to be evaluated, so `x+x=2` gave `Eq(2*x, 2)` where `x+x` gave `x + x`, and `9**9**9=x` never finished: any learner could stall an evaluation. Now `x+x=2` gives `Eq(x + x, 2)`.
 - Defining both a `lambda` and a `lamda` symbol raises `InvalidParameterError` (they are the same symbol; the `lamda` definition was silently dropped).
+- The regular expressions behind the number checks and LaTeX handling are replaced by string scanners that run in linear time, with the same results. `NUMBER_REGEX`, `NONNEGATIVE_NUMBER_REGEX` (both in `numbers`), `SYMBOL_LATEX_RE` (in `latex`) and `escape_regex_reserved_characters` are removed; use `is_number`, `extract_latex` and `generate_arbitrary_number_pattern_matcher` instead. The convention grammar's tokens are `slr_parsing.Lexeme`s (requires `lambdafeedback-slr-parsing` with literal token patterns).
 
 ### Security
 

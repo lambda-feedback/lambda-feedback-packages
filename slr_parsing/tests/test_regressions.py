@@ -1,13 +1,14 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
 import logging
-import re
+from itertools import takewhile
 
 import pytest
 
 from lambdafeedback.slr_parsing import (
     ExprNode,
     GrammarError,
+    Lexeme,
     ParseError,
     SLRParser,
     Token,
@@ -59,20 +60,28 @@ class TestExprNodeTags:
 class TestExpressionParserBuilder:
     @staticmethod
     def number(text):
-        match = re.match(r"[0-9]+", text)
-        return (match.group(), match.group()) if match else (None, None)
+        digits = "".join(takewhile(str.isdigit, text))
+        return (digits, digits) if digits else (None, None)
+
+    @staticmethod
+    def decimal(text):
+        whole, point, fraction = text.partition(".")
+        if not (whole.isdigit() and point and fraction[:1].isdigit()):
+            return None, None
+        decimal = whole + point + "".join(takewhile(str.isdigit, fraction))
+        return decimal, decimal
 
     @pytest.mark.parametrize(
         "nodes",
         [
-            pytest.param([(r"[0-9]+", "NUM")], id="regex pattern"),
+            pytest.param([(Lexeme(("12", "13")), "NUM")], id="lexeme pattern"),
             pytest.param([("NUM", "NUM", number.__func__)], id="matcher"),
-            pytest.param([(r"[0-9]+", "NUM"), (r"[0-9]+\.[0-9]+", "NUM")], id="shared label"),
+            pytest.param([("N", "NUM", number.__func__), ("D", "NUM", decimal.__func__)], id="shared label"),
         ],
     )
     def test_nodes_are_operands_whatever_their_pattern(self, nodes):
-        # The production used the pattern text as a grammar symbol, so a regex
-        # such as "[0-9]+" raised GrammarError (and before that never parsed).
+        # The production used the pattern as a grammar symbol, so a pattern that
+        # isn't a plain symbol raised GrammarError (and before that never parsed).
         parser = build_expression_parser(nodes=nodes, infix_operators=[("+", "ADD")])
         root = parser.parse(parser.scan("12+x"))[0]
         assert [(n.label, n.content) for n in (root, *root.children)] == [
@@ -118,7 +127,14 @@ class TestExpressionParserBuilder:
 
 class TestParserConstruction:
     def test_token_list_argument_is_not_mutated(self):
-        token_list = [("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), (" *\\+ *", "+"), ("x", "x")]
+        token_list = [
+            ("START", "START"),
+            ("END", "END"),
+            ("NULL", "NULL"),
+            ("E", "E"),
+            (Lexeme(("+",), True, True), "+"),
+            ("x", "x"),
+        ]
         before = list(token_list)
         SLRParser(token_list, [("START", "E", None), ("E", "E+E", None), ("E", "x", None)], "START", "END", "NULL")
         assert token_list == before
@@ -280,7 +296,7 @@ class TestRelabel:
             ("E", "E"),
             ("F", "F"),
             ("x", "X"),
-            (r"\+", "P"),
+            ("+", "P"),
         ]
         parser = SLRParser(
             symbols, [("START", "E", None), ("E", "F", relabel), ("F", "x+x", infix)], "START", "END", "NULL"

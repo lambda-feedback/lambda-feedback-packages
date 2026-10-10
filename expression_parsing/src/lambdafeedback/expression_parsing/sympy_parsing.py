@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -217,10 +216,22 @@ def _parse_expr(expr: str, **kwargs: Any) -> Any:
     return parsed
 
 
+def _warning_type_name(warning: str) -> str | None:
+    """The ``name`` in the first ``has type 'name'`` of a warning, if any."""
+    marker = "has type '"
+    index = warning.find(marker)
+    while index != -1:
+        start = index + len(marker)
+        name, quote, _ = warning[start:].partition("'")
+        if quote and name and all(char.isalnum() or char == "_" for char in name):
+            return name
+        index = warning.find(marker, index + 1)
+    return None
+
+
 def _non_expr_message(warning: str, expr: str) -> str:
     """Explain SymPy's "non-Expr arguments" warning in terms of what the learner wrote."""
-    match = re.search(r"has type '(\w+)'", warning)
-    kind = getattr(sympy, match.group(1), None) if match else None
+    kind = getattr(sympy, type_name, None) if (type_name := _warning_type_name(warning)) else None
     if isinstance(kind, type) and issubclass(kind, Set):
         return f"Arithmetic on a set ({{...}}) is not supported in {expr!r}; use ( ) for grouping."
     if kind is Tuple:

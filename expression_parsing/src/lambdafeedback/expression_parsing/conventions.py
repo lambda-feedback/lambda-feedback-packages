@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from functools import cache
 
-from lambdafeedback.slr_parsing import SLRError, SLRParser, build_expression_parser, compose, group, infix
+from lambdafeedback.slr_parsing import Lexeme, SLRError, SLRParser, build_expression_parser, compose, group, infix
 
 from .errors import ExpressionParsingError
 from .params import Convention, validate_convention
@@ -19,7 +19,10 @@ def convention_parser(convention: Convention) -> SLRParser:
     binds tighter (``a/bc`` is ``a/(bc)``).
     """
     validate_convention(convention)
-    custom_tokens = [(r" *(\*|\+|-| ) *", "SPLIT"), (" */ *", "SOLIDUS")]
+    custom_tokens = [
+        (Lexeme(("*", "+", "-", " "), space_before=True, space_after=True), "SPLIT"),
+        (Lexeme(("/",), space_before=True, space_after=True), "SOLIDUS"),
+    ]
     custom_productions = [("E", "*E", group(2, empty=True)), ("E", "EE", group(2, empty=True))]
     if convention == "equal_precedence":
         custom_productions.append(("E", "E/E", infix))

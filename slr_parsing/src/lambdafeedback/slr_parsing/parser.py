@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import logging
-import re
 from collections.abc import Sequence
 from typing import Any, Literal
 
 from .errors import GrammarError, ParseError, ScanError
-from .grammar import Action, ErrorHandler, Matcher, TagHandler, TokenSpec, catch_undefined
+from .grammar import (
+    Action,
+    ErrorHandler,
+    Lexeme,
+    Matcher,
+    TagHandler,
+    TokenSpec,
+    catch_undefined,
+    match_pattern,
+    pattern_weight,
+)
 from .tags import inherit_tags
 from .tokens import ExprNode, Token
 
@@ -43,9 +52,9 @@ class SLRParser:
         error_handler: Sequence[ErrorHandler | tuple[Any, Any]] = (),
         tag_handler: TagHandler = inherit_tags,
     ) -> None:
-        # Longest pattern strings first: scan() keeps the longest match, so this
+        # Heaviest patterns first: scan() keeps the longest match, so this
         # order only breaks ties between equal-length matches.
-        self.token_list: list[TokenSpec] = sorted(token_list, key=lambda spec: -len(spec[0]))
+        self.token_list: list[TokenSpec] = sorted(token_list, key=lambda spec: -pattern_weight(spec[0]))
         self.productions = list(productions)
         self.start_symbol = start_symbol
         self.end_symbol = end_symbol
@@ -78,13 +87,13 @@ class SLRParser:
         if len(catch_all) > 1:
             raise GrammarError("Only one token type can be used to catch undefined lexemes.")
         self._catch_undefined: TokenSpec | None = catch_all[0] if catch_all else None
-        self._expression_symbols = [(re.compile(spec[0]), spec[1]) for spec in self.token_list if len(spec) == 2]
+        self._expression_symbols = [(spec[0], spec[1]) for spec in self.token_list if len(spec) == 2]
         self._expression_rules: list[tuple[str, Matcher]] = [
             (spec[1], spec[2])
             for spec in self.token_list
             if len(spec) > 2 and spec[2] is not None and spec[2] is not catch_undefined
         ]
-        self._bnf_symbols = [(re.compile(spec[0]), spec[1]) for spec in self.token_list]
+        self._bnf_symbols: list[tuple[str | Lexeme, str]] = [(spec[0], spec[1]) for spec in self.token_list]
 
     def scan(self, expr: str, mode: Literal["expression", "bnf"] = "expression") -> list[Token]:
         """Split ``expr`` into tokens, preferring the longest match at each position.
@@ -114,10 +123,10 @@ class SLRParser:
             length = 0
             rest = expr[index:]
             for pattern, symbol_label in symbols:
-                match = pattern.match(rest)
-                if match is not None and len(match.group()) > length:
-                    content = match.group()
-                    length = len(content)
+                matched_length = match_pattern(pattern, rest)
+                if matched_length is not None and matched_length > length:
+                    length = matched_length
+                    content = rest[:length]
                     label = symbol_label
             for rule_label, matcher in rules:
                 matched, rule_content = matcher(rest)

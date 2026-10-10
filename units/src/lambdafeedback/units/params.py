@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import warnings
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -66,5 +65,5 @@ class QuantityParams(ExpressionParams):
         if units_string is not None:
             if not isinstance(units_string, str):
                 raise QuantityParamsError("units_string", f"expected a string, got {units_string!r}")
-            values["unit_sets"] = frozenset(re.split(r"[\s,]+", units_string.strip())) - {""}
+            values["unit_sets"] = frozenset(units_string.replace(",", " ").split())
         return super().from_dict(values)

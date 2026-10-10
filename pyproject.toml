@@ -45,14 +45,18 @@ extend-exclude = [
 exclude = ["NOTES.md"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "N"]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "N", "TID"]
 # Ambiguous-unicode checks: parsing Greek letters, Unicode dashes and unit
 # symbols (Ω, µ, Å) is the point of this code.
 ignore = ["RUF001", "RUF002", "RUF003"]
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"re".msg = "Use str methods or a small scanner instead of regular expressions."
+
 [tool.ruff.lint.per-file-ignores]
 # Test cases and names carried over verbatim from compareExpressions.
-"*/tests/*" = ["E501", "N802"]
+# Tests may use re.escape for pytest.raises(match=...).
+"*/tests/*" = ["E501", "N802", "TID251"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["lambdafeedback"]

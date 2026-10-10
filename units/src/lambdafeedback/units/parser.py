@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Callable
 from functools import cache
 from typing import Any, NamedTuple
 
 from lambdafeedback.slr_parsing import (
     ExprNode,
+    Lexeme,
     SLRParser,
     TokenProduction,
     TokenSpec,
@@ -26,7 +26,34 @@ from .errors import QuantityParseError
 from .params import Strictness
 from .tags import QuantityTag
 
-_NUMBER_RE = re.compile(r"^-?(0|[1-9]\d*)?(\.\d+)?(?<=\d)(e-?(0|[1-9]\d*))?")
+
+def _integer_end(string: str, index: int) -> int:
+    """Where the integer at ``index`` ends: ``0``, or digits not starting with ``0`` (``index`` if none)."""
+    if string.startswith("0", index):
+        return index + 1
+    if index < len(string) and string[index] in "123456789":
+        index += 1
+        while index < len(string) and string[index].isdecimal():
+            index += 1
+    return index
+
+
+def _number_prefix(string: str) -> str | None:
+    """The number at the start of ``string`` (``-1.5``, ``.5``, ``2e-3``), if there is one."""
+    start = 1 if string.startswith("-") else 0
+    end = _integer_end(string, start)
+    if string.startswith(".", end) and string[end + 1 : end + 2].isdecimal():
+        end += 2
+        while end < len(string) and string[end].isdecimal():
+            end += 1
+    if end == start:
+        return None
+    if string.startswith("e", end):
+        exponent_start = end + 2 if string.startswith("-", end + 1) else end + 1
+        exponent_end = _integer_end(string, exponent_start)
+        if exponent_end > exponent_start:
+            end = exponent_end
+    return string[:end]
 
 
 class UnitDictionaries(NamedTuple):
@@ -193,21 +220,20 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
             return None, None
 
     def starts_with_number(string: str) -> tuple[str | None, str | None]:
-        match = _NUMBER_RE.match(string)
-        number = match.group() if match is not None else None
+        number = _number_prefix(string)
         return number, number
 
     token_list: list[TokenSpec] = [
         ("START", "START"),
         ("END", "END"),
         ("NULL", "NULL"),
-        (" +", "SPACE"),
-        (r" *\* *", "PRODUCT"),
-        (" */ *", "SOLIDUS"),
-        (r" *\^ *", "POWER"),
-        (r" *\*\* *", "POWER"),
-        (r"\( *", "START_DELIMITER"),
-        (r" *\)", "END_DELIMITER"),
+        (Lexeme((" ",)), "SPACE"),
+        (Lexeme(("*",), space_before=True, space_after=True), "PRODUCT"),
+        (Lexeme(("/",), space_before=True, space_after=True), "SOLIDUS"),
+        (Lexeme(("^",), space_before=True, space_after=True), "POWER"),
+        (Lexeme(("**",), space_before=True, space_after=True), "POWER"),
+        (Lexeme(("(",), space_after=True), "START_DELIMITER"),
+        (Lexeme((")",), space_before=True), "END_DELIMITER"),
         ("N", "NUMBER", starts_with_number),
         ("U", "UNIT", starts_with_unit),
         ("V", "NON-UNIT", catch_undefined),

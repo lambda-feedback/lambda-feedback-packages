@@ -112,3 +112,10 @@ class TestDeterminism:
         graph.attach("C1", "E2", summary="e2", details="d", sufficiencies=["C1"])
         graph.attach("E2", "C2", summary="c2", details="d")
         assert list(graph.starting_evaluations("C2")) == ["E2"]
+
+
+@pytest.mark.parametrize(("text", "reserved"), [("x.y", True), ("xzy", False), ("f(x)", True)])
+def test_reserved_names_are_matched_literally(text, reserved):
+    # Reserved names were used as regular expressions: "x.y" matched "xzy" and "f(x)" never matched itself.
+    parser = build_criteria_parser({"learner": {"x.y": None, "f(x)": None}})
+    assert (parser.scan(text)[0].label == "RESERVED") is reserved

@@ -60,15 +60,20 @@ the one listed later wins. Productions headed by the start symbol are never
 reduced (reaching their end accepts the input), so their action is never
 called and can be `None`.
 
-```python
-import re
+A token's pattern is a literal string, or a `Lexeme`: the first of several
+literal forms, optionally with spaces around it (`Lexeme(("+", "-"), True,
+True)` matches ` + `). Anything else, such as a run of digits, is scanned by a
+matcher function.
 
-from lambdafeedback.slr_parsing import SLRParser, create_node, group, infix, proceed
+```python
+from itertools import takewhile
+
+from lambdafeedback.slr_parsing import Lexeme, SLRParser, create_node, group, infix, proceed
 
 
 def number(text):
-    match = re.match(r"[0-9]+", text)
-    return (match.group(), int(match.group())) if match else (None, None)
+    digits = "".join(takewhile(str.isdigit, text))
+    return (digits, int(digits)) if digits else (None, None)
 
 
 tokens = [
@@ -78,10 +83,10 @@ tokens = [
     ("E", "E"),
     ("T", "T"),
     ("F", "F"),
-    (r"\+", "PLUS"),
-    (r"\*", "TIMES"),
-    (r"\(", "LPAR"),
-    (r"\)", "RPAR"),
+    (Lexeme(("+",), space_before=True, space_after=True), "PLUS"),
+    (Lexeme(("*",), space_before=True, space_after=True), "TIMES"),
+    ("(", "LPAR"),
+    (")", "RPAR"),
     ("n", "NUM", number),  # in productions "n"; in input, whatever `number` matches
 ]
 productions = [

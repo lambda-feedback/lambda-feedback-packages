@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
+from string import ascii_letters
 from typing import Any
 
 from sympy import Basic, simplify
@@ -33,14 +33,71 @@ MAX_INPUT_LENGTH = 10_000
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
 _DIMENSION_NAMES = frozenset(unit.dimension for unit in SI_BASE_UNITS)
-_CALL = re.compile(r"([A-Za-z_]\w*)\s*\(")
-"""A name followed by ``(``: a function call."""
-_PRODUCT_SIGNS = str.maketrans({"·": "*", "⋅": "*", "×": "*", "​": None, "‌": None, "‍": None, "﻿": None})
-_WHITESPACE = re.compile(r"\s+")
-_CELSIUS_OR_FAHRENHEIT = re.compile(r"[℃℉]|(°|(?<![A-Za-z])deg(rees?)?)\s*[CF](?![A-Za-z])")
-"""Read as degree times coulomb (or farad) otherwise."""
-_LATEX_SPACE = re.compile(r"~|\\[,;: ]|\\q?quad\b")
-_LATEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|operatorname)\{([^{}]*)\}")
+_PRODUCT_SIGNS = str.maketrans(
+    {"·": "*", "⋅": "*", "×": "*", "\u200b": None, "\u200c": None, "\u200d": None, "\ufeff": None}
+)
+_UPRIGHT_COMMANDS = ("mathrm", "text", "textrm", "operatorname")
+
+
+def _is_word_character(char: str) -> bool:
+    return char.isalnum() or char == "_"
+
+
+def _called_names(expr: str) -> list[str]:
+    """The names followed by ``(`` (function calls) in ``expr``; a name starts with an ASCII letter or ``_``."""
+    names = []
+    bracket = expr.find("(")
+    while bracket != -1:
+        end = bracket
+        while end > 0 and expr[end - 1].isspace():
+            end -= 1
+        start = end
+        while start > 0 and _is_word_character(expr[start - 1]):
+            start -= 1
+        while start < end and not (expr[start] in ascii_letters or expr[start] == "_"):
+            start += 1
+        if start < end:
+            names.append(expr[start:end])
+        bracket = expr.find("(", bracket + 1)
+    return names
+
+
+def _collapse_whitespace(text: str) -> str:
+    """Each run of whitespace in ``text`` as one space (including at either end)."""
+    collapsed = " ".join(text.split())
+    if text[:1].isspace():
+        collapsed = " " + collapsed
+    if text[-1:].isspace() and collapsed != " ":
+        collapsed += " "
+    return collapsed
+
+
+def _mentions_celsius_or_fahrenheit(expr: str) -> bool:
+    """Whether ``expr`` has ``℃``, ``℉``, or ``°``/``deg``/``degree``/``degrees`` then ``C`` or ``F``.
+
+    Read as degree times coulomb (or farad) otherwise.
+    """
+    if "℃" in expr or "℉" in expr:
+        return True
+
+    def celsius_or_fahrenheit_at(index: int) -> bool:
+        while index < len(expr) and expr[index].isspace():
+            index += 1
+        return expr[index : index + 1] in ("C", "F") and expr[index + 1 : index + 2] not in tuple(ascii_letters)
+
+    for index, char in enumerate(expr):
+        if char == "°" and celsius_or_fahrenheit_at(index + 1):
+            return True
+        if (
+            expr.startswith("deg", index)
+            and (index == 0 or expr[index - 1] not in ascii_letters)
+            and any(
+                expr.startswith(suffix, index + 3) and celsius_or_fahrenheit_at(index + 3 + len(suffix))
+                for suffix in ("rees", "ree", "")
+            )
+        ):
+            return True
+    return False
 
 
 def _normalise_latex(expr: str) -> str:
@@ -48,7 +105,49 @@ def _normalise_latex(expr: str) -> str:
 
     MathLive writes ``2~\\mathrm{m}``; the quantity grammar needs ``2 m``.
     """
-    return _LATEX_UPRIGHT.sub(r"\1", _LATEX_SPACE.sub(" ", expr))
+    spaced = []
+    index = 0
+    while index < len(expr):
+        if expr[index] == "~":
+            spaced.append(" ")
+            index += 1
+        elif expr.startswith("\\", index) and expr[index + 1 : index + 2] in (",", ";", ":", " "):
+            spaced.append(" ")
+            index += 2
+        elif quad := next((q for q in ("\\qquad", "\\quad") if expr.startswith(q, index)), None):
+            after = index + len(quad)
+            if after < len(expr) and _is_word_character(expr[after]):
+                spaced.append(expr[index])
+                index += 1
+            else:
+                spaced.append(" ")
+                index = after
+        else:
+            spaced.append(expr[index])
+            index += 1
+    return _unwrap_upright("".join(spaced))
+
+
+def _unwrap_upright(expr: str) -> str:
+    """``\\mathrm{m}``, ``\\text{m}``, ... as ``m`` (when the braces hold no other braces)."""
+    unwrapped = []
+    index = 0
+    while (backslash := expr.find("\\", index)) != -1:
+        unwrapped.append(expr[index:backslash])
+        index = backslash + 1
+        for command in _UPRIGHT_COMMANDS:
+            start = backslash + 1 + len(command) + 1
+            if not expr.startswith(command + "{", backslash + 1):
+                continue
+            end = expr.find("}", start)
+            if end != -1 and "{" not in expr[start:end]:
+                unwrapped.append(expr[start:end])
+                index = end + 1
+                break
+        else:
+            unwrapped.append("\\")
+    unwrapped.append(expr[index:])
+    return "".join(unwrapped)
 
 
 MAX_UNIT_EXPONENT = 100
@@ -338,7 +437,7 @@ class PhysicalQuantity:
         original = self.value.original_string()
         # Unit forms inside a called name (``s`` and ``in`` in ``sin(2)``) would split
         # the call in the preview, though the value itself is parsed as the call.
-        calls = _CALL.findall(original)
+        calls = _called_names(original)
         unit_forms = [
             form
             for form in _unsplittable_names(self.params, all_forms=True)
@@ -437,12 +536,12 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
             expression=expr,
             name=name,
         )
-    if _CELSIUS_OR_FAHRENHEIT.search(expr):
+    if _mentions_celsius_or_fahrenheit(expr):
         raise QuantityParseError(
             "Temperatures in degrees Celsius or Fahrenheit aren't supported; use kelvin.", expression=expr, name=name
         )
     # Any whitespace (tabs, newlines, no-break and thin spaces) as one space; drop zero-width characters.
-    text = _WHITESPACE.sub(" ", expr.translate(_PRODUCT_SIGNS))
+    text = _collapse_whitespace(expr.translate(_PRODUCT_SIGNS))
     if params.is_latex:
         text = _normalise_latex(text)
     parser = build_quantity_parser(params.unit_sets, params.strictness)

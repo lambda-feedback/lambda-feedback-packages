@@ -16,7 +16,7 @@ Depends on `slr_parsing`, `sympy` and `latex2sympy2` (the PyPI release; see belo
 | `sympy_parsing.py` | `SympyParsingConfig`, `parse_expression`, `sympy_symbols` |
 | `latex.py` | `sympy_to_latex`, `parse_latex`, `sanitise_latex`, `E`/`e` placeholder handling |
 | `_safe_parse.py` | `safe_parse_expr`: SymPy's parse pipeline with a syntax allowlist and a maths-only namespace |
-| `numbers.py` | Number regexes, `is_number`, complex-form checks, `generate_arbitrary_number_pattern_matcher`, `compute_relative_tolerance_from_significant_decimals` |
+| `numbers.py` | Number scanners (no regexes), `is_number`, complex-form checks, `generate_arbitrary_number_pattern_matcher`, `compute_relative_tolerance_from_significant_decimals` |
 | `errors.py` | `ExpressionParsingError` (a `ValueError`) → `InvalidParameterError`, `UnknownConventionError`, `SymbolAssumptionError`, `LatexParseError`, `BracketNotationError`, `AbsoluteValueNotationError` |
 
 **Deviations from the plan:**
@@ -50,7 +50,7 @@ Depends on `slr_parsing`, `sympy` and `latex2sympy2` (the PyPI release; see belo
 - [x] Symbols normalised once. The consistent `lambda` → `lamda` handling changes 4 parity probes (reviewed).
 - [x] Convention parser cached per convention; deterministic expression-set and substitution ordering.
 - [x] Dead code removed (`printing_symbols`, atol/rtol copying, unused ± placeholders, template docstrings).
-- [x] Documented why `escape_regex_reserved_characters` isn't `re.escape`.
+- [x] Documented why `escape_regex_reserved_characters` isn't `re.escape`. (Since removed with the other regexes; see the 0.3.0 changelog.)
 - [x] `units` ported to the new API.
 
 ### Types & lint

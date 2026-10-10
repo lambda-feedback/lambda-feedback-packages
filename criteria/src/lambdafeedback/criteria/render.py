@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from collections.abc import Collection, Mapping
 from typing import TYPE_CHECKING, Any
 
@@ -27,7 +26,7 @@ def _text(text: str) -> str:
 
 def _identifier(label: str) -> str:
     """``label`` made safe as (part of) a mermaid node id."""
-    return re.sub(r"\W", "_", label)
+    return "".join(char if char.isalnum() or char == "_" else "_" for char in label)
 
 
 def graph_to_json(graph: CriteriaGraph) -> str:

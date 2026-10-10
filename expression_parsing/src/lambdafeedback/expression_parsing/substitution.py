@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -167,8 +166,6 @@ def unicode_dash_substitutions(expr: str) -> list[tuple[str, str]]:
 
 
 _UNICODE_OPERATOR_TABLE = str.maketrans(UNICODE_OPERATORS)
-# Including a redundant ^ or ** before it (x^²).
-_SUPERSCRIPT_RUN = re.compile(rf"(?:\^|\*\*)? *([{''.join(SUPERSCRIPTS)}]+)")
 
 
 def normalise_unicode_operators(expr: str) -> str:
@@ -179,7 +176,22 @@ def normalise_unicode_operators(expr: str) -> str:
     ``√`` or ``½``, are left for parsing to report.
     """
     expr = expr.translate(_UNICODE_OPERATOR_TABLE)
-    return _SUPERSCRIPT_RUN.sub(lambda run: "**(" + "".join(SUPERSCRIPTS[c] for c in run.group(1)) + ")", expr)
+    pieces = []
+    done = index = 0
+    while index < len(expr):
+        if expr[index] not in SUPERSCRIPTS:
+            index += 1
+            continue
+        end = index
+        while end < len(expr) and expr[end] in SUPERSCRIPTS:
+            end += 1
+        # The power replaces any spaces before the run, and a redundant ^ or ** before those (x^²).
+        before = expr[done:index].rstrip(" ")
+        before = before.removesuffix("^") if before.endswith("^") else before.removesuffix("**")
+        pieces += [before, "**(" + "".join(SUPERSCRIPTS[char] for char in expr[index:end]) + ")"]
+        done = index = end
+    pieces.append(expr[done:])
+    return "".join(pieces)
 
 
 def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParams) -> list[str]:

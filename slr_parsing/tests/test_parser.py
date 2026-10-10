@@ -9,6 +9,7 @@ import pytest
 
 from lambdafeedback.slr_parsing import (
     ExprNode,
+    Lexeme,
     Token,
     build_expression_parser,
 )
@@ -91,3 +92,33 @@ class TestSLRExpressionParser:
             assert root.label == label
             assert root.children[0].label == label
             assert root.children[1].label == "UNDEFINED"
+
+
+class TestLexeme:
+    @pytest.mark.parametrize(
+        ("lexeme", "text", "length"),
+        [
+            (Lexeme(("+",)), "+x", 1),
+            (Lexeme(("+",)), " +x", None),
+            (Lexeme(("+",), space_before=True), "  +x", 3),
+            (Lexeme(("+",), space_after=True), "+  x", 3),
+            (Lexeme(("+",), True, True), "x", None),
+            # The first form that matches wins, even when a later one is longer.
+            (Lexeme((">", ">="), True, True), ">= x", 1),
+            (Lexeme((">=", ">"), True, True), ">= x", 3),
+            # A space in a form matches one or more spaces.
+            (Lexeme(("written as",)), "written   as x", 12),
+            (Lexeme(("written as",)), "writtenas", None),
+            (Lexeme((" ",)), "   x", 3),
+            (Lexeme((" ",)), "x", None),
+            # A form starting with a space uses the spaces skipped before it.
+            (Lexeme(("*", " "), True, True), "  x", 2),
+            (Lexeme(("*", " "), True, True), " * x", 3),
+        ],
+    )
+    def test_match_length(self, lexeme, text, length):
+        assert lexeme.match(text) == length
+
+    def test_token_content_includes_the_spaces(self):
+        parser = build_expression_parser(infix_operators=[("+", "ADD")])
+        assert [token.content for token in parser.scan("a  +  b")] == ["a", "  +  ", "b"]

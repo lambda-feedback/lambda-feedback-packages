@@ -69,4 +69,5 @@ Behaviour differences to be aware of when adopting:
 - Graph nodes are hashable and compare unequal to non-nodes, instead of raising `AttributeError`.
 - **Deterministic results.** `generate_feedback` ran evaluations (and so ordered the returned criteria), and `CriteriaGraph.mermaid()` ordered its edge lines, by set iteration, which varies with Python's hash seed. Both now follow graph order: evaluations breadth-first in attachment order. `starting_evaluations` returns an ordered, de-duplicated **list** (was a set).
 - `starting_evaluations` terminates when sufficiencies form a cycle; it used to loop forever.
+- Reserved names are matched literally. They were used as regular expressions, so a name such as `x.y` also matched `xzy`, and one such as `f(x)` never matched itself. `grammar.TOKENS` are now `slr_parsing.Lexeme`s; a custom `token_list` needs literal or `Lexeme` patterns too.
 - A failing `evaluate` function raises `CriteriaEvaluationError` (with the original exception chained) instead of printing the evaluation label and the whole evaluations dict to stdout.

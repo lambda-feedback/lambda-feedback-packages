@@ -4,7 +4,7 @@ E -> E + T | T        T -> T * F | F        F -> ( E ) | id
 """
 
 import logging
-import re
+from itertools import takewhile
 
 import pytest
 
@@ -25,8 +25,8 @@ from lambdafeedback.slr_parsing import (
 
 
 def identifier(text):
-    match = re.match(r"[a-z]+", text)
-    return (match.group(), match.group()) if match else (None, None)
+    name = "".join(takewhile(lambda c: "a" <= c <= "z", text))
+    return (name, name) if name else (None, None)
 
 
 TOKENS = [
@@ -36,10 +36,10 @@ TOKENS = [
     ("E", "E"),
     ("T", "T"),
     ("F", "F"),
-    (r"\+", "PLUS"),
-    (r"\*", "TIMES"),
-    (r"\(", "LPAR"),
-    (r"\)", "RPAR"),
+    ("+", "PLUS"),
+    ("*", "TIMES"),
+    ("(", "LPAR"),
+    (")", "RPAR"),
     ("id", "ID", identifier),
 ]
 

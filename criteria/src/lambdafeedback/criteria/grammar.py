@@ -13,6 +13,7 @@ from typing import Any
 
 from lambdafeedback.slr_parsing import (
     Action,
+    Lexeme,
     SLRParser,
     TokenSpec,
     append_last,
@@ -27,23 +28,29 @@ START_SYMBOL = "START"
 END_SYMBOL = "END"
 NULL_SYMBOL = "NULL"
 
+
+def _spaced(*forms: str) -> Lexeme:
+    """Any of ``forms``, with any spaces around it."""
+    return Lexeme(forms, space_before=True, space_after=True)
+
+
 TOKENS: tuple[TokenSpec, ...] = (
     (START_SYMBOL, START_SYMBOL),
     (END_SYMBOL, END_SYMBOL),
     (NULL_SYMBOL, NULL_SYMBOL),
-    (" *BOOL *", "BOOL"),
-    (" *EQUALITY *", "EQUALITY"),
-    (" *EQUAL *", "EQUAL"),
-    (" *EQUAL_LIST *", "EQUAL_LIST"),
-    (" *RESERVED *", "RESERVED"),
-    (" *= *", "EQUALITY"),
-    (" *(>=?|<=?|ORDER) *", "ORDER"),  # less than (or equal), < (<=), greater than (or equal), > (>=)
-    (" *where *", "WHERE"),
-    (" *written +as *", "WRITTEN_AS"),
-    (" *proportional +to *", "PROPORTIONAL_TO"),
-    (" *contains *", "CONTAINS"),
-    (" *; *", "SEPARATOR"),
-    (" *OTHER *", "OTHER", catch_undefined),
+    (_spaced("BOOL"), "BOOL"),
+    (_spaced("EQUALITY"), "EQUALITY"),
+    (_spaced("EQUAL"), "EQUAL"),
+    (_spaced("EQUAL_LIST"), "EQUAL_LIST"),
+    (_spaced("RESERVED"), "RESERVED"),
+    (_spaced("="), "EQUALITY"),
+    (_spaced(">=", ">", "<=", "<", "ORDER"), "ORDER"),
+    (_spaced("where"), "WHERE"),
+    (_spaced("written as"), "WRITTEN_AS"),
+    (_spaced("proportional to"), "PROPORTIONAL_TO"),
+    (_spaced("contains"), "CONTAINS"),
+    (_spaced(";"), "SEPARATOR"),
+    (_spaced("OTHER"), "OTHER", catch_undefined),
 )
 
 # Order matters: when productions conflict, the one listed later wins.

@@ -13,7 +13,7 @@ Depends on `slr_parsing`, `expression_parsing` and `sympy`. Released as `0.2.0`;
 | `tags.py` | `QuantityTag`: `UNIT`, `NON_UNIT`, `NUMBER`, `REJECTED_UNIT` (was `U`/`V`/`N`/`R`) |
 | `parser.py` | Unit dictionaries, tag handler, natural juxtaposition, `build_quantity_parser` (cached per unit sets and strictness) |
 | `quantity.py` | `PhysicalQuantity`, `parse_quantity`, `RevertedUnit` |
-| `preprocessing.py` | `preprocess_quantity` → `Preprocessed`, `preprocess_legacy` (patterns compiled once, deprecated), `transform_prefixes_to_standard` |
+| `preprocessing.py` | `preprocess_quantity` → `Preprocessed`, `preprocess_legacy` (string searches built once, deprecated), `transform_prefixes_to_standard` |
 | `errors.py` | `QuantityError` (a `ValueError`) → `QuantityParseError`, `UnitConversionError` |
 
 `preview.py` (`preview_function`, `fix_exponents`) was removed in 0.3.0 and moved to compareExpressions — see above.
