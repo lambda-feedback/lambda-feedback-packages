@@ -31,7 +31,7 @@ from .data import (
     Unit,
     units_in,
 )
-from .errors import QuantityError, QuantityParamsError, QuantityParseError, UnitConversionError
+from .errors import DisallowedUnitError, QuantityError, QuantityParamsError, QuantityParseError, UnitConversionError
 from .params import QuantityParams, Strictness
 from .parser import build_quantity_parser
 from .preprocessing import MAX_LEGACY_LENGTH, preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
@@ -65,6 +65,7 @@ __all__ = [
     "VERY_COMMON_UNITS",
     "AnyUnit",
     "BaseUnit",
+    "DisallowedUnitError",
     "PhysicalQuantity",
     "Prefix",
     "QuantityError",

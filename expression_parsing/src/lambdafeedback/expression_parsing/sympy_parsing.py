@@ -18,7 +18,7 @@ from sympy.parsing.sympy_parser import T as TRANSFORMATIONS
 from sympy.parsing.sympy_parser import _token_splittable, split_symbols_custom
 from sympy.utilities.exceptions import SymPyDeprecationWarning
 
-from ._safe_parse import MATH_NAMESPACE, safe_parse_expr
+from ._safe_parse import MATH_NAMESPACE, check_evaluation_cost, safe_parse_expr
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import Convention, ExpressionParams
@@ -308,8 +308,11 @@ def _parse_side(
     expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...], symbol_dict: dict[str, Any]
 ) -> Any:
     """An expression (or one side of an equation): simplified, or else left unevaluated."""
+    unevaluated = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict, evaluate=False)
     if not config.simplify:
-        return _parse_expr(expr, transformations=transformations, local_dict=symbol_dict, evaluate=False)
+        return unevaluated
+    if isinstance(unevaluated, Basic):
+        check_evaluation_cost(unevaluated, expr)
     parsed = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict)
     return parsed.simplify() if isinstance(parsed, Basic) else parsed
 

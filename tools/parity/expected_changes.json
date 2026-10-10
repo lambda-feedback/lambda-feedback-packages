@@ -1620,177 +1620,41 @@
    "value_latex": "10 \\cdot N \\cdot p"
   }
  },
- "quantity.parse|natural_si|10 angleminute": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 angleminute",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t",
-   "messages": [
-    {
-     "after": "leminute",
-     "before": "10 a",
-     "marked": "ng"
-    },
-    {
-     "after": "inute",
-     "before": "10 angle",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*a*g*i*l*m*n*nu*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 angleminute",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t"
-  }
- },
  "quantity.parse|natural_si|10 anglesecond": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 anglesecond",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot a \\cdot g \\cdot l \\cdot n \\cdot second",
-   "messages": [
-    {
-     "after": "lesecond",
-     "before": "10 a",
-     "marked": "ng"
-    },
-    {
-     "after": "",
-     "before": "10 angle",
-     "marked": "second"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*a*g*l*n*second",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 anglesecond",
-   "value_latex": "10 \\cdot e \\cdot a \\cdot g \\cdot l \\cdot n \\cdot second"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 angstrom": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 angstrom",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot g \\cdot m \\cdot n \\cdot o \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "strom",
-     "before": "10 a",
-     "marked": "ng"
-    },
-    {
-     "after": "trom",
-     "before": "10 ang",
-     "marked": "s"
-    },
-    {
-     "after": "",
-     "before": "10 angstro",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*a*g*m*n*o*r*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 angstrom",
-   "value_latex": "10 \\cdot a \\cdot g \\cdot m \\cdot n \\cdot o \\cdot r \\cdot s \\cdot t"
-  }
- },
- "quantity.parse|natural_si|10 are": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 are",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot a \\cdot r",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*E*a*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 are",
-   "value_latex": "10 \\cdot e \\cdot a \\cdot r"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 astronomical_unit": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples; standard_value keeps 'astronomical_unit' whole (unsplittable name), was a*stronomical_unit",
-  "value": {
-   "content": "10 astronomical_unit",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot \\mathcal{i}_{unit} \\cdot m \\cdot n \\cdot o \\cdot o \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "tronomical_unit",
-     "before": "10 ",
-     "marked": "as"
-    },
-    {
-     "after": "ical_unit",
-     "before": "10 astrono",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*astronomical_unit",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 astronomical_unit",
-   "value_latex": "10 \\cdot a \\cdot \\mathcal{i}_{unit} \\cdot m \\cdot n \\cdot o \\cdot o \\cdot r \\cdot s \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 atomic_mass_unit": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 atomic_mass_unit",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot _unit \\cdot a \\cdot ic_{} \\cdot m \\cdot mass \\cdot o \\cdot t",
-   "messages": [
-    {
-     "after": "ic_mass_unit",
-     "before": "10 ato",
-     "marked": "m"
-    },
-    {
-     "after": "ass_unit",
-     "before": "10 atomic_",
-     "marked": "m"
-    },
-    {
-     "after": "s_unit",
-     "before": "10 atomic_m",
-     "marked": "as"
-    },
-    {
-     "after": "_unit",
-     "before": "10 atomic_mas",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*_unit*atomic_*mass",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 atomic_mass_unit",
-   "value_latex": "10 \\cdot _unit \\cdot a \\cdot ic_{} \\cdot m \\cdot mass \\cdot o \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 bar": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 barn": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 bel": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 curie": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 day": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 deg": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -1813,29 +1677,6 @@
    "unit_latex": null,
    "value": "10 deg",
    "value_latex": "10 \\cdot e \\cdot d \\cdot g"
-  }
- },
- "quantity.parse|natural_si|10 degree": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 degree",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r",
-   "messages": [
-    {
-     "after": "ree",
-     "before": "10 de",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*E*d*g*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 degree",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r"
   }
  },
  "quantity.parse|natural_si|10 eV": {
@@ -1862,27 +1703,16 @@
   }
  },
  "quantity.parse|natural_si|10 electronvolt": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 electronvolt",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot c \\cdot l \\cdot n \\cdot o \\cdot r \\cdot t \\cdot volt",
-   "messages": [
-    {
-     "after": "",
-     "before": "10 electron",
-     "marked": "volt"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*c*l*n*o*r*t*volt",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 electronvolt",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot c \\cdot l \\cdot n \\cdot o \\cdot r \\cdot t \\cdot volt"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 fluid_ounce": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 foot": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 gal": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -1908,27 +1738,8 @@
   }
  },
  "quantity.parse|natural_si|10 gallon": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 gallon",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot g \\cdot l \\cdot l \\cdot n \\cdot o",
-   "messages": [
-    {
-     "after": "allon",
-     "before": "10 ",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*a*g*l*l*n*o",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 gallon",
-   "value_latex": "10 \\cdot a \\cdot g \\cdot l \\cdot l \\cdot n \\cdot o"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 gi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -1954,44 +1765,12 @@
   }
  },
  "quantity.parse|natural_si|10 gill": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 gill",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot g \\cdot i \\cdot l \\cdot l",
-   "messages": [
-    {
-     "after": "ill",
-     "before": "10 ",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*g*i*l*l",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 gill",
-   "value_latex": "10 \\cdot g \\cdot i \\cdot l \\cdot l"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
- "quantity.parse|natural_si|10 hectare": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 hectare",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*E*E*a*c*h*r*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 hectare",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t"
-  }
+ "quantity.parse|natural_si|10 hour": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 in": {
   "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
@@ -2009,6 +1788,10 @@
    "value": "10 in",
    "value_latex": "10 \\cdot i \\cdot n"
   }
+ },
+ "quantity.parse|natural_si|10 inch": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 kg m/s^2 + 10 kg m/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -2116,45 +1899,13 @@
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
   }
  },
- "quantity.parse|natural_si|10 litre": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 litre",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*E*i*l*r*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 litre",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t"
-  }
+ "quantity.parse|natural_si|10 knot": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 metricton": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 metricton",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot c \\cdot i \\cdot m \\cdot n \\cdot o \\cdot r \\cdot t \\cdot t",
-   "messages": [
-    {
-     "after": "etricton",
-     "before": "10 ",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*c*i*m*n*o*r*t*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 metricton",
-   "value_latex": "10 \\cdot e \\cdot c \\cdot i \\cdot m \\cdot n \\cdot o \\cdot r \\cdot t \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 mi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -2180,27 +1931,8 @@
   }
  },
  "quantity.parse|natural_si|10 mile": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 mile",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m",
-   "messages": [
-    {
-     "after": "ile",
-     "before": "10 ",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*i*l*m",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 mile",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 min": {
   "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
@@ -2225,51 +1957,13 @@
    "value_latex": "10 \\cdot i \\cdot m \\cdot n"
   }
  },
- "quantity.parse|natural_si|10 minute": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 minute",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t",
-   "messages": [
-    {
-     "after": "inute",
-     "before": "10 ",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*i*m*nu*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 minute",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t"
-  }
- },
  "quantity.parse|natural_si|10 nautical_mile": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 nautical_mile",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m \\cdot \\mathcal{nauti}_{}",
-   "messages": [
-    {
-     "after": "ile",
-     "before": "10 nautical_",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*nautical_mil",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 nautical_mile",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m \\cdot \\mathcal{nauti}_{}"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 neper": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 nmi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -2294,68 +1988,29 @@
    "value_latex": "10 \\cdot i \\cdot m \\cdot n"
   }
  },
- "quantity.parse|natural_si|10 rad": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 rad",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot d \\cdot r",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*a*d*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 rad",
-   "value_latex": "10 \\cdot a \\cdot d \\cdot r"
-  }
+ "quantity.parse|natural_si|10 ounce": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
- "quantity.parse|natural_si|10 rem": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 rem",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot m \\cdot r",
-   "messages": [
-    {
-     "after": "",
-     "before": "10 re",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*m*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 rem",
-   "value_latex": "10 \\cdot e \\cdot m \\cdot r"
-  }
+ "quantity.parse|natural_si|10 pint": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 pound": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 quart": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 radian": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 roentgen": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 roentgen",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot g \\cdot n \\cdot n \\cdot o \\cdot r \\cdot t",
-   "messages": [
-    {
-     "after": "en",
-     "before": "10 roent",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*g*n*n*o*r*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 roentgen",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot g \\cdot n \\cdot n \\cdot o \\cdot r \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 s/g + 5 gram*second^2 + 7 ms + 5 gram/second^3": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -2588,50 +2243,16 @@
   }
  },
  "quantity.parse|natural_si|10 steradian": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot d \\cdot i \\cdot n \\cdot s \\cdot tera",
-   "messages": [
-    {
-     "after": "teradian",
-     "before": "10 ",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*a*d*i*n*s*tera",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 steradian",
-   "value_latex": "10 \\cdot a \\cdot d \\cdot i \\cdot n \\cdot s \\cdot tera"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|10 stone": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 stone",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot n \\cdot o \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "tone",
-     "before": "10 ",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*n*o*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 stone",
-   "value_latex": "10 \\cdot e \\cdot n \\cdot o \\cdot s \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 yard": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|100* Pa": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -2703,50 +2324,8 @@
   }
  },
  "quantity.parse|natural_si|2 liters": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "2 liters",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "",
-     "before": "2 lite",
-     "marked": "rs"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "2*E*i*l*r*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "2 liters",
-   "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
-  }
- },
- "quantity.parse|natural_si|2 litres": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "2 litres",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "",
-     "before": "2 litre",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "2*E*i*l*r*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "2 litres",
-   "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|3 micro second": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -2818,7 +2397,7 @@
   }
  },
  "quantity.parse|natural_si|5 °": {
-  "reason": "units: without a unit set containing the degree, ° in a value raises 'Unrecognised character' instead of becoming a symbol named °",
+  "reason": "units: ° (the degree, from the common set) with only the SI unit set raises DisallowedUnitError; v0.1 read it as a symbol named °",
   "value": "ERROR"
  },
  "quantity.parse|natural_si|5/s^2": {
@@ -5929,177 +5508,41 @@
    "value_latex": "10 \\cdot N \\cdot p"
   }
  },
- "quantity.parse|strict_si|10 angleminute": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 angleminute",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t",
-   "messages": [
-    {
-     "after": "leminute",
-     "before": "10 a",
-     "marked": "ng"
-    },
-    {
-     "after": "inute",
-     "before": "10 angle",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*a*g*i*l*m*n*nu*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 angleminute",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t"
-  }
- },
  "quantity.parse|strict_si|10 anglesecond": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 anglesecond",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot a \\cdot g \\cdot l \\cdot n \\cdot second",
-   "messages": [
-    {
-     "after": "lesecond",
-     "before": "10 a",
-     "marked": "ng"
-    },
-    {
-     "after": "",
-     "before": "10 angle",
-     "marked": "second"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*a*g*l*n*second",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 anglesecond",
-   "value_latex": "10 \\cdot e \\cdot a \\cdot g \\cdot l \\cdot n \\cdot second"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 angstrom": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 angstrom",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot g \\cdot m \\cdot n \\cdot o \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "strom",
-     "before": "10 a",
-     "marked": "ng"
-    },
-    {
-     "after": "trom",
-     "before": "10 ang",
-     "marked": "s"
-    },
-    {
-     "after": "",
-     "before": "10 angstro",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*a*g*m*n*o*r*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 angstrom",
-   "value_latex": "10 \\cdot a \\cdot g \\cdot m \\cdot n \\cdot o \\cdot r \\cdot s \\cdot t"
-  }
- },
- "quantity.parse|strict_si|10 are": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 are",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot a \\cdot r",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*E*a*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 are",
-   "value_latex": "10 \\cdot e \\cdot a \\cdot r"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 astronomical_unit": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples; standard_value keeps 'astronomical_unit' whole (unsplittable name), was a*stronomical_unit",
-  "value": {
-   "content": "10 astronomical_unit",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot \\mathcal{i}_{unit} \\cdot m \\cdot n \\cdot o \\cdot o \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "tronomical_unit",
-     "before": "10 ",
-     "marked": "as"
-    },
-    {
-     "after": "ical_unit",
-     "before": "10 astrono",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*astronomical_unit",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 astronomical_unit",
-   "value_latex": "10 \\cdot a \\cdot \\mathcal{i}_{unit} \\cdot m \\cdot n \\cdot o \\cdot o \\cdot r \\cdot s \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 atomic_mass_unit": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 atomic_mass_unit",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot _unit \\cdot a \\cdot ic_{} \\cdot m \\cdot mass \\cdot o \\cdot t",
-   "messages": [
-    {
-     "after": "ic_mass_unit",
-     "before": "10 ato",
-     "marked": "m"
-    },
-    {
-     "after": "ass_unit",
-     "before": "10 atomic_",
-     "marked": "m"
-    },
-    {
-     "after": "s_unit",
-     "before": "10 atomic_m",
-     "marked": "as"
-    },
-    {
-     "after": "_unit",
-     "before": "10 atomic_mas",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*_unit*atomic_*mass",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 atomic_mass_unit",
-   "value_latex": "10 \\cdot _unit \\cdot a \\cdot ic_{} \\cdot m \\cdot mass \\cdot o \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 bar": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 barn": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 bel": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 curie": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 day": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 deg": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6122,29 +5565,6 @@
    "unit_latex": null,
    "value": "10 deg",
    "value_latex": "10 \\cdot e \\cdot d \\cdot g"
-  }
- },
- "quantity.parse|strict_si|10 degree": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 degree",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r",
-   "messages": [
-    {
-     "after": "ree",
-     "before": "10 de",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*E*d*g*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 degree",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r"
   }
  },
  "quantity.parse|strict_si|10 eV": {
@@ -6171,27 +5591,16 @@
   }
  },
  "quantity.parse|strict_si|10 electronvolt": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 electronvolt",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot c \\cdot l \\cdot n \\cdot o \\cdot r \\cdot t \\cdot volt",
-   "messages": [
-    {
-     "after": "",
-     "before": "10 electron",
-     "marked": "volt"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*c*l*n*o*r*t*volt",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 electronvolt",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot c \\cdot l \\cdot n \\cdot o \\cdot r \\cdot t \\cdot volt"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 fluid_ounce": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 foot": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 g/sm": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6255,27 +5664,8 @@
   }
  },
  "quantity.parse|strict_si|10 gallon": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 gallon",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot g \\cdot l \\cdot l \\cdot n \\cdot o",
-   "messages": [
-    {
-     "after": "allon",
-     "before": "10 ",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*a*g*l*l*n*o",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 gallon",
-   "value_latex": "10 \\cdot a \\cdot g \\cdot l \\cdot l \\cdot n \\cdot o"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 gi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6301,27 +5691,8 @@
   }
  },
  "quantity.parse|strict_si|10 gill": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 gill",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot g \\cdot i \\cdot l \\cdot l",
-   "messages": [
-    {
-     "after": "ill",
-     "before": "10 ",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*g*i*l*l",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 gill",
-   "value_latex": "10 \\cdot g \\cdot i \\cdot l \\cdot l"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 gram/metresecond": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6361,22 +5732,9 @@
    "value_latex": "\\frac{10 \\cdot e \\cdot c \\cdot d \\cdot gram \\cdot n \\cdot o}{metres}"
   }
  },
- "quantity.parse|strict_si|10 hectare": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 hectare",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*E*E*a*c*h*r*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 hectare",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t"
-  }
+ "quantity.parse|strict_si|10 hour": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 in": {
   "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
@@ -6394,6 +5752,10 @@
    "value": "10 in",
    "value_latex": "10 \\cdot i \\cdot n"
   }
+ },
+ "quantity.parse|strict_si|10 inch": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 kg m/s^2 + 10 kg m/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6691,45 +6053,13 @@
    "value_latex": "\\frac{10 \\cdot e \\cdot c \\cdot gram \\cdot kilo \\cdot metres \\cdot n \\cdot o}{d^{2}}"
   }
  },
- "quantity.parse|strict_si|10 litre": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 litre",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*E*i*l*r*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 litre",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t"
-  }
+ "quantity.parse|strict_si|10 knot": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 metricton": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 metricton",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot c \\cdot i \\cdot m \\cdot n \\cdot o \\cdot r \\cdot t \\cdot t",
-   "messages": [
-    {
-     "after": "etricton",
-     "before": "10 ",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*c*i*m*n*o*r*t*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 metricton",
-   "value_latex": "10 \\cdot e \\cdot c \\cdot i \\cdot m \\cdot n \\cdot o \\cdot r \\cdot t \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 mi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6755,27 +6085,8 @@
   }
  },
  "quantity.parse|strict_si|10 mile": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 mile",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m",
-   "messages": [
-    {
-     "after": "ile",
-     "before": "10 ",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*i*l*m",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 mile",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 min": {
   "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
@@ -6800,51 +6111,13 @@
    "value_latex": "10 \\cdot i \\cdot m \\cdot n"
   }
  },
- "quantity.parse|strict_si|10 minute": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 minute",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t",
-   "messages": [
-    {
-     "after": "inute",
-     "before": "10 ",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*i*m*nu*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 minute",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t"
-  }
- },
  "quantity.parse|strict_si|10 nautical_mile": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 nautical_mile",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m \\cdot \\mathcal{nauti}_{}",
-   "messages": [
-    {
-     "after": "ile",
-     "before": "10 nautical_",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*nautical_mil",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 nautical_mile",
-   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m \\cdot \\mathcal{nauti}_{}"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 neper": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 nmi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -6869,68 +6142,29 @@
    "value_latex": "10 \\cdot i \\cdot m \\cdot n"
   }
  },
- "quantity.parse|strict_si|10 rad": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 rad",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot d \\cdot r",
-   "messages": [],
-   "standard_unit": null,
-   "standard_value": "10*a*d*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 rad",
-   "value_latex": "10 \\cdot a \\cdot d \\cdot r"
-  }
+ "quantity.parse|strict_si|10 ounce": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
- "quantity.parse|strict_si|10 rem": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "10 rem",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot m \\cdot r",
-   "messages": [
-    {
-     "after": "",
-     "before": "10 re",
-     "marked": "m"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*m*r",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 rem",
-   "value_latex": "10 \\cdot e \\cdot m \\cdot r"
-  }
+ "quantity.parse|strict_si|10 pint": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 pound": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 quart": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 radian": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 roentgen": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 roentgen",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot e \\cdot g \\cdot n \\cdot n \\cdot o \\cdot r \\cdot t",
-   "messages": [
-    {
-     "after": "en",
-     "before": "10 roent",
-     "marked": "g"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*E*g*n*n*o*r*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 roentgen",
-   "value_latex": "10 \\cdot e \\cdot e \\cdot g \\cdot n \\cdot n \\cdot o \\cdot r \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 s/g + 5 gram*second^2 + 7 ms + 5 gram/second^3": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -7148,50 +6382,16 @@
   }
  },
  "quantity.parse|strict_si|10 steradian": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot a \\cdot d \\cdot i \\cdot n \\cdot s \\cdot tera",
-   "messages": [
-    {
-     "after": "teradian",
-     "before": "10 ",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*a*d*i*n*s*tera",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 steradian",
-   "value_latex": "10 \\cdot a \\cdot d \\cdot i \\cdot n \\cdot s \\cdot tera"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10 stone": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "10 stone",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "10 \\cdot e \\cdot n \\cdot o \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "tone",
-     "before": "10 ",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "10*E*n*o*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "10 stone",
-   "value_latex": "10 \\cdot e \\cdot n \\cdot o \\cdot s \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 yard": {
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|10*pi kilogrammetre/second^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -7301,50 +6501,8 @@
   }
  },
  "quantity.parse|strict_si|2 liters": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
-  "value": {
-   "content": "2 liters",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "",
-     "before": "2 lite",
-     "marked": "rs"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "2*E*i*l*r*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "2 liters",
-   "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
-  }
- },
- "quantity.parse|strict_si|2 litres": {
-  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
-  "value": {
-   "content": "2 litres",
-   "dimension": "1",
-   "expanded_unit": null,
-   "latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t",
-   "messages": [
-    {
-     "after": "",
-     "before": "2 litre",
-     "marked": "s"
-    }
-   ],
-   "standard_unit": null,
-   "standard_value": "2*E*i*l*r*s*t",
-   "unit": null,
-   "unit_factor": "1",
-   "unit_latex": null,
-   "value": "2 litres",
-   "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
-  }
+  "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
+  "value": "ERROR"
  },
  "quantity.parse|strict_si|2 meters": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -7523,7 +6681,7 @@
   }
  },
  "quantity.parse|strict_si|5 °": {
-  "reason": "units: without a unit set containing the degree, ° in a value raises 'Unrecognised character' instead of becoming a symbol named °",
+  "reason": "units: ° (the degree, from the common set) with only the SI unit set raises DisallowedUnitError; v0.1 read it as a symbol named °",
   "value": "ERROR"
  },
  "quantity.parse|strict_si|5/s^2": {

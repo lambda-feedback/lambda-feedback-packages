@@ -6,6 +6,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Breaking
 
+- A unit spelled out from a unit set that isn't selected raises the new `DisallowedUnitError` (a `QuantityParseError`, with `.unit` and `.unit_sets`): with only `SI`, `10 litre`, `3 feet` and `5 °` are rejected, naming the set that has the unit. Before, most were read as letters in the value, so `10 litre` was `10*E*i*l*r*t` with no unit (the `e` read as Euler's number), and a few raised an unrelated error. Names, alternative spellings and plurals are checked, with or without a prefix; symbols (`L`, `h`) are still read as variables.
 - **Angles are in radians.** The radian and the steradian are now 1, and the degree is `pi/180`. Before, the radian was `1/(2*pi)`, the steradian `1/(4*pi)` and the degree `1/360` (fractions of a turn), while the arcminute and the arcsecond were already in radians, so `60 angleminute` didn't equal `1 degree`. This changes `standard_value`, `unit_factor`, `expanded_unit` and `dimension` for every angle unit.
 - `parse_quantity` raises only `QuantityError`s. A parser error (`slr_parsing.ParseError`/`ScanError`, e.g. for `2 m)`) and a value SymPy can't parse (`ExpressionParsingError`, e.g. `2 x;y`) are now raised as `QuantityParseError`, with the original error as `__cause__`. Every `QuantityError` carries `expression` and `name`.
 - `QuantityParams` validates `unit_sets`: an unknown name (such as `"si"`) raises `QuantityParamsError`. Before, it was silently ignored, and no units were recognised. `from_dict` splits `units_string` on spaces and commas instead of testing for substrings, so `"SIcommon"` is rejected rather than read as both sets.
@@ -20,6 +21,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Added
 
+- `DisallowedUnitError` (see Breaking).
 - `PhysicalQuantity.base_dimension`: the dimension without the unit's factor (`5 km/h` gives `length/time`, where `dimension` is `10**3*length/((3600*time))`), and `same_dimension(a, b)` to compare two quantities' dimensions.
 - `MAX_INPUT_LENGTH` (10,000 characters): `parse_quantity` raises `QuantityParseError` for longer input, and `preprocess_quantity` returns it unchanged. This bounds the running time on any input.
 - `MAX_LEGACY_LENGTH` (1,000 characters): the deprecated legacy rewrites are skipped for longer input.

@@ -98,11 +98,18 @@ to read. LaTeX nested more than 10 brackets deep (`MAX_LATEX_NESTING`) is reject
 exponential time in nesting depth.
 
 Expressions are parsed unevaluated, including functions and operator
-classes called by name (`factorial(10**8)`, `Pow(9, Pow(9, 9))`), but
-`simplify` (and any later evaluation, such as comparing answers) computes:
-`9**9**9` would then take practically forever. A caller handling untrusted
-input, such as an evaluation function, must run parsing and evaluation
-under a time or memory limit.
+classes called by name (`factorial(10**8)`, `Pow(9, Pow(9, 9))`). With
+`simplify` they are evaluated, after a check that no exact number would
+have more than `MAX_NUMBER_DIGITS` digits (`9**9**9`, `factorial(10**8)`
+and `primepi(10**13)` raise `ExpressionParsingError`) and that no sum
+containing symbols is raised to a power above `MAX_SIMPLIFY_POWER` (500).
+
+That bounds the arithmetic, not SymPy's symbolic algorithms. The calculus
+helpers `summation`, `product`, `integrate`, `limit` and `diff` are
+evaluated in every mode, and `summation(1/k**k, (k, 1, 10**6))` never
+finishes. Any later evaluation, such as comparing answers, is unbounded
+too. A caller handling untrusted input, such as an evaluation function,
+must run parsing and evaluation under a time or memory limit.
 
 ## Licence
 

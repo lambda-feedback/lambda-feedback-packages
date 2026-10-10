@@ -17,7 +17,7 @@ compareExpressions, not here. Failures are raised as typed exceptions (see
 
 from importlib.metadata import PackageNotFoundError, version
 
-from ._safe_parse import MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT
+from ._safe_parse import MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT, MAX_SIMPLIFY_POWER
 from .conventions import apply_convention, convention_parser
 from .errors import (
     AbsoluteValueNotationError,
@@ -58,6 +58,7 @@ __all__ = [
     "MAX_LATEX_NESTING",
     "MAX_NUMBER_DIGITS",
     "MAX_NUMBER_EXPONENT",
+    "MAX_SIMPLIFY_POWER",
     "AbsoluteValueNotationError",
     "BracketNotationError",
     "Convention",

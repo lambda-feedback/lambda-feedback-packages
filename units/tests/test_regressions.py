@@ -3,7 +3,7 @@
 import pytest
 from sympy import simplify
 
-from lambdafeedback.units import QuantityParams, QuantityParseError, parse_quantity
+from lambdafeedback.units import DisallowedUnitError, QuantityParams, QuantityParseError, parse_quantity
 
 NATURAL = QuantityParams(strictness="natural")
 
@@ -282,3 +282,57 @@ class TestUnitExponents:
         with pytest.raises(QuantityParseError, match="too large"):
             parse(expr)
         assert time.perf_counter() - start < 2
+
+
+class TestUnitsOutsideTheUnitSets:
+    """With only SI, 10 litre was the value 10*E*i*l*r*t: no unit, and e read as Euler's number."""
+
+    SI_ONLY = QuantityParams(unit_sets=frozenset({"SI"}))
+
+    @pytest.mark.parametrize(
+        ("expr", "unit", "unit_sets"),
+        [
+            ("10 litre", "litre", ("common",)),
+            ("2 litres", "litre", ("common",)),
+            ("10 millilitre", "litre", ("common",)),
+            ("3 feet", "foot", ("imperial",)),
+            ("10 hour", "hour", ("common",)),
+            ("5 °", "degree", ("common",)),
+            ("2 m/hour", "hour", ("common",)),
+        ],
+    )
+    @pytest.mark.parametrize("strictness", ["natural", "strict"])
+    def test_spelled_out_unit_raises(self, expr, unit, unit_sets, strictness):
+        params = self.SI_ONLY.replace(strictness=strictness)
+        with pytest.raises(DisallowedUnitError) as caught:
+            parse(expr, params)
+        assert (caught.value.unit, caught.value.unit_sets) == (unit, unit_sets)
+        assert caught.value.expression == expr
+        assert isinstance(caught.value, QuantityParseError)
+
+    @pytest.mark.parametrize("expr", ["5 h", "2 L", "2 a m", "2 x_bar m", "sin(x) m"])
+    def test_symbols_and_other_words_are_still_values(self, expr):
+        # A letter such as h or L is more likely a variable than an hour or a litre.
+        parse(expr, self.SI_ONLY)
+
+    def test_latex_command_is_not_a_word(self):
+        params = self.SI_ONLY.replace(is_latex=True)
+        with pytest.raises(DisallowedUnitError):
+            parse(r"2~\text{litre}", params)
+        assert parse(r"\frac{1}{2}~\mathrm{m}", params).unit is not None
+
+    def test_selected_sets_are_allowed(self):
+        assert parse("10 litre").unit.content_string() == "litre"
+
+    def test_error_pickles(self):
+        import pickle
+
+        with pytest.raises(DisallowedUnitError) as caught:
+            parse("10 litre", self.SI_ONLY)
+        copy = pickle.loads(pickle.dumps(caught.value))
+        assert (copy.unit, copy.unit_sets, copy.expression, str(copy)) == (
+            "litre",
+            ("common",),
+            "10 litre",
+            str(caught.value),
+        )

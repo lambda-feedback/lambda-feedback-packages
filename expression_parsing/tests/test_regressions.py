@@ -1,5 +1,6 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
+import math
 import re
 import subprocess
 import sys
@@ -637,3 +638,49 @@ def test_latex_binomial_is_not_computed_while_parsing():
     start = time.monotonic()
     assert parse_latex(r"\binom{100000000}{50000000}", {}) == "binomial(100000000, 50000000)"
     assert time.monotonic() - start < 2
+
+
+class TestSimplifyIsBounded:
+    """With simplify, parsing evaluates: 9**9**9 and factorial(10**8) never finished."""
+
+    @pytest.mark.parametrize(
+        "response",
+        [
+            "9**9**9",
+            "Pow(9,Pow(9,9))",
+            "factorial(100000000)",
+            "(10**10)!",
+            "(2*x)**100000",
+            "catalan(10**6)",
+            "harmonic(10**6)",
+            "2**4000",
+            "x = 9**9**9",
+        ],
+    )
+    def test_huge_numbers_raise(self, response):
+        import time
+
+        start = time.monotonic()
+        with pytest.raises(ExpressionParsingError, match="at most 1000"):
+            parse_expression(response, parsing_params(simplify=True))
+        assert time.monotonic() - start < 2
+
+    def test_large_power_of_a_sum_raises(self):
+        # simplify((x+1)**1000) took seconds, (x+1)**100000 never finished.
+        with pytest.raises(ExpressionParsingError, match="at most 500"):
+            parse_expression("(x+1)**100000", parsing_params(simplify=True))
+
+    @pytest.mark.parametrize(
+        ("response", "expected"),
+        [
+            ("2**3000", str(2**3000)),
+            ("factorial(300)", str(math.factorial(300))),
+            ("Mod(9**9**2, 7)", "1"),
+            ("(x+1)**400", "(x + 1)**400"),
+            ("x**(10**100)", f"x**{10**100}"),
+            ("(x+1)**2 - x**2", "2*x + 1"),
+            ("5!", "120"),
+        ],
+    )
+    def test_reasonable_sizes_still_simplify(self, response, expected):
+        assert str(parse_expression(response, parsing_params(simplify=True))) == expected

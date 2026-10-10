@@ -22,14 +22,38 @@ namespace holds all of SymPy plus Python's builtin functions (``open``,
 from __future__ import annotations
 
 import ast
+import math
 from collections.abc import Mapping
 from typing import Any
 
 import sympy
-from sympy import Abs, Basic, Function, Max, Min, Pow
-from sympy.core.function import FunctionClass
+from sympy import (
+    Abs,
+    Add,
+    Basic,
+    Function,
+    Max,
+    Min,
+    Mod,
+    Mul,
+    Pow,
+    Rational,
+    arg,
+    ceiling,
+    conjugate,
+    exp,
+    floor,
+    frac,
+    im,
+    log,
+    re,
+    sign,
+)
+from sympy.core.function import AppliedUndef, FunctionClass
 from sympy.core.operations import AssocOp
 from sympy.core.relational import Relational
+from sympy.functions.elementary.hyperbolic import HyperbolicFunction, InverseHyperbolicFunction
+from sympy.functions.elementary.trigonometric import InverseTrigonometricFunction, TrigonometricFunction
 from sympy.parsing.sympy_parser import eval_expr, evaluateFalse, stringify_expr
 
 from .errors import ExpressionParsingError
@@ -220,3 +244,84 @@ class _UnevaluatedCalls(ast.NodeTransformer):
         if (is_function or is_operator) and not any(keyword.arg == "evaluate" for keyword in node.keywords):
             node.keywords.append(ast.keyword(arg="evaluate", value=ast.Constant(False)))
         return node
+
+
+MAX_SIMPLIFY_POWER = 500
+"""Largest power a sum containing symbols may be raised to when simplifying (``(x+1)**500``)."""
+
+# Functions whose value is no larger than their arguments' (or not an exact number at all).
+_BOUNDED_FUNCTIONS = (Abs, sign, re, im, conjugate, floor, ceiling, frac, Mod)
+_INEXACT_FUNCTIONS = (
+    TrigonometricFunction,
+    InverseTrigonometricFunction,
+    HyperbolicFunction,
+    InverseHyperbolicFunction,
+    exp,
+    log,
+    arg,
+    AppliedUndef,
+)
+
+
+def check_evaluation_cost(expr: Basic, text: str) -> None:
+    """Raise :class:`ExpressionParsingError` if evaluating the unevaluated ``expr`` could take practically forever.
+
+    Evaluating builds exact numbers, so ``9**9**9`` or ``factorial(10**8)``
+    never finishes, and functions such as ``bell`` or ``primepi`` compute
+    from their argument. Any exact number evaluation could build is bounded
+    by :data:`MAX_NUMBER_DIGITS` digits, like a number the learner types. A
+    sum containing symbols may be raised to at most :data:`MAX_SIMPLIFY_POWER`:
+    simplifying ``(x+1)**1000`` takes seconds.
+
+    This bounds evaluation, not SymPy's symbolic algorithms: simplifying can
+    still be slow on large or contrived expressions.
+    """
+    _log_size(expr, text)
+
+
+def _magnitude(log_size: float) -> float:
+    """The largest value with this ``log10`` size."""
+    return math.inf if log_size > 300 else float(10**log_size)
+
+
+def _log_size(node: Basic, text: str) -> float:
+    """At least ``log10`` of the largest exact number (numerator or denominator) evaluating ``node`` builds.
+
+    Symbols and inexact values (floats, ``pi``, ``sin(x)``) count as 1: their
+    powers don't build exact numbers.
+    """
+    if isinstance(node, Rational):
+        # Exact for small numbers: an overestimate here compounds through nested powers.
+        return math.log10(max(abs(node.p), node.q))
+    sizes = [_log_size(argument, text) for argument in node.args]
+    largest = max(sizes, default=0.0)
+    if isinstance(node, Add):
+        size = largest + math.log10(len(sizes) or 1)
+    elif isinstance(node, Mul):
+        size = sum(sizes)
+    elif isinstance(node, Pow):
+        base, exponent = sizes
+        power = _magnitude(exponent)
+        if power > MAX_SIMPLIFY_POWER and node.base.free_symbols and node.base.has(Add):
+            raise ExpressionParsingError(
+                f"A sum is raised to too large a power to simplify in {text!r}; "
+                f"at most {MAX_SIMPLIFY_POWER} is allowed.",
+                expression=text,
+            )
+        size = base * power if base else 0.0
+    elif isinstance(node, _BOUNDED_FUNCTIONS) or not isinstance(node, Function):
+        size = largest  # also symbols, relations, tuples, Max/Min, unevaluated sums and integrals
+    elif isinstance(node, _INEXACT_FUNCTIONS):
+        size = 0.0
+    else:
+        # factorial, binomial, bell, fibonacci, primepi, zeta, ...: computed from the
+        # argument, with values of up to about n*log10(n) digits (n! has fewer).
+        n = _magnitude(largest)
+        size = n * math.log10(2 * n)
+    if size > MAX_NUMBER_DIGITS:
+        raise ExpressionParsingError(
+            f"Evaluating {text!r} builds a number of more than {MAX_NUMBER_DIGITS} digits; "
+            f"at most {MAX_NUMBER_DIGITS} are allowed.",
+            expression=text,
+        )
+    return size

@@ -128,6 +128,7 @@ All errors derive from `QuantityError`, which is a `ValueError`, and carry
 | Exception | Raised when |
 |---|---|
 | `QuantityParseError` | The input can't be read as a quantity: unbalanced brackets, a dangling operator, a unit between parts of the value (`5 m/s x`), a number inside the unit (`2 m 3 s`, `1 hour 30 minutes`), a temperature in °C or °F, a number with more than 1000 digits or an exponent beyond ±1000, a unit's exponent that isn't a number or is beyond ±`MAX_UNIT_EXPONENT` (100), input longer than `MAX_INPUT_LENGTH` (10,000 characters) or too deeply nested to process, or a value SymPy can't parse. The underlying error is chained as `__cause__`. |
+| `DisallowedUnitError` | A `QuantityParseError`: the input spells out a unit from a unit set that isn't selected, by name, alternative spelling or plural, with or without a prefix (`10 litre`, `3 feet`, `5 °` with only `SI`). `unit` is the unit's name and `unit_sets` the sets that contain it. Symbols (`L`, `h`) aren't checked, since they are more likely variables. |
 | `UnitConversionError` | The unit can't be converted to SI base units. |
 | `QuantityParamsError` | A `QuantityParams` field is invalid. |
 
@@ -163,11 +164,10 @@ except QuantityError as error:
   with the `2` as a factor.
 - Temperatures are in kelvin only. Celsius and Fahrenheit raise an error,
   because their conversions aren't proportional.
-- A unit from a set that isn't selected is read as letters in the value, not
-  rejected: with only `SI`, `10 litre` is the value `10*E*i*l*r*t` (with
-  `elementary_functions`, each `e` is Euler's number) and has no unit, and
-  `reverted_units` may be empty. Check `quantity.unit is None` when a unit is
-  required.
+- A unit *symbol* from a set that isn't selected is read as letters in the
+  value: with only `SI`, `5 h` is the value `5*h` with no unit (spelled-out
+  names such as `hour` raise `DisallowedUnitError`). Check
+  `quantity.unit is None` when a unit is required.
 - `QuantityParams` instances aren't hashable.
 - Legacy preprocessing (`strictness: "legacy"`, deprecated) is skipped for input
   longer than `MAX_LEGACY_LENGTH` (1,000 characters): its rewrites take time

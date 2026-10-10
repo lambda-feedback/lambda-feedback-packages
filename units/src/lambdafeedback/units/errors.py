@@ -22,6 +22,26 @@ class QuantityParseError(QuantityError):
     """A response could not be read as a physical quantity."""
 
 
+class DisallowedUnitError(QuantityParseError):
+    """A response used a unit from a unit set the task doesn't allow (``10 litre`` with only ``SI``).
+
+    ``unit`` is the unit's name and ``unit_sets`` names the sets that contain it.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        unit: str | None = None,
+        unit_sets: tuple[str, ...] = (),
+        expression: str | None = None,
+        name: str | None = None,
+    ) -> None:
+        super().__init__(message, expression=expression, name=name)
+        self.unit = unit
+        self.unit_sets = unit_sets
+
+
 class UnitConversionError(QuantityError):
     """A quantity's unit could not be converted to SI base units."""
 

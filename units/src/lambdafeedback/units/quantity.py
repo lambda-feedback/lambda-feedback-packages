@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import cache
 from string import ascii_letters
 from typing import Any
 
@@ -21,8 +22,8 @@ from lambdafeedback.expression_parsing import (
 )
 from lambdafeedback.slr_parsing import ExprNode, SLRError, SLRParser
 
-from .data import CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, units_in
-from .errors import QuantityError, QuantityParseError, UnitConversionError
+from .data import ALL_UNITS, CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, UNIT_SETS, AnyUnit, units_in
+from .errors import DisallowedUnitError, QuantityError, QuantityParseError, UnitConversionError
 from .params import QuantityParams
 from .parser import build_quantity_parser
 from .tags import QuantityTag
@@ -98,6 +99,52 @@ def _mentions_celsius_or_fahrenheit(expr: str) -> bool:
         ):
             return True
     return False
+
+
+@cache
+def _unselected_unit_forms(unit_sets: frozenset[str]) -> dict[str, AnyUnit]:
+    """Spellings (names, alternatives, plurals, with or without a prefix name) of units outside ``unit_sets``.
+
+    Symbols are left out: a letter such as ``h`` or ``L`` in a value is more
+    likely a variable than an hour or a litre. A spelling of a selected unit is
+    never included.
+    """
+    prefixes = ("", *(prefix.name for prefix in SI_PREFIXES))
+
+    def spellings(unit: AnyUnit) -> set[str]:
+        return {prefix + form for form in (unit.name, *unit.alternatives, *unit.plurals) for prefix in prefixes}
+
+    selected = units_in(unit_sets)
+    allowed = set().union(*map(spellings, selected))
+    forms: dict[str, AnyUnit] = {}
+    for unit in ALL_UNITS:
+        if unit not in selected:
+            for form in spellings(unit) - allowed:
+                forms.setdefault(form, unit)
+    return forms
+
+
+def _disallowed_unit(text: str, unit_sets: frozenset[str]) -> tuple[str, AnyUnit] | None:
+    """The first whole word of ``text`` (and its unit) that spells a unit outside ``unit_sets``, if any.
+
+    A word is a run of letters and ``_``; one after ``\\`` is a LaTeX command.
+    Characters that aren't letters (``°``) are checked one at a time.
+    """
+    forms = _unselected_unit_forms(unit_sets)
+    index = 0
+    while index < len(text):
+        start = index
+        if text[index].isalpha() or text[index] == "_":
+            while index < len(text) and (text[index].isalpha() or text[index] == "_"):
+                index += 1
+            if start > 0 and text[start - 1] == "\\":
+                continue
+        else:
+            index += 1
+        unit = forms.get(text[start:index])
+        if unit is not None:
+            return text[start:index], unit
+    return None
 
 
 def _normalise_latex(expr: str) -> str:
@@ -526,7 +573,9 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
     Raises :class:`QuantityParseError` if ``expr`` can't be read as a
     quantity (including a value SymPy can't parse, a number inside the unit,
     a temperature in degrees Celsius or Fahrenheit, or input longer than
-    :data:`MAX_INPUT_LENGTH`), or
+    :data:`MAX_INPUT_LENGTH`), :class:`DisallowedUnitError` (a
+    :class:`QuantityParseError`) if it spells out a unit from a unit set not in
+    ``params.unit_sets`` (``10 litre`` with only ``SI``), or
     :class:`UnitConversionError` if its unit can't be converted to SI base
     units. Both are :class:`QuantityError`\\ s carrying ``expression`` and ``name``.
     """
@@ -544,6 +593,16 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
     text = _collapse_whitespace(expr.translate(_PRODUCT_SIGNS))
     if params.is_latex:
         text = _normalise_latex(text)
+    if (disallowed := _disallowed_unit(text, params.unit_sets)) is not None:
+        word, unit = disallowed
+        sets = tuple(set_name for set_name, units in UNIT_SETS.items() if unit in units)
+        raise DisallowedUnitError(
+            f"{word!r} is a unit ({unit.name}) from the {' or '.join(sets)} unit set, which isn't allowed here.",
+            unit=unit.name,
+            unit_sets=sets,
+            expression=expr,
+            name=name,
+        )
     parser = build_quantity_parser(params.unit_sets, params.strictness)
     try:
         roots = parser.parse(parser.scan(text.strip()))
