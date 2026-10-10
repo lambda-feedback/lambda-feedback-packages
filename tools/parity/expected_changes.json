@@ -111,12 +111,60 @@
   "reason": "slr_parsing: ExprNode.__str__ shows single tags; empty tags print as 'tags: {}' (was 'tags:  {}')",
   "value": "WRITTEN_AS:  written as  tags: {}\n0: RESERVED: response tags: {}\n1: RESERVED: answer tags: {}"
  },
+ "expr.parse|assumptions|1 ± x": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
  "expr.parse|assumptions|a=b=c": {
   "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
   "value": "ERROR"
  },
+ "expr.parse|assumptions|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|assumptions|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|assumptions|x ∓ 2": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
+ "expr.parse|complex|1 ± x": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
  "expr.parse|complex|a=b=c": {
   "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
+  "value": "ERROR"
+ },
+ "expr.parse|complex|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|complex|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|complex|x ∓ 2": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
+ "expr.parse|default|1 ± x": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
   "value": "ERROR"
  },
  "expr.parse|default|2E": {
@@ -130,6 +178,24 @@
   "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
   "value": "ERROR"
  },
+ "expr.parse|default|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|default|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|default|x ∓ 2": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
  "expr.parse|default|xE": {
   "reason": "slr_parsing: the convention parser no longer scans a capital E as its expression-node symbol, so inputs like 2E / xE parse",
   "value": {
@@ -137,17 +203,82 @@
    "parsed": "E*x"
   }
  },
+ "expr.parse|elementary|1 ± x": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
  "expr.parse|elementary|a=b=c": {
   "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
+  "value": "ERROR"
+ },
+ "expr.parse|elementary|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|elementary|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|elementary|x ∓ 2": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
+ "expr.parse|implicit_higher|1 ± x": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
   "value": "ERROR"
  },
  "expr.parse|implicit_higher|a=b=c": {
   "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
   "value": "ERROR"
  },
+ "expr.parse|implicit_higher|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|implicit_higher|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|implicit_higher|x ∓ 2": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
+ },
  "expr.parse|strict|a=b=c": {
   "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
   "value": "ERROR"
+ },
+ "expr.parse|strict|as": {
+  "reason": "expression_parsing: Python keywords (as, in, is, ...) are read as symbols; in strict syntax 'as' is one symbol (was a*s)",
+  "value": {
+   "latex": "as",
+   "parsed": "as"
+  }
+ },
+ "expr.parse|strict|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|strict|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
  },
  "expr.parse|strict|xE": {
   "reason": "slr_parsing: the convention parser no longer scans a capital E as its expression-node symbol, so inputs like 2E / xE parse",
@@ -158,6 +289,10 @@
  },
  "expr.parse|strict|{x+1}*{x-1}": {
   "reason": "expression_parsing: arithmetic on {} set literals (strict syntax) is rejected instead of building a deprecated Mul(FiniteSet, ...)",
+  "value": "ERROR"
+ },
+ "expr.parse|symbols|1 ± x": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
   "value": "ERROR"
  },
  "expr.parse|symbols|a=b=c": {
@@ -177,6 +312,24 @@
    "latex": "\\Lambda_0 x",
    "parsed": "lamda*x"
   }
+ },
+ "expr.parse|symbols|x – 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|symbols|x − 1": {
+  "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
+  "value": {
+   "latex": "x - 1",
+   "parsed": "x - 1*1"
+  }
+ },
+ "expr.parse|symbols|x ∓ 2": {
+  "reason": "expression_parsing: a character Python can't read (± and ∓ outside the plus_minus alias) raises 'Unrecognised character' instead of becoming a symbol",
+  "value": "ERROR"
  },
  "expr.parse|symbols|λ": {
   "reason": "expression_parsing: task symbols are normalised once (lambda -> lamda) in ExpressionParams, so every path maps the task's lambda to lamda and prints it with the task's LaTeX",
@@ -1467,6 +1620,34 @@
    "value_latex": "10 \\cdot N \\cdot p"
   }
  },
+ "quantity.parse|natural_si|10 angleminute": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t",
+   "messages": [
+    {
+     "after": "leminute",
+     "before": "10 a",
+     "marked": "ng"
+    },
+    {
+     "after": "inute",
+     "before": "10 angle",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*E*a*g*i*l*m*n*nu*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 angleminute",
+   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t"
+  }
+ },
  "quantity.parse|natural_si|10 anglesecond": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -1528,8 +1709,25 @@
    "value_latex": "10 \\cdot a \\cdot g \\cdot m \\cdot n \\cdot o \\cdot r \\cdot s \\cdot t"
   }
  },
+ "quantity.parse|natural_si|10 are": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 are",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot a \\cdot r",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*E*a*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 are",
+   "value_latex": "10 \\cdot e \\cdot a \\cdot r"
+  }
+ },
  "quantity.parse|natural_si|10 astronomical_unit": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
+  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples; standard_value keeps 'astronomical_unit' whole (unsplittable name), was a*stronomical_unit",
   "value": {
    "content": "10 astronomical_unit",
    "dimension": "1",
@@ -1548,7 +1746,7 @@
     }
    ],
    "standard_unit": null,
-   "standard_value": "10*a*stronomical_unit",
+   "standard_value": "10*astronomical_unit",
    "unit": null,
    "unit_factor": "1",
    "unit_latex": null,
@@ -1615,6 +1813,29 @@
    "unit_latex": null,
    "value": "10 deg",
    "value_latex": "10 \\cdot e \\cdot d \\cdot g"
+  }
+ },
+ "quantity.parse|natural_si|10 degree": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 degree",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r",
+   "messages": [
+    {
+     "after": "ree",
+     "before": "10 de",
+     "marked": "g"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*E*E*d*g*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 degree",
+   "value_latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r"
   }
  },
  "quantity.parse|natural_si|10 eV": {
@@ -1755,6 +1976,40 @@
    "value_latex": "10 \\cdot g \\cdot i \\cdot l \\cdot l"
   }
  },
+ "quantity.parse|natural_si|10 hectare": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 hectare",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*E*E*a*c*h*r*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 hectare",
+   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t"
+  }
+ },
+ "quantity.parse|natural_si|10 in": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 in",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot i \\cdot n",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*i*n",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 in",
+   "value_latex": "10 \\cdot i \\cdot n"
+  }
+ },
  "quantity.parse|natural_si|10 kg m/s^2 + 10 kg m/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -1861,6 +2116,23 @@
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
   }
  },
+ "quantity.parse|natural_si|10 litre": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 litre",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*E*i*l*r*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 litre",
+   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t"
+  }
+ },
  "quantity.parse|natural_si|10 metricton": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -1930,6 +2202,52 @@
    "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m"
   }
  },
+ "quantity.parse|natural_si|10 min": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 min",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot i \\cdot m \\cdot n",
+   "messages": [
+    {
+     "after": "in",
+     "before": "10 ",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*i*m*n",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 min",
+   "value_latex": "10 \\cdot i \\cdot m \\cdot n"
+  }
+ },
+ "quantity.parse|natural_si|10 minute": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 minute",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t",
+   "messages": [
+    {
+     "after": "inute",
+     "before": "10 ",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*i*m*nu*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 minute",
+   "value_latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t"
+  }
+ },
  "quantity.parse|natural_si|10 nautical_mile": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -1974,6 +2292,46 @@
    "unit_latex": null,
    "value": "10 nmi",
    "value_latex": "10 \\cdot i \\cdot m \\cdot n"
+  }
+ },
+ "quantity.parse|natural_si|10 rad": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 rad",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot a \\cdot d \\cdot r",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*a*d*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 rad",
+   "value_latex": "10 \\cdot a \\cdot d \\cdot r"
+  }
+ },
+ "quantity.parse|natural_si|10 rem": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 rem",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot m \\cdot r",
+   "messages": [
+    {
+     "after": "",
+     "before": "10 re",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*m*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 rem",
+   "value_latex": "10 \\cdot e \\cdot m \\cdot r"
   }
  },
  "quantity.parse|natural_si|10 roentgen": {
@@ -2367,6 +2725,29 @@
    "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
   }
  },
+ "quantity.parse|natural_si|2 litres": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "2 litres",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t",
+   "messages": [
+    {
+     "after": "",
+     "before": "2 litre",
+     "marked": "s"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "2*E*i*l*r*s*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "2 litres",
+   "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
+  }
+ },
  "quantity.parse|natural_si|3 micro second": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -2435,6 +2816,10 @@
    "value": "3 μs",
    "value_latex": "3 \\cdot \\mu \\cdot s"
   }
+ },
+ "quantity.parse|natural_si|5 °": {
+  "reason": "units: without a unit set containing the degree, ° in a value raises 'Unrecognised character' instead of becoming a symbol named °",
+  "value": "ERROR"
  },
  "quantity.parse|natural_si|5/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
@@ -3881,6 +4266,23 @@
    "unit_latex": null,
    "value": "-10.5 kgm/s^2",
    "value_latex": "- \\frac{10.5 \\cdot g \\cdot k \\cdot m}{s^{2}}"
+  }
+ },
+ "quantity.parse|strict_all|1 Ω": {
+  "reason": "units: Ω is the ohm's symbol in both modes, with prefixes (was only O in strict mode)",
+  "value": {
+   "content": "1 ohm",
+   "dimension": "length**2*10**3*mass/(time**3*electric_current**2)",
+   "expanded_unit": "metre**2*10**3*gram/(second**3*ampere**2)",
+   "latex": "1~\\mathrm{ohm}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere**2*second**3)",
+   "standard_value": "1*1000",
+   "unit": "Ω",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{ohm}",
+   "value": "1",
+   "value_latex": "1"
   }
  },
  "quantity.parse|strict_all|10 R": {
@@ -5487,6 +5889,23 @@
    "value_latex": "- \\frac{10.5 \\cdot g \\cdot k \\cdot m}{s^{2}}"
   }
  },
+ "quantity.parse|strict_si|1 Ω": {
+  "reason": "units: Ω is the ohm's symbol in both modes, with prefixes (was only O in strict mode)",
+  "value": {
+   "content": "1 ohm",
+   "dimension": "length**2*10**3*mass/(time**3*electric_current**2)",
+   "expanded_unit": "metre**2*10**3*gram/(second**3*ampere**2)",
+   "latex": "1~\\mathrm{ohm}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere**2*second**3)",
+   "standard_value": "1*1000",
+   "unit": "Ω",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{ohm}",
+   "value": "1",
+   "value_latex": "1"
+  }
+ },
  "quantity.parse|strict_si|10 Np": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -5508,6 +5927,34 @@
    "unit_latex": null,
    "value": "10 Np",
    "value_latex": "10 \\cdot N \\cdot p"
+  }
+ },
+ "quantity.parse|strict_si|10 angleminute": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t",
+   "messages": [
+    {
+     "after": "leminute",
+     "before": "10 a",
+     "marked": "ng"
+    },
+    {
+     "after": "inute",
+     "before": "10 angle",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*E*a*g*i*l*m*n*nu*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 angleminute",
+   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot g \\cdot i \\cdot l \\cdot m \\cdot n \\cdot \\nu \\cdot t"
   }
  },
  "quantity.parse|strict_si|10 anglesecond": {
@@ -5571,8 +6018,25 @@
    "value_latex": "10 \\cdot a \\cdot g \\cdot m \\cdot n \\cdot o \\cdot r \\cdot s \\cdot t"
   }
  },
+ "quantity.parse|strict_si|10 are": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 are",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot a \\cdot r",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*E*a*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 are",
+   "value_latex": "10 \\cdot e \\cdot a \\cdot r"
+  }
+ },
  "quantity.parse|strict_si|10 astronomical_unit": {
-  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
+  "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples; standard_value keeps 'astronomical_unit' whole (unsplittable name), was a*stronomical_unit",
   "value": {
    "content": "10 astronomical_unit",
    "dimension": "1",
@@ -5591,7 +6055,7 @@
     }
    ],
    "standard_unit": null,
-   "standard_value": "10*a*stronomical_unit",
+   "standard_value": "10*astronomical_unit",
    "unit": null,
    "unit_factor": "1",
    "unit_latex": null,
@@ -5658,6 +6122,29 @@
    "unit_latex": null,
    "value": "10 deg",
    "value_latex": "10 \\cdot e \\cdot d \\cdot g"
+  }
+ },
+ "quantity.parse|strict_si|10 degree": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 degree",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r",
+   "messages": [
+    {
+     "after": "ree",
+     "before": "10 de",
+     "marked": "g"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*E*E*d*g*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 degree",
+   "value_latex": "10 \\cdot e \\cdot e \\cdot e \\cdot d \\cdot g \\cdot r"
   }
  },
  "quantity.parse|strict_si|10 eV": {
@@ -5872,6 +6359,40 @@
    "unit_latex": null,
    "value": "10 gram/metresecond",
    "value_latex": "\\frac{10 \\cdot e \\cdot c \\cdot d \\cdot gram \\cdot n \\cdot o}{metres}"
+  }
+ },
+ "quantity.parse|strict_si|10 hectare": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 hectare",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*E*E*a*c*h*r*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 hectare",
+   "value_latex": "10 \\cdot e \\cdot e \\cdot a \\cdot c \\cdot h \\cdot r \\cdot t"
+  }
+ },
+ "quantity.parse|strict_si|10 in": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 in",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot i \\cdot n",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*i*n",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 in",
+   "value_latex": "10 \\cdot i \\cdot n"
   }
  },
  "quantity.parse|strict_si|10 kg m/s^2 + 10 kg m/s^2": {
@@ -6170,6 +6691,23 @@
    "value_latex": "\\frac{10 \\cdot e \\cdot c \\cdot gram \\cdot kilo \\cdot metres \\cdot n \\cdot o}{d^{2}}"
   }
  },
+ "quantity.parse|strict_si|10 litre": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 litre",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*E*i*l*r*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 litre",
+   "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot t"
+  }
+ },
  "quantity.parse|strict_si|10 metricton": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -6239,6 +6777,52 @@
    "value_latex": "10 \\cdot e \\cdot i \\cdot l \\cdot m"
   }
  },
+ "quantity.parse|strict_si|10 min": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 min",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot i \\cdot m \\cdot n",
+   "messages": [
+    {
+     "after": "in",
+     "before": "10 ",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*i*m*n",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 min",
+   "value_latex": "10 \\cdot i \\cdot m \\cdot n"
+  }
+ },
+ "quantity.parse|strict_si|10 minute": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 minute",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t",
+   "messages": [
+    {
+     "after": "inute",
+     "before": "10 ",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*i*m*nu*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 minute",
+   "value_latex": "10 \\cdot e \\cdot i \\cdot m \\cdot \\nu \\cdot t"
+  }
+ },
  "quantity.parse|strict_si|10 nautical_mile": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -6283,6 +6867,46 @@
    "unit_latex": null,
    "value": "10 nmi",
    "value_latex": "10 \\cdot i \\cdot m \\cdot n"
+  }
+ },
+ "quantity.parse|strict_si|10 rad": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 rad",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot a \\cdot d \\cdot r",
+   "messages": [],
+   "standard_unit": null,
+   "standard_value": "10*a*d*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 rad",
+   "value_latex": "10 \\cdot a \\cdot d \\cdot r"
+  }
+ },
+ "quantity.parse|strict_si|10 rem": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "10 rem",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "10 \\cdot e \\cdot m \\cdot r",
+   "messages": [
+    {
+     "after": "",
+     "before": "10 re",
+     "marked": "m"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "10*E*m*r",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "10 rem",
+   "value_latex": "10 \\cdot e \\cdot m \\cdot r"
   }
  },
  "quantity.parse|strict_si|10 roentgen": {
@@ -6699,6 +7323,29 @@
    "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
   }
  },
+ "quantity.parse|strict_si|2 litres": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "2 litres",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t",
+   "messages": [
+    {
+     "after": "",
+     "before": "2 litre",
+     "marked": "s"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "2*E*i*l*r*s*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "2 litres",
+   "value_latex": "2 \\cdot e \\cdot i \\cdot l \\cdot r \\cdot s \\cdot t"
+  }
+ },
  "quantity.parse|strict_si|2 meters": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -6875,6 +7522,10 @@
    "value_latex": "3 \\cdot \\mu \\cdot s"
   }
  },
+ "quantity.parse|strict_si|5 °": {
+  "reason": "units: without a unit set containing the degree, ° in a value raises 'Unrecognised character' instead of becoming a symbol named °",
+  "value": "ERROR"
+ },
  "quantity.parse|strict_si|5/s^2": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -6962,6 +7613,54 @@
    "unit_latex": null,
    "value": "kilogram/(metresecond^2)",
    "value_latex": "\\frac{gram \\cdot kilo}{e \\cdot c \\cdot d^{2} \\cdot metres \\cdot n \\cdot o}"
+  }
+ },
+ "quantity.parse|strict_si|kilogrammetersecondAmperes": {
+  "reason": "units: with only the SI unit set, words containing an embeddable function name (re, min) or a keyword (in) are read as letters, as any other unknown word is; they raised before. Note: the value then contains E (Euler's number) for each 'e' when elementary_functions is on",
+  "value": {
+   "content": "kilogrammetersecondAmperes",
+   "dimension": "1",
+   "expanded_unit": null,
+   "latex": "e \\cdot Amperes \\cdot c \\cdot d \\cdot gram \\cdot kilo \\cdot meters \\cdot n \\cdot o",
+   "messages": [
+    {
+     "after": "metersecondAmperes",
+     "before": "",
+     "marked": "kilogram"
+    },
+    {
+     "after": "etersecondAmperes",
+     "before": "kilogram",
+     "marked": "m"
+    },
+    {
+     "after": "econdAmperes",
+     "before": "kilogrammete",
+     "marked": "rs"
+    },
+    {
+     "after": "mperes",
+     "before": "kilogrammetersecon",
+     "marked": "dA"
+    },
+    {
+     "after": "peres",
+     "before": "kilogrammetersecondA",
+     "marked": "m"
+    },
+    {
+     "after": "",
+     "before": "kilogrammetersecondAmpere",
+     "marked": "s"
+    }
+   ],
+   "standard_unit": null,
+   "standard_value": "E*E*E*E*A*gram*kilo*m*m*p*r*r*s*second*t",
+   "unit": null,
+   "unit_factor": "1",
+   "unit_latex": null,
+   "value": "kilogrammetersecondAmperes",
+   "value_latex": "e \\cdot Amperes \\cdot c \\cdot d \\cdot gram \\cdot kilo \\cdot meters \\cdot n \\cdot o"
   }
  },
  "quantity.parse|strict_si|mmPas": {

@@ -22,13 +22,14 @@ namespace holds all of SymPy plus Python's builtin functions (``open``,
 from __future__ import annotations
 
 import ast
-import re
 from collections.abc import Mapping
 from typing import Any
 
 import sympy
-from sympy import Abs, Basic, Function, Max, Min
+from sympy import Abs, Basic, Function, Max, Min, Pow
 from sympy.core.function import FunctionClass
+from sympy.core.operations import AssocOp
+from sympy.core.relational import Relational
 from sympy.parsing.sympy_parser import eval_expr, evaluateFalse, stringify_expr
 
 from .errors import ExpressionParsingError
@@ -58,13 +59,13 @@ MATH_NAMESPACE: Mapping[str, Any] = _math_namespace()
 # argument, so the check is on the content, not just the call.
 _NAME_CONSTRUCTORS = frozenset({"Symbol", "Function"})
 _NUMBER_CONSTRUCTORS = frozenset({"Number", "Integer", "Float", "Rational"})
-_NUMBER_STRING = re.compile(r"[0-9._eE+\-/]+")
+_NUMBER_CHARACTERS = frozenset("0123456789._eE+-/")
 
 
 def _allowed_string(constructor: str, value: str) -> bool:
     if constructor in _NAME_CONSTRUCTORS:
         return value.isidentifier()
-    return constructor in _NUMBER_CONSTRUCTORS and _NUMBER_STRING.fullmatch(value) is not None
+    return constructor in _NUMBER_CONSTRUCTORS and value != "" and set(value) <= _NUMBER_CHARACTERS
 
 
 MAX_NUMBER_DIGITS = 1000
@@ -73,8 +74,6 @@ MAX_NUMBER_EXPONENT = 1000
 """Largest exponent (``1e1000``) a number may have, of either sign."""
 
 _TOO_MANY_DIGITS = 10**MAX_NUMBER_DIGITS  # the smallest integer with one digit too many
-
-_EXPONENT = re.compile(r"[eE]([+-]?)(\d+)")
 
 
 def _number_size_error(number: str, expr: str) -> ExpressionParsingError | None:
@@ -89,9 +88,9 @@ def _number_size_error(number: str, expr: str) -> ExpressionParsingError | None:
         return ExpressionParsingError(
             f"A number has {digits} digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
         )
-    match = _EXPONENT.fullmatch("e" + exponent) if exponent else None
-    if match is not None:
-        magnitude = match.group(2).lstrip("0")
+    exponent_digits = exponent[1:] if exponent[:1] in ("+", "-") else exponent
+    if exponent_digits.isdecimal():
+        magnitude = exponent_digits.lstrip("0")
         if len(magnitude) > len(str(MAX_NUMBER_EXPONENT)) or int(magnitude or 0) > MAX_NUMBER_EXPONENT:
             return ExpressionParsingError(
                 f"The exponent of {number[:30]!r} is out of range; at most ±{MAX_NUMBER_EXPONENT} is allowed.",
@@ -169,7 +168,7 @@ def _unreadable_character(constructor: str | None, value: object) -> str | None:
     if constructor in _NAME_CONSTRUCTORS:
         return next((char for char in value if not f"a{char}".isidentifier()), None)
     if constructor in _NUMBER_CONSTRUCTORS:
-        return next((char for char in value if not _NUMBER_STRING.fullmatch(char)), None)
+        return next((char for char in value if char not in _NUMBER_CHARACTERS), None)
     return None
 
 
@@ -195,13 +194,18 @@ def safe_parse_expr(
     return eval_expr(compile(ast.fix_missing_locations(tree), "<string>", "eval"), local_dict, namespace)
 
 
+# Classes (not FunctionClasses) that compute when constructed unless told not to.
+_EVALUATING_CLASSES = (Pow, AssocOp, Relational)
+
+
 class _UnevaluatedCalls(ast.NodeTransformer):
-    """Add ``evaluate=False`` to every call of a SymPy function class.
+    """Add ``evaluate=False`` to every call of a SymPy function class or operator class.
 
     ``evaluateFalse`` only does so for a fixed list (trigonometric, ``exp``,
     ``log``, ...), so ``factorial``, ``binomial`` and the number-theory
     functions still computed: ``10000000!`` took minutes, and ``100000!`` gave
-    an integer too long to print.
+    an integer too long to print. Operator classes called by name computed
+    too: ``Pow(9, Pow(9, 9))`` never finished.
     """
 
     def __init__(self, names: Mapping[str, Any]) -> None:
@@ -212,6 +216,7 @@ class _UnevaluatedCalls(ast.NodeTransformer):
         target = self.names.get(node.func.id) if isinstance(node.func, ast.Name) else None
         # Function itself (Function('f')) is a FunctionClass too, but it creates functions rather than evaluating.
         is_function = isinstance(target, FunctionClass) and target is not Function
-        if is_function and not any(keyword.arg == "evaluate" for keyword in node.keywords):
+        is_operator = isinstance(target, type) and issubclass(target, _EVALUATING_CLASSES)
+        if (is_function or is_operator) and not any(keyword.arg == "evaluate" for keyword in node.keywords):
             node.keywords.append(ast.keyword(arg="evaluate", value=ast.Constant(False)))
         return node

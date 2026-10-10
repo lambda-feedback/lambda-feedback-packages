@@ -34,8 +34,8 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/m-messer/lambda-feedback-packages"
-Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/expression_parsing/CHANGELOG.md"
+Repository = "https://github.com/lambda-feedback/lambda-feedback-packages"
+Changelog = "https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/expression_parsing/CHANGELOG.md"
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/expression_parsing", from = "src" }]

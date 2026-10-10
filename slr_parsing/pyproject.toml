@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
@@ -9,15 +9,18 @@ description = "Dependency-free SLR(1) parser generator for Lambda Feedback evalu
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Marcus Messer", email = "marcus.messer@kcl.ac.uk" }]
+authors = [{ name = "Lambda Feedback contributors" }]
 keywords = ["parser", "slr", "lr-parser", "parser-generator", "lambda-feedback"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Compilers",
     "Typing :: Typed",
 ]
@@ -25,8 +28,10 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/m-messer/lambda-feedback-packages"
-Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/slr_parsing/CHANGELOG.md"
+Repository = "https://github.com/lambda-feedback/lambda-feedback-packages"
+Changelog = "https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/slr_parsing/CHANGELOG.md"
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/slr_parsing", from = "src" }]
+# The source distribution also carries the changelog and the tests.
+include = [{ path = "CHANGELOG.md", format = "sdist" }, { path = "tests", format = "sdist" }]

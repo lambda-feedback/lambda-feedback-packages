@@ -97,12 +97,14 @@ Number literals are limited to 1000 digits and exponents to ±1000
 to read. LaTeX nested more than 10 brackets deep (`MAX_LATEX_NESTING`) is rejected: the LaTeX parser takes
 exponential time in nesting depth.
 
-Expressions are parsed unevaluated, but `simplify` (and any later
-evaluation, such as comparing answers) computes: `9**9**9` would then take
-practically forever. Run evaluation with a time or memory limit when
-handling untrusted input.
+Expressions are parsed unevaluated, including functions and operator
+classes called by name (`factorial(10**8)`, `Pow(9, Pow(9, 9))`), but
+`simplify` (and any later evaluation, such as comparing answers) computes:
+`9**9**9` would then take practically forever. A caller handling untrusted
+input, such as an evaluation function, must run parsing and evaluation
+under a time or memory limit.
 
 ## Licence
 
-MIT. See [LICENSE](https://github.com/m-messer/lambda-feedback-packages/blob/main/expression_parsing/LICENSE). The changelog, including migration notes, is
-in [CHANGELOG.md](https://github.com/m-messer/lambda-feedback-packages/blob/main/expression_parsing/CHANGELOG.md).
+MIT. See [LICENSE](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/expression_parsing/LICENSE). The changelog, including migration notes, is
+in [CHANGELOG.md](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/expression_parsing/CHANGELOG.md).

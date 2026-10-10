@@ -1,5 +1,9 @@
 # Extraction & decoupling notes
 
+> Historical: these notes describe the v0.1 extraction. For the current
+> packages, dependencies and API, see the [README](README.md) and each
+> package's `CHANGELOG.md`.
+
 These packages were extracted from the
 [compareExpressions](https://github.com/lambda-feedback/compareExpressions)
 evaluation function. The reusable machinery (a generic parser, SymPy expression

@@ -7,10 +7,10 @@ evaluation function. Each package is independently installable; together they
 share the `lambdafeedback` namespace. The app-specific *core evaluation*
 logic stays in compareExpressions.
 
-> **0.2.0:** the post-extraction refactor (branch `refactor/package-tidy`)
-> reshaped every package's API. Each package's `CHANGELOG.md` has the
-> old → new migration table; [`docs/refactor/`](docs/refactor/README.md) has
-> the plan, decisions and per-package checklists.
+The extraction refactor reshaped every package's API. Each package's
+`CHANGELOG.md` has the old → new migration table;
+[`docs/refactor/`](docs/refactor/README.md) has the plan, decisions and
+per-package checklists.
 
 ## Packages
 
@@ -66,13 +66,11 @@ Each package's tests run in their own pytest process, because every package
 has a `tests` package and one process can't import two packages with the same
 name.
 
-Ruff and mypy cover a package once its refactor phase lands. The
-`extend-exclude` list and the mypy `files` list in the root `pyproject.toml`
-record which packages are covered so far.
+CI runs all of these, on Python 3.11 to 3.14.
 
 ### Parity check
 
-`tools/parity/baseline.json` holds 3221 probe outputs captured from the v0.1
+`tools/parity/baseline.json` holds 1608 probe outputs captured from the v0.1
 extraction (`tools/parity/capture_v0_1.py`). `tools/parity/check.py` rebuilds
 the same probes through the current API. Any difference fails, unless it is
 listed in `tools/parity/expected_changes.json` with its reason and exact new

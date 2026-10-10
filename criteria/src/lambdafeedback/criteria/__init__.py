@@ -9,6 +9,8 @@
   and renders the graph.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .errors import CriteriaError, CriteriaEvaluationError, CriteriaGraphError
 from .grammar import build_criteria_parser
 from .graph import CriteriaGraph
@@ -25,6 +27,11 @@ from .nodes import (
 )
 from .tree import CriteriaTree
 
+try:
+    __version__ = version("lambdafeedback-criteria")
+except PackageNotFoundError:  # running from a source checkout that isn't installed
+    __version__ = "0+unknown"
+
 __all__ = [
     "CriteriaError",
     "CriteriaEvaluationError",
@@ -40,5 +47,6 @@ __all__ = [
     "OutputNode",
     "ReachedCriteria",
     "ResultLike",
+    "__version__",
     "build_criteria_parser",
 ]

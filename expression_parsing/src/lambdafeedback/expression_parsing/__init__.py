@@ -15,6 +15,8 @@ compareExpressions, not here. Failures are raised as typed exceptions (see
 ``.expression``, for a caller that wants to continue with the guess.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 from ._safe_parse import MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT
 from .conventions import apply_convention, convention_parser
 from .errors import (
@@ -47,6 +49,11 @@ from .preprocessing import (
 from .substitution import normalise_unicode_operators, substitute, substitute_input_symbols, substitutions_sort_key
 from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
 
+try:
+    __version__ = version("lambdafeedback-expression-parsing")
+except PackageNotFoundError:  # running from a source checkout that isn't installed
+    __version__ = "0+unknown"
+
 __all__ = [
     "MAX_LATEX_NESTING",
     "MAX_NUMBER_DIGITS",
@@ -62,6 +69,7 @@ __all__ = [
     "SymbolSpec",
     "SympyParsingConfig",
     "UnknownConventionError",
+    "__version__",
     "apply_convention",
     "compute_relative_tolerance_from_significant_decimals",
     "convention_parser",

@@ -2,7 +2,7 @@
 
 ## 0.2.0 (unreleased)
 
-The first release after the extraction refactor. The import path is now `lambdafeedback.slr_parsing` (was `slr_parsing`).
+The first public release, after the extraction refactor. The import path is now `lambdafeedback.slr_parsing` (was `slr_parsing`). Supports Python 3.11 to 3.14; `__version__` gives the installed version.
 
 ### Renamed
 

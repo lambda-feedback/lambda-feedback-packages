@@ -136,7 +136,7 @@ All exceptions derive from `CriteriaError`:
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/m-messer/lambda-feedback-packages/blob/main/criteria/CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/criteria/CHANGELOG.md).
 
 ## License
 

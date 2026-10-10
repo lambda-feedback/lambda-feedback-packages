@@ -163,6 +163,11 @@ except QuantityError as error:
   with the `2` as a factor.
 - Temperatures are in kelvin only. Celsius and Fahrenheit raise an error,
   because their conversions aren't proportional.
+- A unit from a set that isn't selected is read as letters in the value, not
+  rejected: with only `SI`, `10 litre` is the value `10*E*i*l*r*t` (with
+  `elementary_functions`, each `e` is Euler's number) and has no unit, and
+  `reverted_units` may be empty. Check `quantity.unit is None` when a unit is
+  required.
 - `QuantityParams` instances aren't hashable.
 - Legacy preprocessing (`strictness: "legacy"`, deprecated) is skipped for input
   longer than `MAX_LEGACY_LENGTH` (1,000 characters): its rewrites take time
@@ -170,7 +175,7 @@ except QuantityError as error:
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/m-messer/lambda-feedback-packages/blob/main/units/CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/units/CHANGELOG.md).
 
 ## License
 

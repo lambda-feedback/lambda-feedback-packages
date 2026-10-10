@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
@@ -9,7 +9,7 @@ description = "Parse physical quantities such as 9.81 m/s^2 into value and unit,
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Marcus Messer", email = "marcus.messer@kcl.ac.uk" }]
+authors = [{ name = "Lambda Feedback contributors" }]
 keywords = ["units", "physical-quantities", "dimensional-analysis", "si-units", "sympy", "lambda-feedback"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -32,8 +32,8 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/m-messer/lambda-feedback-packages"
-Changelog = "https://github.com/m-messer/lambda-feedback-packages/blob/main/units/CHANGELOG.md"
+Repository = "https://github.com/lambda-feedback/lambda-feedback-packages"
+Changelog = "https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/units/CHANGELOG.md"
 
 [tool.poetry]
 packages = [{ include = "lambdafeedback/units", from = "src" }]

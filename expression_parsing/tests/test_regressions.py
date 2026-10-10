@@ -615,6 +615,21 @@ def test_integer_functions_are_not_computed_while_parsing(response):
     assert str(parsed).startswith("factorial(")
 
 
+@pytest.mark.parametrize(
+    ("response", "expected"),
+    [("Pow(9,Pow(9,9))", "9**(9**9)"), ("Add(9**9**9,1)", "1 + 9**(9**9)")],
+)
+@pytest.mark.parametrize("strict", [True, False])
+def test_operator_classes_are_not_computed_while_parsing(response, expected, strict):
+    # Only function classes got evaluate=False: Pow(9, Pow(9, 9)) called by name never finished.
+    import time
+
+    start = time.monotonic()
+    parsed = parse_expression(response, parsing_params(strict_syntax=strict))
+    assert time.monotonic() - start < 2
+    assert str(parsed) == expected
+
+
 def test_latex_binomial_is_not_computed_while_parsing():
     # latex2sympy2_extended built \binom evaluated: this computed a 30-million-digit number.
     import time

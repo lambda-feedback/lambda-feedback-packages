@@ -147,7 +147,7 @@ shift and reduction. `parser.parsing_table_to_string()` and
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/m-messer/lambda-feedback-packages/blob/main/slr_parsing/CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/slr_parsing/CHANGELOG.md).
 
 ## License
 

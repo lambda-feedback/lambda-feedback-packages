@@ -37,3 +37,6 @@ jobs:
 
       - name: Test
         run: poetry run scripts/test.sh -q
+
+      - name: Parity with v0.1
+        run: poetry run python tools/parity/check.py

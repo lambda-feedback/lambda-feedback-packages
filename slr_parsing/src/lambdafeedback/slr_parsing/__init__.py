@@ -9,6 +9,8 @@ Extracted from compareExpressions (app/utility/slr_parsing_utilities.py);
 depends only on the standard library.
 """
 
+from importlib.metadata import PackageNotFoundError, version
+
 from .actions import (
     append,
     append_last,
@@ -59,6 +61,11 @@ from .tokens import (
     traverse_prefix,
 )
 
+try:
+    __version__ = version("lambdafeedback-slr-parsing")
+except PackageNotFoundError:  # running from a source checkout that isn't installed
+    __version__ = "0+unknown"
+
 __all__ = [
     "Action",
     "ErrorAction",
@@ -80,6 +87,7 @@ __all__ = [
     "TokenProduction",
     "TokenSpec",
     "TraverseStep",
+    "__version__",
     "add_tag",
     "append",
     "append_last",
