@@ -14,20 +14,32 @@ from typing import Any
 
 import sympy
 from sympy import Basic, Equality, Function, Set, Symbol, Tuple
-from sympy.parsing.sympy_parser import T as TRANSFORMATIONS
-from sympy.parsing.sympy_parser import _token_splittable, split_symbols_custom
+from sympy.parsing.sympy_parser import (
+    _token_splittable,
+    auto_number,
+    auto_symbol,
+    convert_equals_signs,
+    convert_xor,
+    factorial_notation,
+    function_exponentiation,
+    implicit_multiplication,
+    lambda_notation,
+    rationalize,
+    repeated_decimals,
+    split_symbols_custom,
+)
 from sympy.utilities.exceptions import SymPyDeprecationWarning
 
 from ._safe_parse import MATH_NAMESPACE, check_evaluation_cost, safe_parse_expr
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import Convention, ExpressionParams
-from .preprocessing import convert_bracket_notation, create_expression_set
+from .preprocessing import convert_bracket_notation, create_expression_set, split_equation
 from .substitution import (
     Substitution,
-    _sorted,
     elementary_function_substitutions,
     greek_symbol_substitutions,
+    sorted_substitutions,
     substitute,
 )
 from .symbol_tables import EMBEDDABLE_FUNCTION_NAMES
@@ -130,9 +142,9 @@ class SympyParsingConfig:
                     symbol=symbol,
                     assumption=assumption,
                 )
+            if assumption.lower() == "constant":
+                constants.add(symbol)  # also a Symbol assumption, below
             try:
-                if assumption.lower() == "constant":
-                    constants.add(symbol)
                 if assumption.lower() == "function":
                     symbol_dict[symbol] = Function(symbol)
                 else:
@@ -174,8 +186,15 @@ class SympyParsingConfig:
         )
 
     def transformations(self) -> tuple[Any, ...]:
+        """``parse_expr`` transformations for this configuration.
+
+        Not cached: ``split_symbols_custom`` returns a closure, which would stop the config pickling.
+        """
+        # _keywords_as_names goes after auto_symbol (which leaves keywords alone, and
+        # would wrap our Symbol('in') again), before the symbol splitting.
+        leading = (lambda_notation, auto_symbol, _keywords_as_names, repeated_decimals, auto_number)
         if self.strict_syntax:
-            transformations = TRANSFORMATIONS[0:4, 10] + self.extra_transformations
+            transformations = (*leading, function_exponentiation, *self.extra_transformations)
         else:
             unsplittable = set(self.unsplittable_symbols)
 
@@ -183,17 +202,16 @@ class SympyParsingConfig:
                 return name not in unsplittable and _token_splittable(name)
 
             transformations = (
-                TRANSFORMATIONS[0:5, 6, 10]
-                + self.extra_transformations
-                + (split_symbols_custom(can_split),)
-                + TRANSFORMATIONS[8, 9]
+                *leading,
+                factorial_notation,
+                convert_xor,
+                function_exponentiation,
+                *self.extra_transformations,
+                split_symbols_custom(can_split),
+                implicit_multiplication,
+                convert_equals_signs,
             )
-        if self.rationalise:
-            transformations += TRANSFORMATIONS[11]
-        # After auto_symbol (which leaves keywords alone, and would wrap our
-        # Symbol('in') again), before the symbol splitting.
-        lambda_notation, auto_symbol, *rest = transformations
-        return (lambda_notation, auto_symbol, _keywords_as_names, *rest)
+        return (*transformations, rationalize) if self.rationalise else transformations
 
 
 def _parse_expr(expr: str, **kwargs: Any) -> Any:
@@ -284,18 +302,17 @@ def _substitute_names(expr: str, config: SympyParsingConfig) -> str:
     substitutions += greek_symbol_substitutions(expr)
     if config.elementary_functions:
         substitutions += elementary_function_substitutions(expr)
-    return " ".join(substitute(expr, _sorted(substitutions)).split())
+    return " ".join(substitute(expr, sorted_substitutions(substitutions)).split())
 
 
 def _evaluate(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
     symbol_dict = dict(config.symbol_dict)
-    if expr.count("=") > 1:
-        raise ExpressionParsingError(f"An expression can contain at most one '=': {expr}", expression=expr)
+    sides = split_equation(expr, ExpressionParsingError)
     parsed: Any
-    if "=" in expr:
+    if len(sides) == 2:
         # Each side as if it were a whole expression: unevaluated unless simplifying
         # (evaluating 9**9**9 = x would never finish).
-        lhs, rhs = (_parse_side(side, config, transformations, symbol_dict) for side in expr.split("="))
+        lhs, rhs = (_parse_side(side, config, transformations, symbol_dict) for side in sides)
         parsed = Equality(lhs, rhs, evaluate=False)
     else:
         parsed = _parse_side(expr, config, transformations, symbol_dict)

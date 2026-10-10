@@ -13,8 +13,8 @@ from dataclasses import dataclass, field, fields, replace
 from types import MappingProxyType
 from typing import Any, Literal, Self, get_args
 
+from ._scanning import find_matching_parenthesis
 from .errors import InvalidParameterError, SymbolAssumptionError, UnknownConventionError
-from .preprocessing import find_matching_parenthesis
 
 Convention = Literal["equal_precedence", "implicit_higher_precedence"]
 """How implicit multiplication binds relative to ``/``: ``a/bc`` is ``a/b*c`` or ``a/(b*c)``."""
@@ -201,4 +201,5 @@ class ExpressionParams:
         object.__setattr__(self, "symbols", MappingProxyType(dict(state["symbols"])))
 
 
-_BOOL_FIELDS = tuple(f.name for f in fields(ExpressionParams) if f.type == "bool")
+# Annotations are strings here (``from __future__ import annotations``); accept both forms.
+_BOOL_FIELDS = tuple(f.name for f in fields(ExpressionParams) if f.type in (bool, "bool"))

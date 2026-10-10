@@ -15,13 +15,19 @@ from sympy.parsing.sympy_parser import implicit_multiplication_application, stan
 from sympy.printing.latex import LatexPrinter
 
 from ._safe_parse import safe_parse_expr
+from ._scanning import CLOSING_BRACKETS, OPENING_BRACKETS, find_matching_parenthesis
 from .errors import LatexParseError
 from .params import SymbolSpec
-from .preprocessing import _expand_plus_minus, find_matching_parenthesis
+from .preprocessing import expand_plus_minus, split_equation
+from .symbol_tables import MINUS_PLUS, PLUS_MINUS
 
 # Symbol aliases are parsed with ``Symbol`` as the only name: an alias that
 # needs anything more (a number, a function call) falls back to a plain name.
 _ALIAS_NAMESPACE = {"Symbol": Symbol}
+_ALIAS_TRANSFORMATIONS = (*standard_transformations, implicit_multiplication_application)
+
+# A set, not the string: "" is in every string, and slicing past the end gives "".
+_LETTERS = frozenset(ascii_letters)
 
 
 def _replace_command(latex: str, command: str, replacement: str) -> str:
@@ -31,7 +37,7 @@ def _replace_command(latex: str, command: str, replacement: str) -> str:
     index = latex.find(command)
     while index != -1:
         after = index + len(command)
-        if latex[after : after + 1] in tuple(ascii_letters):
+        if latex[after : after + 1] in _LETTERS:
             index = latex.find(command, index + 1)
             continue
         pieces += [latex[done:index], replacement]
@@ -45,10 +51,10 @@ class _LatexPrinter(LatexPrinter):
     """SymPy's LaTeX printer, but printing logarithms with a base as ``\\log_{b}``."""
 
     def _print_log(self, expr: Any, exp: Any = None) -> str:
-        log_not = r"\ln" if self._settings["ln_notation"] and len(expr.args) < 2 else r"\log"
         if len(expr.args) > 1:
-            base = self._print(expr.args[1])
-            log_not = rf"\log_{{{base}}}"
+            log_not = rf"\log_{{{self._print(expr.args[1])}}}"
+        else:
+            log_not = r"\ln" if self._settings["ln_notation"] else r"\log"
         tex = rf"{log_not}{{\left({self._print(expr.args[0])} \right)}}"
         return rf"{tex}^{{{exp}}}" if exp is not None else tex
 
@@ -121,7 +127,7 @@ def _e_tokens(latex: str) -> Iterator[tuple[int, int, str]]:
     index = 0
     while index < len(latex):
         char = latex[index]
-        if char == "\\" and latex[index + 1 : index + 2] in tuple(ascii_letters):
+        if char == "\\" and latex[index + 1 : index + 2] in _LETTERS:
             end = index + 1
             while end < len(latex) and latex[end] in ascii_letters:
                 end += 1
@@ -246,16 +252,41 @@ Real answers rarely nest more than 3 or 4 deep.
 def _check_nesting(latex: str) -> None:
     depth = deepest = 0
     for char in latex:
-        if char in "([{":
+        if char in OPENING_BRACKETS:
             depth += 1
             deepest = max(deepest, depth)
-        elif char in ")]}":
+        elif char in CLOSING_BRACKETS:
             depth = max(depth - 1, 0)  # stray closers mustn't hide the nesting after them
     if deepest > MAX_LATEX_NESTING:
         raise LatexParseError(
             f"Brackets are nested {deepest} deep; at most {MAX_LATEX_NESTING} levels are supported.",
             expression=latex,
         )
+
+
+def _symbol_substitutions(symbols: Mapping[str, SymbolSpec]) -> dict[Any, Symbol]:
+    """``{parsed LaTeX or alias: Symbol(code)}`` for the task's symbols."""
+    substitutions: dict[Any, Symbol] = {}
+    for code, spec in symbols.items():
+        if spec.latex is None or r"\pm" in spec.latex or r"\mp" in spec.latex:
+            continue
+        latex = extract_latex(spec.latex)
+        try:
+            substitutions[_latex2sympy(latex)] = Symbol(code)
+        except Exception as e:
+            raise LatexParseError(f"Couldn't parse latex symbol {latex} to sympy symbol.", symbol=latex) from e
+        for alias in spec.aliases:
+            try:
+                parsed_alias = safe_parse_expr(
+                    alias,
+                    transformations=_ALIAS_TRANSFORMATIONS,
+                    global_dict=_ALIAS_NAMESPACE,
+                    local_dict={"E": Symbol("E")},
+                )
+            except Exception:
+                parsed_alias = Symbol(alias)  # not an expression: use the alias as a plain name
+            substitutions[parsed_alias] = Symbol(code)
+    return substitutions
 
 
 def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool = False) -> str:
@@ -270,45 +301,22 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     more than :data:`MAX_LATEX_NESTING` deep.
     """
     _check_nesting(response)
-    substitutions: dict[Any, Any] = {}
-
-    expanded = _replace_command(_replace_command(response, "\\pm", "plus_minus"), "\\mp", "minus_plus")
-    responses = list(dict.fromkeys(_expand_plus_minus(expanded)))
-
-    alias_transformations = (*standard_transformations, implicit_multiplication_application)
-    for code, spec in symbols.items():
-        if spec.latex is None or r"\pm" in spec.latex or r"\mp" in spec.latex:
-            continue
-        latex = extract_latex(spec.latex)
-        try:
-            substitutions[_latex2sympy(latex)] = Symbol(code)
-        except Exception as e:
-            raise LatexParseError(f"Couldn't parse latex symbol {latex} to sympy symbol.", symbol=latex) from e
-        for alias in spec.aliases:
-            try:
-                parsed_alias = safe_parse_expr(
-                    alias,
-                    transformations=alias_transformations,
-                    global_dict=_ALIAS_NAMESPACE,
-                    local_dict={"E": Symbol("E")},
-                )
-            except Exception:
-                parsed_alias = Symbol(alias)  # not an expression: use the alias as a plain name
-            substitutions[parsed_alias] = Symbol(code)
+    substitutions = _symbol_substitutions(symbols)
+    expanded = _replace_command(_replace_command(response, "\\pm", PLUS_MINUS), "\\mp", MINUS_PLUS)
+    responses = list(dict.fromkeys(expand_plus_minus(expanded)))
 
     def text(parsed: Any) -> str:
         return str((parsed.simplify() if simplify else parsed).subs(substitutions))
 
     parsed_responses = set()
     for expression in responses:
-        if expression.count("=") > 1:
-            raise LatexParseError(f"An expression can contain at most one '=': {expression}", expression=expression)
+        sides = split_equation(expression, LatexParseError)
         try:
-            if "=" in expression:
+            if len(sides) == 2:
                 # An equation is written "lhs = rhs", as parse_expression reads it, with each
                 # side parsed separately ("Eq(x, 2)" would not survive parse_expression with
                 # elementary_functions, where the E of Eq is Euler's number).
-                parsed_responses.add(" = ".join(text(_latex2sympy(side)) for side in expression.split("=")))
+                parsed_responses.add(" = ".join(text(_latex2sympy(side)) for side in sides))
                 continue
             parsed = _latex2sympy(expression)
             # A comma-separated list ("1, 2") is several answers, like "{1, 2}" in text;

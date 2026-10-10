@@ -55,9 +55,8 @@ class LatexParseError(ExpressionParsingError):
         response: str | None = None,
         wrapper: str | None = None,
     ) -> None:
-        super().__init__(text)
+        super().__init__(text, expression=expression)
         self.symbol = symbol
-        self.expression = expression
         self.response = response
         self.wrapper = wrapper
 

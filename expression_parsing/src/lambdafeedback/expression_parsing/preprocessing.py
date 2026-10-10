@@ -5,28 +5,23 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from .errors import AbsoluteValueNotationError, BracketNotationError
+from ._scanning import CLOSING_BRACKETS, GROUPING, OPENING_BRACKETS, find_matching_parenthesis
+from .errors import AbsoluteValueNotationError, BracketNotationError, ExpressionParsingError
 from .substitution import substitute_input_symbols
+from .symbol_tables import MINUS_PLUS, PLUS_MINUS
 
 if TYPE_CHECKING:
     from .params import ExpressionParams
 
-_BRACKET_PAIRS = {")": "(", "]": "[", "}": "{"}
-_GROUPING = "()[]{}"
+_BRACKET_PAIRS = dict(zip(CLOSING_BRACKETS, OPENING_BRACKETS, strict=True))
 
 
-def find_matching_parenthesis(string: str, index: int, delimiters: tuple[str, str] = ("(", ")")) -> int:
-    """Index of the delimiter closing the one at (or first after) ``index``; ``-1`` if unclosed."""
-    opening, closing = delimiters
-    depth = 0
-    for k in range(index, len(string)):
-        if string[k] == opening:
-            depth += 1
-        elif string[k] == closing:
-            depth -= 1
-            if depth == 0:
-                return k
-    return -1
+def split_equation(expr: str, error: type[ExpressionParsingError]) -> list[str]:
+    """``[expr]``, or ``[lhs, rhs]`` for an equation; raises ``error`` for more than one ``=``."""
+    sides = expr.split("=")
+    if len(sides) > 2:
+        raise error(f"An expression can contain at most one '=': {expr}", expression=expr)
+    return sides
 
 
 def has_matching_brackets(expr: str) -> bool:
@@ -37,9 +32,9 @@ def has_matching_brackets(expr: str) -> bool:
     """
     stack = []
     for char in expr:
-        if char in "([{":
+        if char in OPENING_BRACKETS:
             stack.append(char)
-        elif char in ")]}" and (not stack or stack.pop() != _BRACKET_PAIRS[char]):
+        elif char in CLOSING_BRACKETS and (not stack or stack.pop() != _BRACKET_PAIRS[char]):
             return False
     return not stack
 
@@ -70,21 +65,18 @@ def create_expression_set(exprs: str | Sequence[str], params: ExpressionParams) 
         )
     expanded: dict[str, None] = {}
     for original in exprs:
+        # substitute_input_symbols also writes params.plus_minus/minus_plus as PLUS_MINUS/MINUS_PLUS.
         expr = substitute_input_symbols(original, params)[0]
-        if params.plus_minus is not None:
-            expr = expr.replace(params.plus_minus, "plus_minus")
-        if params.minus_plus is not None:
-            expr = expr.replace(params.minus_plus, "minus_plus")
-        expanded.update(dict.fromkeys(_expand_plus_minus(expr)))
+        expanded.update(dict.fromkeys(expand_plus_minus(expr)))
     return list(expanded)
 
 
-def _expand_plus_minus(expr: str) -> list[str]:
+def expand_plus_minus(expr: str) -> list[str]:
     """Both signs of an expression containing ``plus_minus``/``minus_plus`` (otherwise just ``expr``)."""
-    if "plus_minus" not in expr and "minus_plus" not in expr:
+    if PLUS_MINUS not in expr and MINUS_PLUS not in expr:
         return [expr]
     signed = (
-        expr.replace("plus_minus", plus_minus).replace("minus_plus", minus_plus).strip()
+        expr.replace(PLUS_MINUS, plus_minus).replace(MINUS_PLUS, minus_plus).strip()
         for plus_minus, minus_plus in (("+", "-"), ("-", "+"))
     )
     return [s.lstrip("+").strip() for s in signed]
@@ -95,9 +87,9 @@ def _split_top_level(text: str) -> list[str]:
     parts = []
     depth = start = 0
     for index, char in enumerate(text):
-        if char in "([{":
+        if char in OPENING_BRACKETS:
             depth += 1
-        elif char in ")]}":
+        elif char in CLOSING_BRACKETS:
             depth -= 1
         elif char == "," and depth == 0:
             parts.append(text[start:index])
@@ -145,7 +137,7 @@ def convert_absolute_notation(expr: str, name: str) -> str:
         ends: list[int] = []
 
         def grouping(char: str) -> bool:
-            return char.isalnum() or char in _GROUPING
+            return char.isalnum() or char in GROUPING
 
         if expr[0] == "|":
             starts.append(0)

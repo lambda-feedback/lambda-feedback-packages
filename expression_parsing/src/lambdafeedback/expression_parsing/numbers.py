@@ -14,6 +14,9 @@ from collections.abc import Callable
 DEFAULT_SIGNIFICANT_FIGURES = 2
 
 _EXPONENT_MARKS = ("e", "E", "*10^", "*10**")
+# Sets, not strings: "" is in every string, and slicing past the end gives "".
+_DIGITS = frozenset("0123456789")
+_NONZERO_DIGITS = _DIGITS - {"0"}
 
 
 def _digits_end(string: str, index: int) -> int:
@@ -27,7 +30,7 @@ def _integer_end(string: str, index: int) -> int:
     """Where the integer at ``index`` ends: ``0``, or digits not starting with ``0`` (``index`` if none)."""
     if string.startswith("0", index):
         return index + 1
-    if string[index : index + 1] in tuple("123456789"):
+    if string[index : index + 1] in _NONZERO_DIGITS:
         return _digits_end(string, index + 1)
     return index
 
@@ -66,9 +69,9 @@ def _number_end(string: str, index: int, *, nonnegative: bool = False) -> int | 
     return end
 
 
-def _after_number(string: str, index: int) -> int:
+def _after_number(string: str, index: int, *, nonnegative: bool = False) -> int:
     """Past the number at ``index``, or ``index`` if there is none."""
-    end = _number_end(string, index)
+    end = _number_end(string, index, nonnegative=nonnegative)
     return index if end is None else end
 
 
@@ -122,11 +125,7 @@ def _bracketed_number_end(string: str, index: int) -> int | None:
 def _next_number(string: str, offset: int) -> tuple[int, int] | None:
     """The first number in ``string`` at or after ``offset``: a non-negative number, or a bracketed one before it."""
     nonnegative_start = next(
-        (
-            index
-            for index in range(offset, len(string))
-            if string[index] in "0123456789" or _starts_fraction(string, index)
-        ),
+        (index for index in range(offset, len(string)) if string[index] in _DIGITS or _starts_fraction(string, index)),
         None,
     )
     limit = len(string) if nonnegative_start is None else nonnegative_start
@@ -137,8 +136,8 @@ def _next_number(string: str, offset: int) -> tuple[int, int] | None:
         bracket = string.find("(", bracket + 1, limit)
     if nonnegative_start is None:
         return None
-    end = _number_end(string, nonnegative_start, nonnegative=True)
-    assert end is not None
+    # A digit (or "." and a digit) always starts a number, so this is never the fallback.
+    end = _after_number(string, nonnegative_start, nonnegative=True)
     return nonnegative_start, end
 
 
@@ -177,8 +176,8 @@ def compute_relative_tolerance_from_significant_decimals(string: str) -> float:
     """``5 * 10**-n`` for a number written with ``n`` significant figures (at least 2); 0 for non-numbers."""
     string = string.strip()
     if not is_number(string):
-        return 0
-    # The mantissa ends where the exponent starts: "e", "E", "*10^" or "*10**".
-    exponent = next((index for index, char in enumerate(string) if char in "eE*"), len(string))
-    significant_characters = string[:exponent].rstrip(" ").replace(".", "").lstrip("-0")
+        return 0.0
+    start = 1 if string.startswith("-") else 0
+    mantissa = string[start : _mantissa_end(string, start)]
+    significant_characters = mantissa.replace(".", "").lstrip("0")
     return float(5 * 10 ** (-max(len(significant_characters), DEFAULT_SIGNIFICANT_FIGURES)))

@@ -100,6 +100,11 @@ MAX_NUMBER_EXPONENT = 1000
 _TOO_MANY_DIGITS = 10**MAX_NUMBER_DIGITS  # the smallest integer with one digit too many
 
 
+def _too_many_digits(expr: str, digits: int | None = None) -> ExpressionParsingError:
+    count = f"{digits} digits" if digits is not None else "too many digits"
+    return ExpressionParsingError(f"A number has {count}; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr)
+
+
 def _number_size_error(number: str, expr: str) -> ExpressionParsingError | None:
     """Why ``number`` (a literal's text) is too large for SymPy to handle in reasonable time, if it is.
 
@@ -109,9 +114,7 @@ def _number_size_error(number: str, expr: str) -> ExpressionParsingError | None:
     mantissa, _, exponent = number.partition("e") if "e" in number else number.partition("E")
     digits = sum(character.isdigit() for character in mantissa)
     if digits > MAX_NUMBER_DIGITS:
-        return ExpressionParsingError(
-            f"A number has {digits} digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
-        )
+        return _too_many_digits(expr, digits)
     exponent_digits = exponent[1:] if exponent[:1] in ("+", "-") else exponent
     if exponent_digits.isdecimal():
         magnitude = exponent_digits.lstrip("0")
@@ -154,25 +157,25 @@ def _check_code(code: str, expr: str) -> None:
         tree = ast.parse(code, mode="eval")
     except SyntaxError as e:
         if "integer string conversion" in str(e):  # an integer literal over Python's 4300-digit limit
-            raise ExpressionParsingError(
-                f"A number has too many digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
-            ) from e
+            raise _too_many_digits(expr) from e
         raise ExpressionParsingError(f"Invalid syntax in {expr!r}", expression=expr) from e
 
-    string_arguments: dict[int, str] = {}  # id(argument node) -> constructor name
+    # id(argument node) -> constructor name, for every single-argument call of a plain name.
+    # Collected up front so the check below doesn't depend on the order ast.walk visits nodes in.
+    string_arguments = {
+        id(node.args[0]): node.func.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(node.args) == 1 and not node.keywords
+    }
     for node in ast.walk(tree):
         if isinstance(node, ast.Constant) and isinstance(node.value, int) and abs(node.value) >= _TOO_MANY_DIGITS:
-            raise ExpressionParsingError(
-                f"A number has too many digits; at most {MAX_NUMBER_DIGITS} are allowed.", expression=expr
-            )
+            raise _too_many_digits(expr)
         if not isinstance(node, _ALLOWED_NODES):
             raise reject(type(node).__name__)
         if isinstance(node, ast.Name) and node.id.startswith("_"):
             raise reject(f"The name {node.id!r}")
         if isinstance(node, ast.keyword) and (node.arg is None or node.arg.startswith("_")):
             raise reject("This keyword argument")
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and len(node.args) == 1 and not node.keywords:
-            string_arguments[id(node.args[0])] = node.func.id
         if isinstance(node, ast.Constant) and not isinstance(node.value, int | float | complex | bool | None):
             constructor = string_arguments.get(id(node))
             if not (isinstance(node.value, str) and constructor and _allowed_string(constructor, node.value)):

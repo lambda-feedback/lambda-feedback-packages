@@ -18,6 +18,7 @@ compareExpressions, not here. Failures are raised as typed exceptions (see
 from importlib.metadata import PackageNotFoundError, version
 
 from ._safe_parse import MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT, MAX_SIMPLIFY_POWER
+from ._scanning import find_matching_parenthesis
 from .conventions import apply_convention, convention_parser
 from .errors import (
     AbsoluteValueNotationError,
@@ -41,7 +42,6 @@ from .preprocessing import (
     convert_absolute_notation,
     convert_bracket_notation,
     create_expression_set,
-    find_matching_parenthesis,
     has_matching_brackets,
     is_multiple_answers_wrapper,
     preprocess_expression,

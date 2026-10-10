@@ -15,6 +15,7 @@ from lambdafeedback.expression_parsing import (
     has_matching_brackets,
     is_multiple_answers_wrapper,
     latex_symbols,
+    normalise_unicode_operators,
     preprocess_expression,
     substitute,
     substitute_input_symbols,
@@ -25,7 +26,6 @@ from lambdafeedback.expression_parsing import (
 from lambdafeedback.expression_parsing.substitution import (
     elementary_function_substitutions,
     greek_symbol_substitutions,
-    unicode_dash_substitutions,
 )
 
 
@@ -34,36 +34,20 @@ class TestConvertUnicodeDashes:
         "expr, expected",
         [
             # No dashes at all
-            ("x+y", []),
-            # ASCII hyphen-minus is not a unicode dash — no substitution
-            ("x-y", []),
-            # Empty string
-            ("", []),
-            # HYPHEN (U+2010)
-            ("x‐y", [("‐", "-")]),
-            # NON-BREAKING HYPHEN (U+2011)
-            ("x‑y", [("‑", "-")]),
-            # FIGURE DASH (U+2012)
-            ("x‒y", [("‒", "-")]),
-            # EN DASH (U+2013)
-            ("x–y", [("–", "-")]),
-            # EM DASH (U+2014)
-            ("x—y", [("—", "-")]),
-            # MINUS SIGN (U+2212)
-            ("x−y", [("−", "-")]),
-            # SMALL HYPHEN-MINUS (U+FE63)
-            ("x﹣y", [("﹣", "-")]),
-            # FULLWIDTH HYPHEN-MINUS (U+FF0D)
-            ("x－y", [("－", "-")]),
-            # Multiple different unicode dashes in one expression
-            ("x–y−z", [("–", "-"), ("−", "-")]),
-            # Repeated occurrences of the same dash — still one substitution pair
-            ("x−y−z", [("−", "-")]),
+            ("x+y", "x+y"),
+            # ASCII hyphen-minus is unchanged
+            ("x-y", "x-y"),
+            ("", ""),
+            # HYPHEN, NON-BREAKING HYPHEN, FIGURE DASH, EN DASH, EM DASH, MINUS SIGN,
+            # SMALL HYPHEN-MINUS, FULLWIDTH HYPHEN-MINUS
+            *((f"x{dash}y", "x-y") for dash in "‐‑‒–—−﹣－"),
+            # Several different dashes, and repeats
+            ("x–y−z", "x-y-z"),
+            ("x−y−z", "x-y-z"),
         ],
     )
     def test_convert_unicode_dashes(self, expr, expected):
-        result = unicode_dash_substitutions(expr)
-        assert result == expected
+        assert normalise_unicode_operators(expr) == expected
 
 
 class TestConvertAbsoluteNotation:

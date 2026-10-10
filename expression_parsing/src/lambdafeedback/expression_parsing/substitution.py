@@ -10,8 +10,9 @@ from .symbol_tables import (
     ELEMENTARY_FUNCTIONS,
     EMBEDDABLE_FUNCTION_NAMES,
     GREEK_SYMBOLS,
+    MINUS_PLUS,
+    PLUS_MINUS,
     SUPERSCRIPTS,
-    UNICODE_DASHES,
     UNICODE_OPERATORS,
 )
 
@@ -56,8 +57,12 @@ def substitutions_sort_key(pair: Substitution) -> float:
     return float(-len(_original_text(pair[0])) - len(pair[1]) / (10 ** (1 + len(str(len(pair[1]))))))
 
 
-def _sorted(substitutions: Sequence[Substitution]) -> list[Substitution]:
-    # Ties are broken by content, so the order never depends on the hash seed.
+def sorted_substitutions(substitutions: Sequence[Substitution]) -> list[Substitution]:
+    """De-duplicated and sorted by :func:`substitutions_sort_key`.
+
+    Ties are broken by content, so the order never depends on the hash seed.
+    """
+
     def key(pair: Substitution) -> tuple[float, str, bool, str]:
         return (substitutions_sort_key(pair), _original_text(pair[0]), not isinstance(pair[0], str), pair[1])
 
@@ -160,11 +165,6 @@ def _named_substitutions(table: Sequence[tuple[str, Sequence[str]]], expr: str, 
     ]
 
 
-def unicode_dash_substitutions(expr: str) -> list[tuple[str, str]]:
-    """Substitutions mapping the Unicode dashes found in ``expr`` to ``-``."""
-    return [(dash, "-") for dash in UNICODE_DASHES if dash in expr]
-
-
 _UNICODE_OPERATOR_TABLE = str.maketrans(UNICODE_OPERATORS)
 
 
@@ -209,9 +209,9 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
     substitutions: list[Substitution] = [(expr, expr) for expr in params.reserved_keywords]
     substitutions += [(expr, expr) for expr in params.unsplittable_symbols]
     if params.plus_minus is not None:
-        substitutions.append((params.plus_minus, "plus_minus"))
+        substitutions.append((params.plus_minus, PLUS_MINUS))
     if params.minus_plus is not None:
-        substitutions.append((params.minus_plus, "minus_plus"))
+        substitutions.append((params.minus_plus, MINUS_PLUS))
 
     symbol_aliases = {alias for spec in params.symbols.values() for alias in spec.aliases}
     if params.elementary_functions:
@@ -240,5 +240,5 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
         (original, "lamda" if replacement == "lambda" else replacement) for original, replacement in substitutions
     ]
 
-    ordered = _sorted(substitutions)
+    ordered = sorted_substitutions(substitutions)
     return [" ".join(substitute(expr, ordered).split()) for expr in exprs]

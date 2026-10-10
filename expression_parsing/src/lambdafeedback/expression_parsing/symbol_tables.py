@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from typing import NamedTuple
 
+PLUS_MINUS = "plus_minus"
+"""The name ``±`` is written as before it is expanded into both signs."""
+MINUS_PLUS = "minus_plus"
+"""The name ``∓`` is written as before it is expanded into both signs."""
+
 
 class SymbolAliases(NamedTuple):
     """A canonical name and the other ways of writing it."""
@@ -37,7 +42,7 @@ ELEMENTARY_FUNCTIONS = _with_upper_case(
         ("ceiling", ["ceil"]), ("floor", []),
         ("oo", ["Infinity", "inf", "infinity", "∞"]),
         # Kept intact during preprocessing so that ± / ∓ expansion still works
-        ("plus_minus", []), ("minus_plus", []),
+        (PLUS_MINUS, []), (MINUS_PLUS, []),
         # Common operations rather than elementary functions, but handled the same way
         ("summation", ["sum", "Sum"]), ("Integral", ["int"]), ("Derivative", ["diff"]), ("re", ["real"]),
         ("im", ["imag"]), ("conjugate", ["conj"]),
