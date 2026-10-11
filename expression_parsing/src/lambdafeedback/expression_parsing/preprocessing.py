@@ -66,7 +66,7 @@ def create_expression_set(exprs: str | Sequence[str], params: ExpressionParams) 
     expanded: dict[str, None] = {}
     for original in exprs:
         # substitute_input_symbols also writes params.plus_minus/minus_plus as PLUS_MINUS/MINUS_PLUS.
-        expr = substitute_input_symbols(original, params)[0]
+        expr = substitute_input_symbols(original, params)
         expanded.update(dict.fromkeys(expand_plus_minus(expr)))
     return list(expanded)
 
@@ -117,79 +117,98 @@ def convert_bracket_notation(expr: str) -> str:
     return guess
 
 
-def convert_absolute_notation(expr: str, name: str) -> str:
+def _classify_pipes(expr: str) -> tuple[list[int], list[int], list[int]]:
+    """Positions of the ``|`` that open, close, or could do either (``a|b``, ``)|(``), each ascending."""
+
+    def grouping(char: str) -> bool:
+        return char.isalnum() or char in GROUPING
+
+    starts = [0] if expr.startswith("|") else []
+    ends: list[int] = []
+    ambiguous: list[int] = []
+    for i in range(1, len(expr) - 1):
+        if expr[i] != "|":
+            continue
+        if grouping(expr[i - 1]) and not grouping(expr[i + 1]):
+            ends.append(i)
+        elif grouping(expr[i + 1]) and not grouping(expr[i - 1]):
+            starts.append(i)
+        else:
+            ambiguous.append(i)
+    if expr.endswith("|"):
+        ends.append(len(expr) - 1)
+    return starts, ends, ambiguous
+
+
+def _resolve_ambiguous(chars: list[str], starts: list[int], ends: list[int], ambiguous: list[int]) -> None:
+    """Make each ambiguous ``|`` in ``chars`` open or close, from the nearest ``|`` before it.
+
+    After a closing one it opens; after an opening one it closes; after another
+    ambiguous one, a run of them alternates, starting with opening.
+    """
+    latest_start = latest_end = previous_ambiguous = -1
+    next_start = next_end = 0  # indices into starts/ends, advanced as the scan moves right
+    ambiguous_seen = 0
+    for i in ambiguous:
+        while next_start < len(starts) and starts[next_start] < i:
+            latest_start = starts[next_start]
+            next_start += 1
+        while next_end < len(ends) and ends[next_end] < i:
+            latest_end = ends[next_end]
+            next_end += 1
+        latest = max(latest_start, latest_end, previous_ambiguous)
+        # chars[i - 1] may already be a replacement ("Abs(" or ")"), which is not alphanumeric
+        opening = "*Abs(" if chars[i - 1].isalnum() else "Abs("
+        if latest == latest_end:
+            chars[i] = opening
+        elif latest == previous_ambiguous:
+            chars[i] = opening if ambiguous_seen % 2 == 0 else ")"
+            ambiguous_seen += 1
+        else:
+            chars[i] = ")"
+        previous_ambiguous = i
+
+
+def convert_absolute_notation(expr: str, *, name: str | None = None) -> str:
     """Rewrite ``|x|`` as ``Abs(x)``.
 
     Nested ``|`` cannot be handled: each ``|`` is paired with the closest one
     to its right, and an :class:`AbsoluteValueNotationError` (naming ``name``,
-    e.g. ``"response"``) is raised, carrying the best guess, when that
-    pairing was ambiguous or a ``|`` is left unpaired.
+    e.g. ``"response"``, if given) is raised, carrying the best guess, when
+    that pairing was ambiguous or a ``|`` is left unpaired.
     """
     n_pipes = expr.count("|")
-    ambiguous: list[int] = []
+    if n_pipes == 0:
+        return expr
     if n_pipes == 2:
-        chars = list(expr)
-        chars[chars.index("|")] = "Abs("
-        chars[chars.index("|")] = ")"
-        expr = "".join(chars)
-    elif n_pipes > 0:
-        starts: list[int] = []
-        ends: list[int] = []
-
-        def grouping(char: str) -> bool:
-            return char.isalnum() or char in GROUPING
-
-        if expr[0] == "|":
-            starts.append(0)
-        for i in range(1, len(expr) - 1):
-            if expr[i] == "|":
-                if grouping(expr[i - 1]) and not grouping(expr[i + 1]):
-                    ends.append(i)
-                elif grouping(expr[i + 1]) and not grouping(expr[i - 1]):
-                    starts.append(i)
-                else:
-                    ambiguous.append(i)
-        if expr[-1] == "|":
-            ends.append(len(expr) - 1)
-        chars = list(expr)
-        for i in starts:
-            chars[i] = "Abs("
-        for i in ends:
-            chars[i] = ")"
-        k = 0
-        previous_ambiguous = -1
-        for i in ambiguous:
-            previous_start = max((j for j in starts if j < i), default=-1)
-            previous_end = max((j for j in ends if j < i), default=-1)
-            latest = max(previous_start, previous_end, previous_ambiguous)
-            # chars[i - 1] may already be a replacement ("Abs(" or ")"), which is not alphanumeric
-            opening = "*Abs(" if chars[i - 1].isalnum() else "Abs("
-            if latest == previous_end:
-                chars[i] = opening
-            elif latest == previous_ambiguous:
-                chars[i] = opening if k % 2 == 0 else ")"
-                k += 1
-            else:
-                chars[i] = ")"
-            previous_ambiguous = i
-        expr = "".join(chars)
-
-    if (n_pipes > 2 and ambiguous) or n_pipes % 2:
-        raise AbsoluteValueNotationError(expr, name)
+        # Always one pair, whatever surrounds it: the general rules would make a|b|c "a*Abs(b*Abs(c".
+        first = expr.index("|")
+        second = expr.index("|", first + 1)
+        return f"{expr[:first]}Abs({expr[first + 1 : second]}){expr[second + 1 :]}"
+    starts, ends, ambiguous = _classify_pipes(expr)
+    chars = list(expr)
+    for i in starts:
+        chars[i] = "Abs("
+    for i in ends:  # after starts: a lone "|" is both, and becomes ")"
+        chars[i] = ")"
+    _resolve_ambiguous(chars, starts, ends, ambiguous)
+    expr = "".join(chars)
+    if ambiguous or n_pipes % 2:
+        raise AbsoluteValueNotationError(expr, name=name)
     return expr
 
 
-def preprocess_expression(name: str, expr: str, params: ExpressionParams) -> str:
+def preprocess_expression(expr: str, params: ExpressionParams, *, name: str | None = None) -> str:
     """Substitute symbol aliases and rewrite bracket and absolute-value notation.
 
-    ``name`` (e.g. ``"response"``) identifies what's being preprocessed in
-    raised exceptions. Both bracket and absolute-value notation are always
+    ``name`` (e.g. ``"response"``), if given, identifies what's being
+    preprocessed in raised exceptions. Both bracket and absolute-value notation are always
     attempted, in sequence, and the resulting best-effort rewrite is always
     computed even when raising; a :class:`BracketNotationError` takes
     precedence over an :class:`AbsoluteValueNotationError` when both apply.
     """
     original = expr.strip()
-    expr = substitute_input_symbols(original, params)[0]
+    expr = substitute_input_symbols(original, params)
     bracket_error: BracketNotationError | None = None
     if not params.strict_syntax:
         try:
@@ -198,7 +217,7 @@ def preprocess_expression(name: str, expr: str, params: ExpressionParams) -> str
             expr = exc.expression
             bracket_error = exc
     try:
-        expr = convert_absolute_notation(expr, name)
+        expr = convert_absolute_notation(expr, name=name)
     except AbsoluteValueNotationError as exc:
         expr = exc.expression
         if bracket_error is None:

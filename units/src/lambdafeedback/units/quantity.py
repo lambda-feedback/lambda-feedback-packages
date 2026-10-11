@@ -496,7 +496,7 @@ class PhysicalQuantity:
             # A LaTeX value is previewed as-is (as expression_parsing.preview_function used to).
             return original
         try:
-            preprocessed = preprocess_expression("response", original, params)
+            preprocessed = preprocess_expression(original, params, name="response")
         except (BracketNotationError, AbsoluteValueNotationError) as exc:
             # Best-effort: preview with the guessed rewrite rather than failing outright.
             preprocessed = exc.expression

@@ -31,7 +31,7 @@ params = ExpressionParams.from_dict(
     {"elementary_functions": True, "symbols": {"v_0": {"latex": "v_0", "aliases": ["v0"]}}}
 )
 
-expr = preprocess_expression("response", "v0 sin(x) + |x|", params)  # aliases, [] / {} brackets, |x| → Abs(x)
+expr = preprocess_expression("v0 sin(x) + |x|", params, name="response")  # aliases, [] / {} brackets, |x| → Abs(x)
 parsed = parse_expression(expr, SympyParsingConfig.from_params(params))
 latex = sympy_to_latex(parsed, params.symbols)
 ```
@@ -71,7 +71,7 @@ tell the learner what was assumed:
 
 ```python
 try:
-    expr = preprocess_expression("response", response, params)
+    expr = preprocess_expression(response, params, name="response")
 except (BracketNotationError, AbsoluteValueNotationError) as e:
     expr = e.expression  # and add non-fatal feedback
 ```

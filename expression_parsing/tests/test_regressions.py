@@ -124,7 +124,7 @@ class TestParsing:
                 parse_expression("{x+1}*{x-1}", parsing_params(strict_syntax=True))
 
     def test_parsing_params_default_missing_keys(self):
-        assert SympyParsingConfig.from_params(ExpressionParams.from_dict({})).complex_numbers is False
+        assert SympyParsingConfig.from_params(ExpressionParams.from_dict({})).params.complex_numbers is False
 
     def test_lone_plus_minus(self):
         assert sorted(create_expression_set("plus_minus", ExpressionParams())) == ["", "-"]
@@ -133,16 +133,16 @@ class TestParsing:
 class TestInputSymbols:
     def test_user_defined_lambda_survives_repeated_substitution(self):
         params = ExpressionParams.from_dict({"symbols": {"lambda": {"latex": r"\Lambda_0", "aliases": ["lam"]}}})
-        assert substitute_input_symbols(["lam"], params) == ["lamda"]
-        assert substitute_input_symbols(["lam"], params) == ["lamda"]
+        assert substitute_input_symbols("lam", params) == "lamda"
+        assert substitute_input_symbols("lam", params) == "lamda"
 
     def test_empty_aliases_do_not_remove_real_ones(self):
         params = ExpressionParams.from_dict({"symbols": {"x": {"latex": "x", "aliases": ["", "", "xx"]}}})
-        assert substitute_input_symbols(["xx"], params) == ["x"]
+        assert substitute_input_symbols("xx", params) == "x"
 
     def test_aliases_are_stripped(self):
         params = ExpressionParams.from_dict({"symbols": {"x": {"latex": "x", "aliases": [" xx "]}}})
-        assert substitute_input_symbols(["xx"], params) == ["x"]
+        assert substitute_input_symbols("xx", params) == "x"
 
 
 class TestNoSideEffects:
@@ -167,11 +167,11 @@ class TestSanitiseLatex:
             "try:\n"
             "    sanitise_latex(r'3 \\mathrm{kg')\n"
             "except LatexParseError as e:\n"
-            "    print('raised:', e, e.wrapper, e.response)\n"
+            "    print('raised:', e, '|', e.expression)\n"
         )
         result = subprocess.run([sys.executable, "-c", script], capture_output=True, text=True, timeout=30)
         assert result.stdout.startswith(r"raised: Unclosed \mathrm{")
-        assert result.stdout.strip().endswith(r"\mathrm 3\mathrm{kg")
+        assert result.stdout.strip().endswith(r"| 3\mathrm{kg")
 
 
 class TestLatexEquations:
@@ -186,7 +186,7 @@ class TestLatexEquations:
         params = ExpressionParams(elementary_functions=elementary_functions)
         text = parse_latex(r"y = 2x + 1", params.symbols)
         parsed = parse_expression(
-            preprocess_expression("response", text, params), SympyParsingConfig.from_params(params)
+            preprocess_expression(text, params, name="response"), SympyParsingConfig.from_params(params)
         )
         assert str(parsed) == "Eq(y, 2*x + 1)"
 
@@ -215,13 +215,13 @@ class TestPublicReleaseReview:
 
     def test_bracket_error_reports_what_was_written(self):
         with pytest.raises(BracketNotationError, match=re.escape("'[x+y)'")) as info:
-            preprocess_expression("response", "[x+y)", ExpressionParams())
+            preprocess_expression("[x+y)", ExpressionParams(), name="response")
         assert (info.value.original, info.value.expression) == ("[x+y)", "(x+y)")
 
     @pytest.mark.parametrize("expr", ["x|", "|x|+|"])
     def test_unpaired_pipe_is_reported(self, expr):
         with pytest.raises(AbsoluteValueNotationError):
-            convert_absolute_notation(expr, "response")
+            convert_absolute_notation(expr, name="response")
 
     @pytest.mark.parametrize("response", [r"1\pm\sqrt{2}", r"1 \pm \sqrt{2}", r"1\pm{\sqrt{2}}"])
     def test_latex_plus_minus_without_a_space(self, response):
@@ -256,7 +256,7 @@ class TestPythonKeywords:
             {"symbols": {code: {"latex": "Q", "aliases": ["q"]}}, "symbol_assumptions": f"('{code}', 'positive')"}
         )
         parsed = parse_expression(
-            preprocess_expression("response", "2q", params), SympyParsingConfig.from_params(params)
+            preprocess_expression("2q", params, name="response"), SympyParsingConfig.from_params(params)
         )
         assert sympy_to_latex(parsed, params.symbols) == "2 Q"
         assert all(symbol.is_positive for symbol in parsed.free_symbols)
@@ -279,7 +279,7 @@ class TestFunctionNames:
     @pytest.mark.parametrize("word", ["area", "time", "rest", "interval", "pressure", "free", "design"])
     def test_short_function_names_inside_words_are_letters(self, word):
         parsed = parse_expression(
-            preprocess_expression("response", word, ExpressionParams(elementary_functions=True)),
+            preprocess_expression(word, ExpressionParams(elementary_functions=True), name="response"),
             parsing_params(elementary_functions=True),
         )
         assert not parsed.atoms(Function)
@@ -299,7 +299,7 @@ class TestFunctionNames:
         assert (
             str(
                 parse_expression(
-                    preprocess_expression("response", response, params), parsing_params(elementary_functions=True)
+                    preprocess_expression(response, params, name="response"), parsing_params(elementary_functions=True)
                 )
             )
             == expected
@@ -308,7 +308,7 @@ class TestFunctionNames:
     def test_short_function_name_as_a_task_symbol(self):
         params = ExpressionParams.from_dict({"symbols": {"max": {"latex": "M"}}})
         assert parse_expression(
-            preprocess_expression("response", "2max", params), SympyParsingConfig.from_params(params)
+            preprocess_expression("2max", params, name="response"), SympyParsingConfig.from_params(params)
         ) == 2 * Symbol("max")
 
     @pytest.mark.parametrize(
@@ -318,7 +318,7 @@ class TestFunctionNames:
         params = ExpressionParams(elementary_functions=True)
         with pytest.raises(ExpressionParsingError, match=re.escape(f"{function} is a function")):
             parse_expression(
-                preprocess_expression("response", response, params), parsing_params(elementary_functions=True)
+                preprocess_expression(response, params, name="response"), parsing_params(elementary_functions=True)
             )
 
     def test_declared_function_without_brackets_says_so(self):
@@ -403,7 +403,7 @@ def test_unreadable_characters_are_reported_as_unrecognised(response, character)
 def test_unicode_operators_parse_like_ascii(unicode, ascii):
     params = ExpressionParams(elementary_functions=True)
     config = SympyParsingConfig.from_params(params)
-    parse = lambda text: parse_expression(preprocess_expression("response", text, params), config)  # noqa: E731
+    parse = lambda text: parse_expression(preprocess_expression(text, params, name="response"), config)  # noqa: E731
     assert parse(unicode) == parse(ascii)
 
 
@@ -521,11 +521,11 @@ class TestSubstitutionScaling:
         assert result.endswith(" SIN(x) N7")
 
     def test_first_match_order_is_kept(self):
-        from lambdafeedback.expression_parsing.substitution import substitute
+        from lambdafeedback.expression_parsing.substitution import FunctionName, substitute
 
         assert substitute("abc bc c", [("abc", "p"), ("bc", "q"), ("c", "r")]) == "p q r"
         assert substitute("abc", [("a", "1"), ("abc", "2")]) == "1bc"  # the listed order wins, not length
-        assert substitute("sin(x) sinx", [(("sin", ["("]), "S")]) == "S(x) sinx"
+        assert substitute("sin(x) sinx", [(FunctionName("sin"), "S")]) == "S(x) sinx"
 
 
 class TestLatexBackend:

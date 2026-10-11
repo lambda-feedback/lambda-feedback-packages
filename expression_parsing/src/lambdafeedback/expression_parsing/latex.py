@@ -344,7 +344,7 @@ def sanitise_latex(response: str) -> str:
             processed.append(response[index:wrapper_start])
             wrapper_end = find_matching_parenthesis(response, wrapper_start + 1, delimiters=("{", "}"))
             if wrapper_end < 0:
-                raise LatexParseError(f"Unclosed {wrapper}{{...}} in {response!r}.", response=response, wrapper=wrapper)
+                raise LatexParseError(f"Unclosed {wrapper}{{...}} in {response!r}.", expression=response)
             processed.append(response[wrapper_start + len(wrapper) + 1 : wrapper_end])
             index = wrapper_end + 1
         response = "".join(processed)

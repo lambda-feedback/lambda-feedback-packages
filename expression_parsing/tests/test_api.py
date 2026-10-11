@@ -125,8 +125,8 @@ class TestSympyParsingConfig:
 
     def test_replace_gives_a_new_config(self):
         config = SympyParsingConfig.from_params(ExpressionParams())
-        assert config.replace(strict_syntax=True).strict_syntax is True
-        assert config.strict_syntax is False
+        assert config.replace(strict_syntax=True).params.strict_syntax is True
+        assert config.params.strict_syntax is False
 
     def test_plus_minus_parses_to_a_set(self):
         config = SympyParsingConfig.from_params(ExpressionParams())

@@ -279,7 +279,18 @@ def check_evaluation_cost(expr: Basic, text: str) -> None:
     This bounds evaluation, not SymPy's symbolic algorithms: simplifying can
     still be slow on large or contrived expressions.
     """
-    _log_size(expr, text)
+    try:
+        _log_size(expr)
+    except _TooCostlyError as e:
+        raise ExpressionParsingError(e.template.format(text=repr(text)), expression=text) from None
+
+
+class _TooCostlyError(Exception):
+    """Raised by :func:`_log_size`; ``template`` is the message, with ``{text}`` for the expression."""
+
+    def __init__(self, template: str) -> None:
+        super().__init__(template)
+        self.template = template
 
 
 def _magnitude(log_size: float) -> float:
@@ -287,7 +298,7 @@ def _magnitude(log_size: float) -> float:
     return math.inf if log_size > 300 else float(10**log_size)
 
 
-def _log_size(node: Basic, text: str) -> float:
+def _log_size(node: Basic) -> float:
     """At least ``log10`` of the largest exact number (numerator or denominator) evaluating ``node`` builds.
 
     Symbols and inexact values (floats, ``pi``, ``sin(x)``) count as 1: their
@@ -296,7 +307,7 @@ def _log_size(node: Basic, text: str) -> float:
     if isinstance(node, Rational):
         # Exact for small numbers: an overestimate here compounds through nested powers.
         return math.log10(max(abs(node.p), node.q))
-    sizes = [_log_size(argument, text) for argument in node.args]
+    sizes = [_log_size(argument) for argument in node.args]
     largest = max(sizes, default=0.0)
     if isinstance(node, Add):
         size = largest + math.log10(len(sizes) or 1)
@@ -306,10 +317,9 @@ def _log_size(node: Basic, text: str) -> float:
         base, exponent = sizes
         power = _magnitude(exponent)
         if power > MAX_SIMPLIFY_POWER and node.base.free_symbols and node.base.has(Add):
-            raise ExpressionParsingError(
-                f"A sum is raised to too large a power to simplify in {text!r}; "
-                f"at most {MAX_SIMPLIFY_POWER} is allowed.",
-                expression=text,
+            raise _TooCostlyError(
+                f"A sum is raised to too large a power to simplify in {{text}}; "
+                f"at most {MAX_SIMPLIFY_POWER} is allowed."
             )
         size = base * power if base else 0.0
     elif isinstance(node, _BOUNDED_FUNCTIONS) or not isinstance(node, Function):
@@ -322,9 +332,8 @@ def _log_size(node: Basic, text: str) -> float:
         n = _magnitude(largest)
         size = n * math.log10(2 * n)
     if size > MAX_NUMBER_DIGITS:
-        raise ExpressionParsingError(
-            f"Evaluating {text!r} builds a number of more than {MAX_NUMBER_DIGITS} digits; "
-            f"at most {MAX_NUMBER_DIGITS} are allowed.",
-            expression=text,
+        raise _TooCostlyError(
+            f"Evaluating {{text}} builds a number of more than {MAX_NUMBER_DIGITS} digits; "
+            f"at most {MAX_NUMBER_DIGITS} are allowed."
         )
     return size

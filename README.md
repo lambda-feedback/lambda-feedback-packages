@@ -31,7 +31,7 @@ from lambdafeedback.expression_parsing import (
 from lambdafeedback.units import QuantityParams, parse_quantity
 
 params = ExpressionParams.from_dict(evaluation_params)  # JSON parameters → typed
-pre = preprocess_expression("response", response, params)  # aliases, brackets, |x|
+pre = preprocess_expression(response, params, name="response")  # aliases, brackets, |x|
 expr = parse_expression(pre, SympyParsingConfig.from_params(params))
 
 quantity = parse_quantity("9.81 m/s^2", QuantityParams.from_dict(evaluation_params))  # value, unit, dimension, SI forms

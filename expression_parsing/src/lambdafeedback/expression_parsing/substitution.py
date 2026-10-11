@@ -41,20 +41,17 @@ class FunctionName:
         return string.startswith(("(", "^", "**"), end)
 
 
-# (original, replacement); an original of the form (text, lookaheads) only
-# matches when followed by one of the lookahead strings.
-Substitution = tuple[str | tuple[str, Sequence[str]] | FunctionName, str]
+Substitution = tuple[str | FunctionName, str]
+"""``(original, replacement)``; a :class:`FunctionName` original only matches where it is applied."""
 
 
-def _original_text(original: str | tuple[str, Sequence[str]] | FunctionName) -> str:
-    if isinstance(original, FunctionName):
-        return original.text
-    return original if isinstance(original, str) else original[0]
+def _original_text(original: str | FunctionName) -> str:
+    return original.text if isinstance(original, FunctionName) else original
 
 
-def substitutions_sort_key(pair: Substitution) -> float:
+def substitutions_sort_key(pair: Substitution) -> tuple[int, int]:
     """Longer originals first; among equal ones, longer replacements first."""
-    return float(-len(_original_text(pair[0])) - len(pair[1]) / (10 ** (1 + len(str(len(pair[1]))))))
+    return -len(_original_text(pair[0])), -len(pair[1])
 
 
 def sorted_substitutions(substitutions: Sequence[Substitution]) -> list[Substitution]:
@@ -63,76 +60,58 @@ def sorted_substitutions(substitutions: Sequence[Substitution]) -> list[Substitu
     Ties are broken by content, so the order never depends on the hash seed.
     """
 
-    def key(pair: Substitution) -> tuple[float, str, bool, str]:
-        return (substitutions_sort_key(pair), _original_text(pair[0]), not isinstance(pair[0], str), pair[1])
+    def key(pair: Substitution) -> tuple[int, int, str, bool, str]:
+        return (*substitutions_sort_key(pair), _original_text(pair[0]), isinstance(pair[0], FunctionName), pair[1])
 
     return sorted(set(substitutions), key=key)
 
 
-def substitute(string: str | Sequence[str | object], substitutions: Sequence[Substitution]) -> str:
+def substitute(string: str, substitutions: Sequence[Substitution]) -> str:
     """Replace each occurrence of a substitution's original with its replacement.
 
     The input is scanned left to right; at each position the first matching
     substitution is applied and its replacement is not scanned again. So
     order only matters when originals overlap at the same position, where
-    sorting with :func:`substitutions_sort_key` (longest first) is usually
-    what you want. ``string`` may also be a list mixing strings (scanned) and
-    other parts (kept as they are). Examples::
+    sorting with :func:`sorted_substitutions` (longest first) is usually
+    what you want. Examples::
 
         substitute("abc bc c", [("abc", "p"), ("bc", "q"), ("c", "r")])  -> "p q r"
         substitute("p bc c", [("p", "abc"), ("bc", "q"), ("c", "r")])    -> "abc q r"
-        substitute("sin(x) sinx", [(("sin", ["("]), "S")])               -> "S(x) sinx"
+        substitute("sin(x) sinx", [(FunctionName("sin"), "S")])          -> "S(x) sinx"
     """
-    parts: Sequence[str | object] = [string] if isinstance(string, str) else string
-
     # Only substitutions whose original starts with the character at hand can match there:
     # trying all of them at every position made long inputs slow (length x substitutions).
     # Each list keeps the substitutions' order, so the first match is the same.
-    by_first: dict[str, list[tuple[int, str | tuple[str, Sequence[str]] | FunctionName]]] = {}
-    always: list[tuple[int, str | tuple[str, Sequence[str]] | FunctionName]] = []  # empty originals
-    for k, (original, _) in enumerate(substitutions):
-        text = _original_text(original)
+    by_first: dict[str, list[tuple[int, Substitution]]] = {}
+    always: list[tuple[int, Substitution]] = []  # empty originals
+    for k, substitution in enumerate(substitutions):
+        text = _original_text(substitution[0])
         if text:
-            by_first.setdefault(text[0], []).append((k, original))
+            by_first.setdefault(text[0], []).append((k, substitution))
         else:
-            always.append((k, original))
+            always.append((k, substitution))
     if always:
         for first, candidates in by_first.items():
             by_first[first] = sorted([*candidates, *always], key=lambda candidate: candidate[0])
 
-    new_string: list[object] = []
-    for part in parts:
-        if not isinstance(part, str):
-            new_string.append(part)
-            continue
-        index = 0
-        buffer = ""
-        while index < len(part):
-            for k, original in by_first.get(part[index], always):
-                if isinstance(original, FunctionName):
-                    match = original.matches(part, index)
-                    length = len(original.text)
-                elif isinstance(original, tuple):
-                    text, lookaheads = original
-                    match = any(part.startswith(text + lookahead, index) for lookahead in lookaheads)
-                    length = len(text)
-                else:
-                    match = part.startswith(original, index)
-                    length = len(original)
-                if match:
-                    if buffer:
-                        new_string.append(buffer)
-                        buffer = ""
-                    new_string.append(k)
-                    index += length
-                    break
+    pieces: list[str] = []
+    done = index = 0
+    while index < len(string):
+        for _, (original, replacement) in by_first.get(string[index], always):
+            if isinstance(original, FunctionName):
+                match = original.matches(string, index)
+                length = len(original.text)
             else:
-                buffer += part[index]
-                index += 1
-        if buffer:
-            new_string.append(buffer)
-
-    return "".join(substitutions[elem][1] if isinstance(elem, int) else str(elem) for elem in new_string)
+                match = string.startswith(original, index)
+                length = len(original)
+            if match:
+                pieces += [string[done:index], replacement]
+                index = done = index + length
+                break
+        else:
+            index += 1
+    pieces.append(string[done:])
+    return "".join(pieces)
 
 
 def greek_symbol_substitutions(expr: str) -> list[Substitution]:
@@ -194,7 +173,7 @@ def normalise_unicode_operators(expr: str) -> str:
     return "".join(pieces)
 
 
-def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParams) -> list[str]:
+def substitute_input_symbols(expr: str, params: ExpressionParams) -> str:
     """Replace symbol aliases (and related spellings) with symbol codes.
 
     Covers the task's ``symbols`` and legacy ``input_symbols``, ``±``/``∓``
@@ -204,10 +183,10 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
     Unicode operators are written in ASCII first (see
     :func:`normalise_unicode_operators`).
     """
-    exprs = [normalise_unicode_operators(expr) for expr in ([exprs] if isinstance(exprs, str) else exprs)]
+    expr = normalise_unicode_operators(expr)
 
-    substitutions: list[Substitution] = [(expr, expr) for expr in params.reserved_keywords]
-    substitutions += [(expr, expr) for expr in params.unsplittable_symbols]
+    substitutions: list[Substitution] = [(name, name) for name in params.reserved_keywords]
+    substitutions += [(name, name) for name in params.unsplittable_symbols]
     if params.plus_minus is not None:
         substitutions.append((params.plus_minus, PLUS_MINUS))
     if params.minus_plus is not None:
@@ -215,14 +194,13 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
 
     symbol_aliases = {alias for spec in params.symbols.values() for alias in spec.aliases}
     if params.elementary_functions:
-        for expr in exprs:
-            for table, original in ((ELEMENTARY_FUNCTIONS, _function_original), (GREEK_SYMBOLS, str)):
-                for name, aliases in table:
-                    if name in symbol_aliases:
-                        continue  # the task uses this name for one of its own symbols
-                    spellings = [name] if name in expr else []
-                    spellings += [alias for alias in aliases if alias in expr and alias not in symbol_aliases]
-                    substitutions += [(original(spelling), " " + name) for spelling in spellings]
+        for table, original in ((ELEMENTARY_FUNCTIONS, _function_original), (GREEK_SYMBOLS, str)):
+            for name, aliases in table:
+                if name in symbol_aliases:
+                    continue  # the task uses this name for one of its own symbols
+                spellings = [name] if name in expr else []
+                spellings += [alias for alias in aliases if alias in expr and alias not in symbol_aliases]
+                substitutions += [(original(spelling), " " + name) for spelling in spellings]
 
     for code, spec in params.symbols.items():
         substitutions.append((code, code))
@@ -240,5 +218,4 @@ def substitute_input_symbols(exprs: str | Sequence[str], params: ExpressionParam
         (original, "lamda" if replacement == "lambda" else replacement) for original, replacement in substitutions
     ]
 
-    ordered = sorted_substitutions(substitutions)
-    return [" ".join(substitute(expr, ordered).split()) for expr in exprs]
+    return " ".join(substitute(expr, sorted_substitutions(substitutions)).split())

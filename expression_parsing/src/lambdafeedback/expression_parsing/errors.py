@@ -44,21 +44,15 @@ class SymbolAssumptionError(ExpressionParsingError):
 
 
 class LatexParseError(ExpressionParsingError):
-    """A LaTeX expression (or a symbol's LaTeX) could not be parsed."""
+    """A LaTeX expression could not be parsed.
 
-    def __init__(
-        self,
-        text: str,
-        *,
-        symbol: str | None = None,
-        expression: str | None = None,
-        response: str | None = None,
-        wrapper: str | None = None,
-    ) -> None:
+    ``expression`` is the LaTeX that failed. ``symbol`` is set instead when
+    it was a task symbol's LaTeX rather than the response.
+    """
+
+    def __init__(self, text: str, *, expression: str | None = None, symbol: str | None = None) -> None:
         super().__init__(text, expression=expression)
         self.symbol = symbol
-        self.response = response
-        self.wrapper = wrapper
 
 
 class BracketNotationError(ExpressionParsingError):
@@ -70,9 +64,10 @@ class BracketNotationError(ExpressionParsingError):
     brackets are genuinely unbalanced.
     """
 
+    expression: str
+
     def __init__(self, expression: str, *, original: str) -> None:
-        super().__init__(f"Mismatched brackets in {original!r}.")
-        self.expression: str = expression
+        super().__init__(f"Mismatched brackets in {original!r}.", expression=expression)
         self.original = original
 
 
@@ -80,10 +75,12 @@ class AbsoluteValueNotationError(ExpressionParsingError):
     """``|...|`` pairs that could not be matched unambiguously.
 
     ``expression`` is a best-guess rewrite of ``|...|`` as ``Abs(...)``;
-    ``name`` (e.g. ``"response"``) identifies what was being converted.
+    ``name`` (e.g. ``"response"``), if given, identifies what was being converted.
     """
 
-    def __init__(self, expression: str, name: str) -> None:
-        super().__init__(f"Ambiguous absolute value notation in {name}: {expression!r}.")
-        self.expression: str = expression
+    expression: str
+
+    def __init__(self, expression: str, *, name: str | None = None) -> None:
+        where = f" in {name}" if name is not None else ""
+        super().__init__(f"Ambiguous absolute value notation{where}: {expression!r}.", expression=expression)
         self.name = name

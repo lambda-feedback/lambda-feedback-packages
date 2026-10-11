@@ -5,6 +5,7 @@ from lambdafeedback.expression_parsing import (
     AbsoluteValueNotationError,
     BracketNotationError,
     ExpressionParams,
+    FunctionName,
     SymbolSpec,
     compute_relative_tolerance_from_significant_decimals,
     convert_absolute_notation,
@@ -64,12 +65,12 @@ class TestConvertAbsoluteNotation:
         ],
     )
     def test_convert_absolute_notation(self, expr, expected_expr):
-        assert convert_absolute_notation(expr, "response") == expected_expr
+        assert convert_absolute_notation(expr, name="response") == expected_expr
 
     def test_ambiguous_pipes_raise(self):
         # More than 2 pipes with ambiguous positions raises, carrying the guess and the name.
         with pytest.raises(AbsoluteValueNotationError) as info:
-            convert_absolute_notation("|x|y|z|", "response")
+            convert_absolute_notation("|x|y|z|", name="response")
         assert info.value.expression == "Abs(x)y*Abs(z)"
         assert info.value.name == "response"
 
@@ -118,26 +119,18 @@ class TestProtectElementaryFunctionsSubstitutions:
 
 class TestSubstituteInputSymbols:
     def test_plain_expression_unchanged(self):
-        result = substitute_input_symbols("x+y", ExpressionParams())
-        assert result == ["x+y"]
+        assert substitute_input_symbols("x+y", ExpressionParams()) == "x+y"
 
     def test_lambda_replaced_with_lamda(self):
-        result = substitute_input_symbols("lambda", ExpressionParams())
-        assert result == ["lamda"]
+        assert substitute_input_symbols("lambda", ExpressionParams()) == "lamda"
 
     def test_alias_replaced_with_symbol_code(self):
         params = {"symbols": {"x": {"latex": r"\(x\)", "aliases": ["x_var"]}}}
-        result = substitute_input_symbols(["x_var"], ExpressionParams.from_dict(params))
-        assert result == ["x"]
+        assert substitute_input_symbols("x_var", ExpressionParams.from_dict(params)) == "x"
 
     def test_symbol_code_preserved(self):
         params = {"symbols": {"x": {"latex": r"\(x\)", "aliases": ["x_var"]}}}
-        result = substitute_input_symbols(["x"], ExpressionParams.from_dict(params))
-        assert result == ["x"]
-
-    def test_list_input_accepted(self):
-        result = substitute_input_symbols(["x", "y"], ExpressionParams())
-        assert result == ["x", "y"]
+        assert substitute_input_symbols("x", ExpressionParams.from_dict(params)) == "x"
 
 
 class TestFindMatchingParenthesis:
@@ -244,21 +237,17 @@ class TestSubstitute:
             ("abc", [("ab", "q"), ("a", "p")], "qc"),
             # Multiple non-overlapping substitutions
             ("a b c", [("a", "x"), ("b", "y"), ("c", "z")], "x y z"),
-            # List input is joined into a single result
-            (["hello", " ", "world"], [("world", "earth")], "hello earth"),
         ],
     )
     def test_substitute(self, string, substitutions, expected):
         assert substitute(string, substitutions) == expected
 
-    def test_lookahead_tuple_matches_with_following_context(self):
-        # (("sin", ["("]), " sin ") matches "sin(" but not "sin " or "sinx"
-        subs = [(("sin", ["("]), " sin ")]
-        assert substitute("sin(x)", subs) == " sin (x)"
-
-    def test_lookahead_tuple_does_not_match_without_context(self):
-        subs = [(("sin", ["("]), " sin ")]
-        assert substitute("sinx", subs) == "sinx"
+    @pytest.mark.parametrize(
+        "string, expected",
+        [("sin(x)", " sin (x)"), ("sin (x)", " sin  (x)"), ("sin^2(x)", " sin ^2(x)"), ("sinx", "sinx")],
+    )
+    def test_function_name_only_matches_where_applied(self, string, expected):
+        assert substitute(string, [(FunctionName("sin"), " sin ")]) == expected
 
 
 class TestComputeRelativeTolerance:
@@ -415,18 +404,18 @@ class TestIsMultipleAnswersWrapper:
 
 class TestPreprocessExpression:
     def test_plain_expression_succeeds(self):
-        assert preprocess_expression("response", "x+y", ExpressionParams()) == "x+y"
+        assert preprocess_expression("x+y", ExpressionParams(), name="response") == "x+y"
 
     def test_absolute_value_notation_converted(self):
-        assert preprocess_expression("response", "|x|", ExpressionParams()) == "Abs(x)"
+        assert preprocess_expression("|x|", ExpressionParams(), name="response") == "Abs(x)"
 
     def test_ambiguous_pipes_raise(self):
         with pytest.raises(AbsoluteValueNotationError) as info:
-            preprocess_expression("response", "|x|y|z|", ExpressionParams())
+            preprocess_expression("|x|y|z|", ExpressionParams(), name="response")
         assert info.value.name == "response"
 
     def test_square_brackets_converted(self):
-        assert preprocess_expression("response", "[x+y]", ExpressionParams()) == "(x+y)"
+        assert preprocess_expression("[x+y]", ExpressionParams(), name="response") == "(x+y)"
 
     @pytest.mark.parametrize(
         "expr, guess",
@@ -442,11 +431,11 @@ class TestPreprocessExpression:
     )
     def test_mismatched_brackets_raise_with_a_best_guess(self, expr, guess):
         with pytest.raises(BracketNotationError) as info:
-            preprocess_expression("response", expr, ExpressionParams())
+            preprocess_expression(expr, ExpressionParams(), name="response")
         assert info.value.expression == guess
 
     def test_bracket_mismatch_takes_precedence_over_absolute_value_ambiguity(self):
         # Bracket error surfaces, but its guess still has the absolute-value guess applied.
         with pytest.raises(BracketNotationError) as info:
-            preprocess_expression("response", "[x|y|z)", ExpressionParams())
+            preprocess_expression("[x|y|z)", ExpressionParams(), name="response")
         assert info.value.expression == "(xAbs(y)z)"

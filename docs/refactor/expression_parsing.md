@@ -9,11 +9,12 @@ Depends on `slr_parsing`, `sympy` and `latex2sympy2` (the PyPI release; see belo
 | Module | Contents |
 |---|---|
 | `params.py` | `ExpressionParams` (frozen; `from_dict` maps the JSON names; symbols normalised once), `SymbolSpec`, `Convention`, `parse_symbol_assumptions` |
-| `symbol_tables.py` | `ELEMENTARY_FUNCTIONS`, `GREEK_SYMBOLS` (`SymbolAliases` tuples), `UNICODE_DASHES` |
+| `symbol_tables.py` | `ELEMENTARY_FUNCTIONS`, `GREEK_SYMBOLS` (`SymbolAliases` tuples), `UNICODE_DASHES`, `PLUS_MINUS`/`MINUS_PLUS` |
+| `_scanning.py` | Bracket constants and `find_matching_parenthesis` (no package dependencies) |
 | `preprocessing.py` | `create_expression_set`, bracket and absolute-value conversion, `preprocess_expression` → `str` (raises `BracketNotationError`/`AbsoluteValueNotationError` with a best guess) |
-| `substitution.py` | `substitute`, `substitute_input_symbols` (pure), Greek/function/dash substitutions |
+| `substitution.py` | `substitute`, `FunctionName`, `substitute_input_symbols` (pure), Greek/function substitutions, `normalise_unicode_operators` |
 | `conventions.py` | `convention_parser` (cached), `apply_convention` |
-| `sympy_parsing.py` | `SympyParsingConfig`, `parse_expression`, `sympy_symbols` |
+| `sympy_parsing.py` | `SympyParsingConfig` (the `ExpressionParams` plus what is derived from them), `parse_expression`, `sympy_symbols` |
 | `latex.py` | `sympy_to_latex`, `parse_latex`, `sanitise_latex`, `E`/`e` placeholder handling |
 | `_safe_parse.py` | `safe_parse_expr`: SymPy's parse pipeline with a syntax allowlist and a maths-only namespace |
 | `numbers.py` | Number scanners (no regexes), `is_number`, complex-form checks, `generate_arbitrary_number_pattern_matcher`, `compute_relative_tolerance_from_significant_decimals` |

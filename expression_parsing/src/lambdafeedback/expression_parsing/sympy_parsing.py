@@ -33,7 +33,7 @@ from sympy.utilities.exceptions import SymPyDeprecationWarning
 from ._safe_parse import MATH_NAMESPACE, check_evaluation_cost, safe_parse_expr
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
-from .params import Convention, ExpressionParams
+from .params import ExpressionParams
 from .preprocessing import convert_bracket_notation, create_expression_set, split_equation
 from .substitution import (
     Substitution,
@@ -45,6 +45,16 @@ from .substitution import (
 from .symbol_tables import EMBEDDABLE_FUNCTION_NAMES
 
 _APPLIED = ("(", "**", "^")
+
+
+def _following(values: Sequence[str], index: int) -> str:
+    """The token text after ``values[index]`` (``""`` at the end)."""
+    return values[index + 1] if index + 1 < len(values) else ""
+
+
+def _reads_as_letters(name: str, following: str, defined: Mapping[str, Any]) -> bool:
+    """True for a short function spelling (``re``, ``max``) not applied to anything and not a defined name."""
+    return name not in defined and name.casefold() in EMBEDDABLE_FUNCTION_NAMES and following not in _APPLIED
 
 
 def _keywords_as_names(tokens: list[Any], local_dict: dict[str, Any], global_dict: Any) -> list[Any]:
@@ -62,10 +72,10 @@ def _keywords_as_names(tokens: list[Any], local_dict: dict[str, Any], global_dic
     otherwise it is letters too, like the ``re`` in ``area``.
     """
     result: list[Any] = []
+    values = [value for _, value in tokens]
     for index, (kind, value) in enumerate(tokens):
-        following = tokens[index + 1][1] if index + 1 < len(tokens) else ""
-        unapplied_function = value.casefold() in EMBEDDABLE_FUNCTION_NAMES and following not in _APPLIED
-        if kind != NAME or not (iskeyword(value) or (unapplied_function and value not in local_dict)):
+        following = _following(values, index)
+        if kind != NAME or not (iskeyword(value) or _reads_as_letters(value, following, local_dict)):
             result.append((kind, value))
         elif value in local_dict:
             alias = f"{value}__keyword"
@@ -102,39 +112,30 @@ def _base_symbol_dict(params: ExpressionParams) -> dict[str, Any]:
 
 @dataclass(frozen=True)
 class SympyParsingConfig:
-    """Everything :func:`parse_expression` needs, derived from :class:`ExpressionParams`.
+    """Everything :func:`parse_expression` needs: the task's parameters and what is derived from them.
 
     Build it with :meth:`from_params`; use :meth:`replace` for variants.
     """
 
-    unsplittable_symbols: tuple[str, ...] = ()
+    params: ExpressionParams
+    extra_unsplittable_symbols: tuple[str, ...] = ()
+    """Names never split, beyond the parameters' own (e.g. unit names), listed first."""
+    extra_symbol_assumptions: tuple[tuple[str, str], ...] = ()
+    """``(symbol, assumption)`` pairs applied before the parameters' own."""
+    unsplittable_symbols: tuple[str, ...] = field(init=False, compare=False)
     """Names never split by implicit multiplication (``ab`` is not ``a*b`` if ``ab`` is listed)."""
-    strict_syntax: bool = False
-    symbol_dict: Mapping[str, Any] = field(default_factory=dict)
+    symbol_dict: Mapping[str, Any] = field(init=False, compare=False)
     """``local_dict`` for ``parse_expr``: names mapped to SymPy objects."""
-    extra_transformations: tuple[Any, ...] = ()
-    elementary_functions: bool = False
-    convention: Convention | None = "equal_precedence"
-    simplify: bool = False
-    rationalise: bool = True
-    constants: frozenset[str] = frozenset()
-    """Symbols declared constant via ``symbol_assumptions``."""
-    complex_numbers: bool = False
-    reserved_keywords: tuple[str, ...] = ()
+    constants: frozenset[str] = field(init=False, compare=False)
+    """Symbols declared constant via ``symbol_assumptions`` (their Symbols also carry ``constant=True``)."""
 
-    @classmethod
-    def from_params(
-        cls,
-        params: ExpressionParams,
-        unsplittable_symbols: Iterable[str] = (),
-        symbol_assumptions: Iterable[tuple[str, str]] = (),
-    ) -> SympyParsingConfig:
-        """Derive the configuration; extra unsplittable symbols and assumptions come first."""
-        unsplittable = [*unsplittable_symbols, *params.reserved_keywords]
+    def __post_init__(self) -> None:
+        params = self.params
+        unsplittable = [*self.extra_unsplittable_symbols, *params.reserved_keywords]
         unsplittable += [code for code in params.symbols if len(code) > 1]
         symbol_dict = {**_base_symbol_dict(params), **sympy_symbols(unsplittable)}
         constants: set[str] = set()
-        for symbol, assumption in (*symbol_assumptions, *params.symbol_assumptions):
+        for symbol, assumption in (*self.extra_symbol_assumptions, *params.symbol_assumptions):
             # Assumptions become Symbol keyword arguments; SymPy stores any identifier.
             if not assumption.isidentifier():
                 raise SymbolAssumptionError(
@@ -155,22 +156,23 @@ class SympyParsingConfig:
                     symbol=symbol,
                     assumption=assumption,
                 ) from e
-        return cls(
-            unsplittable_symbols=tuple(unsplittable),
-            strict_syntax=params.strict_syntax,
-            symbol_dict=symbol_dict,
-            elementary_functions=params.elementary_functions,
-            convention=params.convention,
-            simplify=params.simplify,
-            rationalise=params.rationalise,
-            constants=frozenset(constants),
-            complex_numbers=params.complex_numbers,
-            reserved_keywords=params.reserved_keywords,
-        )
+        object.__setattr__(self, "unsplittable_symbols", tuple(unsplittable))
+        object.__setattr__(self, "symbol_dict", symbol_dict)
+        object.__setattr__(self, "constants", frozenset(constants))
+
+    @classmethod
+    def from_params(
+        cls,
+        params: ExpressionParams,
+        unsplittable_symbols: Iterable[str] = (),
+        symbol_assumptions: Iterable[tuple[str, str]] = (),
+    ) -> SympyParsingConfig:
+        """The configuration for ``params``; extra unsplittable symbols and assumptions come first."""
+        return cls(params, tuple(unsplittable_symbols), tuple(symbol_assumptions))
 
     def replace(self, **changes: Any) -> SympyParsingConfig:
-        """A copy with some fields changed."""
-        return replace(self, **changes)
+        """A copy with some parameters changed (``config.replace(strict_syntax=True)``)."""
+        return replace(self, params=self.params.replace(**changes))
 
     @cached_property
     def substitution_params(self) -> ExpressionParams:
@@ -180,9 +182,9 @@ class SympyParsingConfig:
         :func:`preprocess_expression` with the task's parameters first.
         """
         return ExpressionParams(
-            reserved_keywords=self.reserved_keywords,
+            reserved_keywords=self.params.reserved_keywords,
             unsplittable_symbols=self.unsplittable_symbols,
-            elementary_functions=self.elementary_functions,
+            elementary_functions=self.params.elementary_functions,
         )
 
     def transformations(self) -> tuple[Any, ...]:
@@ -193,8 +195,9 @@ class SympyParsingConfig:
         # _keywords_as_names goes after auto_symbol (which leaves keywords alone, and
         # would wrap our Symbol('in') again), before the symbol splitting.
         leading = (lambda_notation, auto_symbol, _keywords_as_names, repeated_decimals, auto_number)
-        if self.strict_syntax:
-            transformations = (*leading, function_exponentiation, *self.extra_transformations)
+        transformations: tuple[Any, ...]
+        if self.params.strict_syntax:
+            transformations = (*leading, function_exponentiation)
         else:
             unsplittable = set(self.unsplittable_symbols)
 
@@ -206,12 +209,11 @@ class SympyParsingConfig:
                 factorial_notation,
                 convert_xor,
                 function_exponentiation,
-                *self.extra_transformations,
                 split_symbols_custom(can_split),
                 implicit_multiplication,
                 convert_equals_signs,
             )
-        return (*transformations, rationalize) if self.rationalise else transformations
+        return (*transformations, rationalize) if self.params.rationalise else transformations
 
 
 def _parse_expr(expr: str, **kwargs: Any) -> Any:
@@ -266,11 +268,12 @@ def _unapplied_function(expr: str, symbol_dict: Mapping[str, Any]) -> str | None
         tokens = [token for token in generate_tokens(StringIO(expr).readline) if token.type in (NAME, OP)]
     except (TokenError, SyntaxError):
         return None
+    values = [token.string for token in tokens]
     for index, token in enumerate(tokens):
-        following = tokens[index + 1].string if index + 1 < len(tokens) else ""
+        following = _following(values, index)
         if token.type != NAME or following in _APPLIED:
             continue
-        if token.string not in symbol_dict and token.string.casefold() in EMBEDDABLE_FUNCTION_NAMES:
+        if _reads_as_letters(token.string, following, symbol_dict):
             continue  # read as letters (see _keywords_as_names)
         obj = symbol_dict[token.string] if token.string in symbol_dict else MATH_NAMESPACE.get(token.string)
         if callable(obj) and not isinstance(obj, Basic):
@@ -279,10 +282,10 @@ def _unapplied_function(expr: str, symbol_dict: Mapping[str, Any]) -> str | None
 
 
 def _parse_one(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
-    if not config.strict_syntax:
+    if not config.params.strict_syntax:
         expr = convert_bracket_notation(expr)
     try:
-        expr = _substitute_names(apply_convention(expr, config.convention), config)
+        expr = _substitute_names(apply_convention(expr, config.params.convention), config)
         return _evaluate(expr, config, transformations)
     except Exception as e:
         function = _unapplied_function(expr, config.symbol_dict)
@@ -300,7 +303,7 @@ def _substitute_names(expr: str, config: SympyParsingConfig) -> str:
     """Pad unsplittable symbols and function names, and spell out Greek letters."""
     substitutions: list[Substitution] = [(name, f" {name} ") for name in config.unsplittable_symbols]
     substitutions += greek_symbol_substitutions(expr)
-    if config.elementary_functions:
+    if config.params.elementary_functions:
         substitutions += elementary_function_substitutions(expr)
     return " ".join(substitute(expr, sorted_substitutions(substitutions)).split())
 
@@ -326,7 +329,7 @@ def _parse_side(
 ) -> Any:
     """An expression (or one side of an equation): simplified, or else left unevaluated."""
     unevaluated = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict, evaluate=False)
-    if not config.simplify:
+    if not config.params.simplify:
         return unevaluated
     if isinstance(unevaluated, Basic):
         check_evaluation_cost(unevaluated, expr)

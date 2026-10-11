@@ -3,7 +3,7 @@
 Typical use::
 
     params = ExpressionParams.from_dict(evaluation_params)
-    expr = preprocess_expression("response", response, params)
+    expr = preprocess_expression(response, params, name="response")
     parsed = parse_expression(expr, SympyParsingConfig.from_params(params))
     latex = sympy_to_latex(parsed, params.symbols)
 
@@ -46,7 +46,13 @@ from .preprocessing import (
     is_multiple_answers_wrapper,
     preprocess_expression,
 )
-from .substitution import normalise_unicode_operators, substitute, substitute_input_symbols, substitutions_sort_key
+from .substitution import (
+    FunctionName,
+    normalise_unicode_operators,
+    substitute,
+    substitute_input_symbols,
+    substitutions_sort_key,
+)
 from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
 
 try:
@@ -64,6 +70,7 @@ __all__ = [
     "Convention",
     "ExpressionParams",
     "ExpressionParsingError",
+    "FunctionName",
     "InvalidParameterError",
     "LatexParseError",
     "SymbolAssumptionError",
