@@ -279,10 +279,17 @@ class TestPhysicalQuantity:
 
 class TestPreprocessing:
     def test_same_shape_as_expression_preprocessing(self):
-        assert preprocess_quantity("response", "5 μ s", QuantityParams()) == "5 micros"
+        assert preprocess_quantity("5 μ s", QuantityParams(), name="response") == "5 micros"
 
     def test_legacy(self):
         with pytest.deprecated_call():
             legacy_params = QuantityParams(legacy_preprocessing=True)
-        assert preprocess_quantity("response", "100Pa", legacy_params) == "100 Pa"
-        assert preprocess_quantity("response", "newton*metre", legacy_params) == "newton metre"
+        assert preprocess_quantity("100Pa", legacy_params, name="response") == "100 Pa"
+        assert preprocess_quantity("newton*metre", legacy_params, name="response") == "newton metre"
+
+
+class TestProductSigns:
+    @pytest.mark.parametrize("sign", ["·", "⋅", "∙", "×"])
+    def test_unicode_product_signs_are_products(self, sign):
+        quantity = parse_quantity(f"2 kg{sign}m", QuantityParams())
+        assert quantity.unit is not None and quantity.unit.content_string() == "kilogram*metre"

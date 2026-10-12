@@ -19,6 +19,12 @@ The first public release, after the extraction refactor. The import path is now 
 
 ### Changed
 
+- `SLRParser(..., error_handlers=...)` and `build_expression_parser(..., error_handlers=...)` (was `error_handler`); the parser keeps them as `error_handlers`. `SLRParser.parse_error(...)` is public, for error actions that give up (as `new_root_on_error` does).
+- `ExprNode.traverse_step` is public (was `_traverse_step`), for callers that expand one node at a time.
+- `Lexeme.match(text, index=0)` matches at `index`, so scanning no longer copies the rest of the input at every position. `add_tag` requires its `tag`.
+- `GROUP_LABEL`, `START_DELIMITER_LABEL` and `END_DELIMITER_LABEL` name the labels `group` and `build_expression_parser` use.
+- Table construction indexes productions by head and transitions by symbol instead of searching lists; the tables are unchanged.
+
 - **Errors:** bare `Exception`s are replaced by `GrammarError` (invalid grammar), `ScanError` (text no token matches) and `ParseError` (input doesn't match the grammar). All derive from `SLRError` and `ValueError`. `ParseError`'s message is a one-line summary ("Unexpected end of input.", "Unexpected OP '+' at position 3."); the full parser-state dump that used to be the message is available from `ParseError.details()`, with the parts as attributes. An invalid `ExprNode` child raises `TypeError`.
 - **Logging instead of printing:** `parse()` no longer takes `verbose`; set the `lambdafeedback.slr_parsing.parser` logger to DEBUG to trace shifts and reductions. Unreachable grammar states and reductions are logged as a WARNING instead of printed, and the start state is no longer falsely reported.
 - `build_expression_parser` drops the unused `group_node` parameter; sequence defaults are tuples instead of shared mutable lists.

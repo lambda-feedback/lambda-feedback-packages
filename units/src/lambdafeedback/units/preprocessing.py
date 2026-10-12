@@ -6,10 +6,10 @@ from collections.abc import Callable, Iterable
 from functools import cache
 from itertools import groupby
 from string import ascii_letters
+from typing import NamedTuple
 
 from .data import ALL_UNITS, SI_PREFIXES
-from .params import QuantityParams
-from .quantity import MAX_INPUT_LENGTH
+from .params import MAX_INPUT_LENGTH, QuantityParams
 
 MAX_LEGACY_LENGTH = 1_000
 """Longest input the legacy rewrites are applied to, in characters.
@@ -20,11 +20,11 @@ about 0.4 s at this length, hours at 10000.
 """
 
 
-def preprocess_quantity(name: str, expr: str, params: QuantityParams) -> str:
+def preprocess_quantity(expr: str, params: QuantityParams, *, name: str | None = None) -> str:
     """Normalise prefix spellings (or apply the legacy rewrites); never raises.
 
     Same shape as ``expression_parsing.preprocess_expression``, so either can
-    serve as a context's preprocessing step. ``name`` is unused.
+    serve as a context's preprocessing step. ``name`` is unused (nothing is raised).
 
     Input longer than :data:`~lambdafeedback.units.MAX_INPUT_LENGTH` is
     returned unchanged (:func:`~lambdafeedback.units.parse_quantity` rejects
@@ -90,8 +90,19 @@ _DIGITS_STAR_BRACKETS = frozenset("0123456789*()")
 _DIGITS_BRACKETS_SPACE = frozenset("0123456789() ")
 
 
+class _LegacySearches(NamedTuple):
+    """The searches of :func:`preprocess_legacy`'s rewrites (see each one there)."""
+
+    star_before_unit: Search
+    spaced_prefix: Search
+    glued_symbol: Search
+    spaced_prefix_symbol: Search
+    starred_prefix_symbol: Search
+    star_before_symbol: Search
+
+
 @cache
-def _legacy_searches() -> dict[str, Search]:
+def _legacy_searches() -> _LegacySearches:
     prefix_symbols = _Forms(prefix.symbol for prefix in SI_PREFIXES)
     unit_symbols = _Forms(unit.symbol for unit in ALL_UNITS)
     symbols = _Forms([*(prefix.symbol for prefix in SI_PREFIXES), *(unit.symbol for unit in ALL_UNITS)])
@@ -158,14 +169,14 @@ def _legacy_searches() -> dict[str, Search]:
                 return index, index + 3 + len(symbol)
         return None
 
-    return {
-        "star_before_unit": star_before_unit,
-        "spaced_prefix": spaced_prefix,
-        "glued_symbol": glued_symbol,
-        "spaced_prefix_symbol": prefix_symbol_followed_by(" "),
-        "starred_prefix_symbol": prefix_symbol_followed_by("* "),
-        "star_before_symbol": star_before_symbol,
-    }
+    return _LegacySearches(
+        star_before_unit=star_before_unit,
+        spaced_prefix=spaced_prefix,
+        glued_symbol=glued_symbol,
+        spaced_prefix_symbol=prefix_symbol_followed_by(" "),
+        starred_prefix_symbol=prefix_symbol_followed_by("* "),
+        star_before_symbol=star_before_symbol,
+    )
 
 
 def preprocess_legacy(expr: str) -> str:
@@ -175,7 +186,7 @@ def preprocess_legacy(expr: str) -> str:
     # "newton*metre" -> "newton metre": "*UNIT" (but not "**UNIT") becomes " UNIT", after the first character
     # Searched in expr[1:], where expr[0] can't count as a "*" before the "*", as before. The rewrite
     # turns "*" into " ", so a "*" before the spaces it extends may now match: resume there.
-    search = searches["star_before_unit"]
+    search = searches.star_before_unit
     head, tail = expr[:1], expr[1:]
     position = 0
     while (span := search(tail, position)) is not None:
@@ -190,21 +201,21 @@ def preprocess_legacy(expr: str) -> str:
 
     # "kilo metre" -> "kilometre"
     expr = _rewrite_all(
-        searches["spaced_prefix"], expr, lambda s, m: s[: m[0]] + " " + "".join(s[m[0] : m[1]].split()) + s[m[1] :]
+        searches.spaced_prefix, expr, lambda s, m: s[: m[0]] + " " + "".join(s[m[0] : m[1]].split()) + s[m[1] :]
     )
     # "100Pa" -> "100 Pa": space before a prefix or unit symbol after a digit, '*' or bracket
-    expr = _rewrite_all(searches["glued_symbol"], expr, lambda s, m: s[: m[0] + 1] + " " + s[m[0] + 1 :])
+    expr = _rewrite_all(searches.glued_symbol, expr, lambda s, m: s[: m[0] + 1] + " " + s[m[0] + 1 :])
     # "100 m Pa" -> "100 mPa"
     expr = _rewrite_all(
-        searches["spaced_prefix_symbol"], expr, lambda s, m: s[: m[0] + 1] + s[m[0] : m[1] - 1] + s[m[1] :]
+        searches.spaced_prefix_symbol, expr, lambda s, m: s[: m[0] + 1] + s[m[0] : m[1] - 1] + s[m[1] :]
     )
     # "100 m* Pa" -> "100 mPa"
     expr = _rewrite_all(
-        searches["starred_prefix_symbol"], expr, lambda s, m: s[: m[0] + 1] + s[m[0] : m[1] - 2] + s[m[1] :]
+        searches.starred_prefix_symbol, expr, lambda s, m: s[: m[0] + 1] + s[m[0] : m[1] - 2] + s[m[1] :]
     )
     # "100* Pa" -> "100 Pa"
     return _rewrite_all(
-        searches["star_before_symbol"], expr, lambda s, m: s[: m[0]] + s[m[0] : m[1]].replace("*", " ") + s[m[1] :]
+        searches.star_before_symbol, expr, lambda s, m: s[: m[0]] + s[m[0] : m[1]].replace("*", " ") + s[m[1] :]
     )
 
 
@@ -224,6 +235,11 @@ def transform_prefixes_to_standard(expr: str) -> str:
     ).strip()
 
 
+# What may follow a prefix for it to count as one: an ASCII letter, or the
+# non-ASCII unit symbols ("µ" as in "µm" for micro, "Ω" for the ohm).
+_UNIT_START = frozenset(ascii_letters) | {"\u00b5", "\u03a9"}
+
+
 def _replace_prefix(expr: str, alternative: str, name: str) -> str:
     """``alternative`` as ``name`` where it starts a word and is followed (after any whitespace) by a letter."""
     pieces = []
@@ -234,7 +250,7 @@ def _replace_prefix(expr: str, alternative: str, name: str) -> str:
         while after < len(expr) and expr[after].isspace():
             after += 1
         starts_word = index == 0 or not (expr[index - 1].isalnum() or expr[index - 1] == "_")
-        if starts_word and after < len(expr) and (expr[after] in ascii_letters or expr[after] in "\u00b5\u03a9"):
+        if starts_word and after < len(expr) and expr[after] in _UNIT_START:
             pieces += [expr[done:index], name]
             done = after
             index = expr.find(alternative, after)

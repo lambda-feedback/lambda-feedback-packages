@@ -41,21 +41,13 @@ def no_feedback(inputs: Mapping[str, Any]) -> None:
 
 @dataclass(eq=False)
 class Node:
-    """A graph node. Nodes compare (and hash) by label, summary and details."""
+    """A graph node. Nodes compare (and hash) by identity; within a graph, labels are unique."""
 
     label: str
     summary: str
     details: str
     incoming: list[Edge] = field(default_factory=list, init=False, repr=False)
     outgoing: list[Edge] = field(default_factory=list, init=False, repr=False)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Node):
-            return NotImplemented
-        return (self.label, self.summary, self.details) == (other.label, other.summary, other.details)
-
-    def __hash__(self) -> int:
-        return hash((self.label, self.summary, self.details))
 
 
 @dataclass(eq=False)
@@ -64,10 +56,14 @@ class EvaluationNode(Node):
 
     Setting ``replacement`` (e.g. to ``CriteriaGraph.END``) disables the
     evaluation: feedback generation goes to the replacement instead.
+    ``sufficiencies`` lists criteria whose evaluations can stand in for this
+    one when choosing where to start (``None``: it can't be stood in for;
+    see ``CriteriaGraph.starting_evaluations``).
     """
 
     evaluate: Evaluate | None = None
     replacement: Node | None = None
+    sufficiencies: list[str] | None = None
 
 
 @dataclass(eq=False)

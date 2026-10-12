@@ -5,9 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import cache
 from string import ascii_letters
-from typing import Any
+from typing import Any, NamedTuple
 
-from sympy import Basic, simplify
+from sympy import Basic, Integer, simplify
 
 from lambdafeedback.expression_parsing import (
     AbsoluteValueNotationError,
@@ -20,23 +20,26 @@ from lambdafeedback.expression_parsing import (
     substitute,
     sympy_to_latex,
 )
-from lambdafeedback.slr_parsing import ExprNode, SLRError, SLRParser
+from lambdafeedback.expression_parsing.symbol_tables import UNICODE_OPERATORS
+from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode, SLRError, SLRParser
 
 from .data import ALL_UNITS, CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, UNIT_SETS, AnyUnit, units_in
 from .errors import DisallowedUnitError, QuantityError, QuantityParseError, UnitConversionError
-from .params import QuantityParams
-from .parser import build_quantity_parser
+from .params import MAX_INPUT_LENGTH, QuantityParams
+from .parser import Label, build_quantity_parser
 from .tags import QuantityTag
-
-MAX_INPUT_LENGTH = 10_000
-"""Longest input :func:`parse_quantity` reads, in characters: a bound on its running time."""
 
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
 _DIMENSION_NAMES = frozenset(unit.dimension for unit in SI_BASE_UNITS)
+# Product signs as in expression parsing (·, ⋅, ∙, ×), and zero-width characters dropped.
 _PRODUCT_SIGNS = str.maketrans(
-    {"·": "*", "⋅": "*", "×": "*", "\u200b": None, "\u200c": None, "\u200d": None, "\ufeff": None}
+    {
+        **{sign: "*" for sign, ascii_sign in UNICODE_OPERATORS.items() if ascii_sign == "*"},
+        **dict.fromkeys("\u200b\u200c\u200d\ufeff"),
+    }
 )
+_LETTERS = frozenset(ascii_letters)
 _UPRIGHT_COMMANDS = ("mathrm", "text", "textrm", "operatorname")
 
 
@@ -84,7 +87,7 @@ def _mentions_celsius_or_fahrenheit(expr: str) -> bool:
     def celsius_or_fahrenheit_at(index: int) -> bool:
         while index < len(expr) and expr[index].isspace():
             index += 1
-        return expr[index : index + 1] in ("C", "F") and expr[index + 1 : index + 2] not in tuple(ascii_letters)
+        return expr[index : index + 1] in ("C", "F") and expr[index + 1 : index + 2] not in _LETTERS
 
     for index, char in enumerate(expr):
         if char == "°" and celsius_or_fahrenheit_at(index + 1):
@@ -176,7 +179,12 @@ def _normalise_latex(expr: str) -> str:
 
 
 def _unwrap_upright(expr: str) -> str:
-    """``\\mathrm{m}``, ``\\text{m}``, ... as ``m`` (when the braces hold no other braces)."""
+    """``\\mathrm{m}``, ``\\text{m}``, ... as ``m`` (when the braces hold no other braces).
+
+    Unlike ``expression_parsing.sanitise_latex`` this also unwraps ``\\textrm``
+    and ``\\operatorname``, leaves nested braces alone and never raises: a unit
+    preview should degrade, not fail.
+    """
     unwrapped = []
     index = 0
     while (backslash := expr.find("\\", index)) != -1:
@@ -200,7 +208,7 @@ def _unwrap_upright(expr: str) -> str:
 MAX_UNIT_EXPONENT = 100
 """Largest exponent a unit may have (``m^100``), of either sign."""
 
-_EXPONENT_LABELS = frozenset({"NUMBER", "GROUP", "SOLIDUS", "PRODUCT", "SPACE"})
+_EXPONENT_LABELS = frozenset({Label.NUMBER, GROUP_LABEL, Label.SOLIDUS, Label.PRODUCT, Label.SPACE})
 
 
 def _exponent_problem(unit: ExprNode) -> str | None:
@@ -215,7 +223,7 @@ def _exponent_problem(unit: ExprNode) -> str | None:
     while stack:
         node = stack.pop()
         stack.extend(node.children)
-        if node.label != "POWER":
+        if node.label != Label.POWER:
             continue
         bound = 1.0  # at least the exponent's magnitude: the product of its numbers' sizes
         exponent_nodes = [node.children[1]]
@@ -223,7 +231,7 @@ def _exponent_problem(unit: ExprNode) -> str | None:
             part = exponent_nodes.pop()
             if part.label not in _EXPONENT_LABELS:
                 return f"A unit's exponent must be a number, not {part.original_string()!r}."
-            if part.label == "NUMBER":
+            if part.label == Label.NUMBER:
                 bound *= max(1.0, abs(float(part.content)))
             exponent_nodes.extend(part.children)
         if bound > MAX_UNIT_EXPONENT:
@@ -240,13 +248,13 @@ def _has_stray_number(node: ExprNode) -> bool:
     stack = [node]  # iterative: a long unit such as m*m*...*m is a deep tree
     while stack:
         node = stack.pop()
-        if node.label == "NUMBER":
+        if node.label == Label.NUMBER:
             return True
-        if node.label == "GROUP":
+        if node.label == GROUP_LABEL:
             continue
-        if node.label == "POWER":
+        if node.label == Label.POWER:
             stack.append(node.children[0])
-        elif node.label == "SOLIDUS" and node.children[0].label == "NUMBER" and node.children[0].content == "1":
+        elif node.label == Label.SOLIDUS and node.children[0].label == Label.NUMBER and node.children[0].content == "1":
             stack.append(node.children[1])
         else:
             stack.extend(node.children)
@@ -268,7 +276,7 @@ def _subtree_texts(root: ExprNode) -> dict[int, str]:
     texts: dict[int, str] = {}
     for node in reversed(order):  # so each node's children are done first
         texts[id(node)] = "".join(
-            part if is_output else texts[id(part)] for is_output, part in node._traverse_step(node, _content)
+            part if is_output else texts[id(part)] for is_output, part in node.traverse_step(node, _content)
         )
     return texts
 
@@ -277,6 +285,23 @@ def _without_factor(dimension: Basic) -> Basic:
     """The dimension with its numeric factor removed: ``10**3*length/(3600*time)`` → ``length/time``."""
     factor = dimension.subs({symbol: 1 for symbol in dimension.free_symbols if str(symbol) in _DIMENSION_NAMES})
     return simplify(dimension / factor)
+
+
+@cache
+def _conversion_tree(parser: SLRParser, unit_name: str) -> ExprNode:
+    """A unit's expansion in SI base units, parsed once per parser (callers copy it before changing it)."""
+    tree: ExprNode = parser.parse(parser.scan(CONVERSION_TO_BASE_SI[unit_name]))[0]
+    return tree
+
+
+class _Forms(NamedTuple):
+    """A quantity's SymPy forms (see :class:`PhysicalQuantity`)."""
+
+    standard_value: Basic | set[Basic] | None
+    standard_unit: Basic | None
+    expanded_unit: Basic | None
+    dimension: Basic
+    unit_factor: Basic
 
 
 @dataclass(frozen=True)
@@ -372,13 +397,12 @@ class PhysicalQuantity:
         self.unit_latex = "".join(self._unit_latex(self.unit)) if self.unit is not None else None
         separator = "~" if self.value_latex is not None and self.unit_latex is not None else ""
         self.latex = (self.value_latex or "") + separator + (self.unit_latex or "")
-        (
-            self.standard_value,
-            self.standard_unit,
-            self.expanded_unit,
-            self.dimension,
-            self.unit_factor,
-        ) = self._all_forms()
+        forms = self._all_forms()
+        self.standard_value = forms.standard_value
+        self.standard_unit = forms.standard_unit
+        self.expanded_unit = forms.expanded_unit
+        self.dimension = forms.dimension
+        self.unit_factor = forms.unit_factor
         self.base_dimension = _without_factor(self.dimension)
 
     def __getstate__(self) -> dict[str, Any]:
@@ -400,15 +424,17 @@ class PhysicalQuantity:
     # Splitting value and unit
     # ------------------------------------------------------------------
 
-    def _rotate(self, direction: int) -> None:
-        """Tree rotation at the root: ``direction`` 1 rotates right, 0 left."""
+    def _rotate(self, right: bool) -> None:
+        """Tree rotation at the root, to the right (the left child becomes the root) or to the left."""
         old_root = self.ast_root
-        new_root = old_root.children[1 - direction]
+        # The child that becomes the root, and which of its children moves across to the old root.
+        pivot, inner = (0, -1) if right else (1, 0)
+        new_root = old_root.children[pivot]
         # Only binary nodes can be rotated; groups (one child) are atomic.
         if len(new_root.children) < 2:
-            raise QuantityParseError(f"Cannot rotate {'right' if direction == 1 else 'left'}.")
-        old_root.children[1 - direction] = new_root.children[-direction]
-        new_root.children[-direction] = old_root
+            raise QuantityParseError(f"Cannot rotate {'right' if right else 'left'}.")
+        old_root.children[pivot] = new_root.children[inner]
+        new_root.children[inner] = old_root
         old_root.tags = self.parser.tag_handler(old_root)
         new_root.tags = self.parser.tag_handler(new_root)
         self.ast_root = new_root
@@ -421,25 +447,25 @@ class PhysicalQuantity:
         direction means there is no split (e.g. ``5 m/s x``, a unit between
         value parts).
         """
-        previous = None
-        while self.ast_root.label == "SPACE":
+        previous: bool | None = None  # the direction of the last rotation (True: right)
+        while self.ast_root.label == Label.SPACE:
             left, right = self.ast_root.children
             if QuantityTag.UNIT not in self.ast_root.tags and len(right.children) > 1:
-                direction = 0
+                rotate_right = False
             elif QuantityTag.UNIT in left.tags and len(left.children) > 1:
-                direction = 1
+                rotate_right = True
             else:
                 return
-            if previous is not None and direction != previous:
+            if previous is not None and rotate_right != previous:
                 raise QuantityParseError(f"Cannot separate the value from the unit in {self.ast_root.original!r}.")
-            self._rotate(direction)
-            previous = direction
+            self._rotate(rotate_right)
+            previous = rotate_right
 
     def _split_value_and_unit(self) -> None:
         self._rotate_until_root_is_split()
         root = self.ast_root
         if (
-            root.label == "SPACE"
+            root.label == Label.SPACE
             and QuantityTag.UNIT not in root.children[0].tags
             and QuantityTag.UNIT in root.children[1].tags
         ):
@@ -463,11 +489,11 @@ class PhysicalQuantity:
         content around its children's unchanged text: what ``content_string()``
         gave, without walking the subtree again for every node (quadratic).
         """
-        if node.label != "GROUP":
+        if node.label != GROUP_LABEL:
             node.content = node.original[node.start : node.end + 1]
-        if node.label == "UNIT" or QuantityTag.UNIT in node.tags:
+        if node.label == Label.UNIT or QuantityTag.UNIT in node.tags:
             marked = "".join(
-                part if is_output else texts[id(part)] for is_output, part in node._traverse_step(node, _content)
+                part if is_output else texts[id(part)] for is_output, part in node.traverse_step(node, _content)
             )
             self.reverted_units.append(
                 RevertedUnit(before=node.original[: node.start], marked=marked, after=node.original[node.end + 1 :])
@@ -510,17 +536,17 @@ class PhysicalQuantity:
     def _unit_latex(self, node: ExprNode) -> list[str]:
         # TODO: skip unnecessary parentheses (e.g. groups inside powers and fractions)
         children = node.children
-        if node.label == "PRODUCT":
+        if node.label == Label.PRODUCT:
             return [*self._unit_latex(children[0]), "\\cdot", *self._unit_latex(children[1])]
-        if node.label == "SPACE":
+        if node.label == Label.SPACE:
             return [*self._unit_latex(children[0]), "~", *self._unit_latex(children[1])]
-        if node.label == "UNIT":
+        if node.label == Label.UNIT:
             return ["\\mathrm{", node.content, "}"]
-        if node.label == "GROUP":
+        if node.label == GROUP_LABEL:
             return [node.content[0], *(part for child in children for part in self._unit_latex(child)), node.content[1]]
-        if node.label == "POWER":
+        if node.label == Label.POWER:
             return [*self._unit_latex(children[0]), "^{", *self._unit_latex(children[1]), "}"]
-        if node.label == "SOLIDUS":
+        if node.label == Label.SOLIDUS:
             return ["\\frac{", *self._unit_latex(children[0]), "}{", *self._unit_latex(children[1]), "}"]
         return [node.content]  # NUMBER and anything else
 
@@ -530,25 +556,25 @@ class PhysicalQuantity:
 
     def _expand_units(self, node: ExprNode) -> ExprNode:
         """Replace non-base units by their expression in SI base units (in place where possible)."""
-        if node.label == "UNIT" and not node.children and node.content not in _BASE_UNIT_NAMES:
-            node = self.parser.parse(self.parser.scan(CONVERSION_TO_BASE_SI[node.content]))[0]
+        if node.label == Label.UNIT and not node.children and node.content not in _BASE_UNIT_NAMES:
+            node = _conversion_tree(self.parser, node.content).copy()
         node.children = [self._expand_units(child) for child in node.children]
         return node
 
-    def _all_forms(self) -> tuple[Basic | set[Basic] | None, Basic | None, Basic | None, Basic, Basic]:
+    def _all_forms(self) -> _Forms:
         config = self.parsing_config
         value: Any = self.value.content_string() if self.value is not None else None
         if value is not None and self.params.is_latex:
             value = parse_latex(value, self.params.symbols, self.params.simplify)
         unit: Any = None
         expanded_unit: Any = None
-        dimension = parse_expression("1", config)
-        unit_factor = parse_expression("1", config)
+        dimension: Basic = Integer(1)
+        unit_factor: Basic = Integer(1)
         if self.unit is not None:
             expanded_unit_string = self._expand_units(self.unit.copy()).content_string()
             try:
                 expanded_unit = unit = parse_expression(expanded_unit_string, config)
-            except Exception as e:
+            except Exception as e:  # SymPy raises many types; all mean the expansion didn't parse
                 raise UnitConversionError(f"SymPy was unable to parse the {self.name} unit") from e
             if self.value is not None:
                 base_symbols = {symbol: 1 for symbol in unit.free_symbols if str(symbol) in _BASE_UNIT_NAMES}
@@ -558,7 +584,7 @@ class PhysicalQuantity:
             dimension = parse_expression(substitute(expanded_unit_string, _BASE_UNIT_DIMENSIONS), config)
         if value is not None:
             value = parse_expression(value, config)
-        return value, unit, expanded_unit, dimension, unit_factor
+        return _Forms(value, unit, expanded_unit, dimension, unit_factor)
 
 
 def parse_quantity(expr: str, params: QuantityParams, name: str = "response") -> PhysicalQuantity:

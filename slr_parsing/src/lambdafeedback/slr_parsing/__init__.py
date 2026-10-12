@@ -12,6 +12,9 @@ depends only on the standard library.
 from importlib.metadata import PackageNotFoundError, version
 
 from .actions import (
+    END_DELIMITER_LABEL,
+    GROUP_LABEL,
+    START_DELIMITER_LABEL,
     append,
     append_last,
     compose,
@@ -67,6 +70,9 @@ except PackageNotFoundError:  # running from a source checkout that isn't instal
     __version__ = "0+unknown"
 
 __all__ = [
+    "END_DELIMITER_LABEL",
+    "GROUP_LABEL",
+    "START_DELIMITER_LABEL",
     "Action",
     "ErrorAction",
     "ErrorCondition",

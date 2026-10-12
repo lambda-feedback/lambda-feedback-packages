@@ -56,7 +56,7 @@ No dependencies. The single `parser.py` (845 lines) is now 7 modules. Released a
 
 - [x] Renames recorded in `CHANGELOG.md` (`SLRParser`, `build_expression_parser`, `custom_*`, tag helpers).
 - [x] Mutable defaults → tuples/`None`.
-- [x] `default_error_action` → `SLRParser._parse_error`.
+- [x] `default_error_action` → `SLRParser.parse_error`.
 
 ### Types & lint
 

@@ -12,6 +12,9 @@ from lambdafeedback.expression_parsing import ExpressionParams
 from .data import UNIT_SETS
 from .errors import QuantityParamsError
 
+MAX_INPUT_LENGTH = 10_000
+"""Longest input :func:`~lambdafeedback.units.parse_quantity` reads, in characters: a bound on its running time."""
+
 Strictness = Literal["strict", "natural"]
 """``strict``: only unit names and symbols, units separated by ``*`` / ``/`` / spaces;
 ``natural`` also accepts alternative spellings and plurals, and units written together."""

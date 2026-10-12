@@ -122,3 +122,8 @@ class TestLexeme:
     def test_token_content_includes_the_spaces(self):
         parser = build_expression_parser(infix_operators=[("+", "ADD")])
         assert [token.content for token in parser.scan("a  +  b")] == ["a", "  +  ", "b"]
+
+    def test_match_at_an_index(self):
+        assert Lexeme(("+",), space_before=True, space_after=True).match("a  +  b", 1) == 5
+        assert Lexeme(("written as",)).match("x written   as y", 2) == 12
+        assert Lexeme(("+",)).match("a+b", 0) is None

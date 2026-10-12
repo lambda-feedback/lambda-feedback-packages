@@ -60,6 +60,11 @@ Behaviour differences to be aware of when adopting:
 - **Tags in `to_dict()`.** lf_toolkit only includes `tags` with `include_test_data=True`; `EvaluationResult.serialise()` always did.
 - **Stripping.** Feedback text is stripped when resolved (it used to be stripped when serialised), so the stored texts are already trimmed.
 
+### Changed
+
+- Sufficiencies are stored on the node: `EvaluationNode.sufficiencies` (`None`: none set) replaces `CriteriaGraph.sufficiencies`, and `add_node` copies them.
+- Nodes compare by identity (they compared by label, summary and details, all mutable).
+
 ### Fixed
 
 - Rendering a tree to mermaid no longer empties the tree. The renderer used the root's own `outgoing` list as its work stack.

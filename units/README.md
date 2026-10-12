@@ -52,7 +52,7 @@ Without it, `2 µm` is read as a value with no unit.
 from lambdafeedback.units import preprocess_quantity
 
 params = QuantityParams()
-text = preprocess_quantity("response", "2 µm", params)  # '2 microm'
+text = preprocess_quantity("2 µm", params, name="response")  # '2 microm'
 parse_quantity(text, params)  # PhysicalQuantity(value='2', unit='micrometre')
 ```
 

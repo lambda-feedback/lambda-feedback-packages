@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
 
-from .actions import create_node, infix, relabel
-from .grammar import Action, ErrorHandler, Lexeme, TokenSpec, catch_undefined
+from .actions import END_DELIMITER_LABEL, START_DELIMITER_LABEL, create_node, infix, relabel
+from .grammar import Action, ErrorAction, ErrorCondition, ErrorHandler, Lexeme, TokenSpec, catch_undefined
 from .parser import SLRParser
 
 
@@ -21,7 +20,7 @@ def build_expression_parser(
     start: tuple[str, str] | None = None,
     null: tuple[str, str] | None = None,
     end: tuple[str, str] | None = None,
-    error_handler: Sequence[ErrorHandler | tuple[Any, Any]] = (),
+    error_handlers: Sequence[ErrorHandler | tuple[ErrorCondition, ErrorAction]] = (),
 ) -> SLRParser:
     """Build a parser for expressions made of operands, infix operators and delimiters.
 
@@ -84,8 +83,8 @@ def build_expression_parser(
     productions += [(e, e + operator + e, infix) for operator in operator_symbols]
     for (open_delimiter, close_delimiter), _ in delimiters:
         token_list += [
-            (Lexeme((open_delimiter,), space_after=True), "START_DELIMITER"),
-            (Lexeme((close_delimiter,), space_before=True), "END_DELIMITER"),
+            (Lexeme((open_delimiter,), space_after=True), START_DELIMITER_LABEL),
+            (Lexeme((close_delimiter,), space_before=True), END_DELIMITER_LABEL),
         ]
     if delimiters:
         # Every pair scans to the same START_DELIMITER E END_DELIMITER body, so
@@ -95,4 +94,4 @@ def build_expression_parser(
         productions += [(e, open_delimiter + e + close_delimiter, action)]
     productions += custom_productions
 
-    return SLRParser(token_list, productions, start[1], end[1], null[1], error_handler=error_handler)
+    return SLRParser(token_list, productions, start[1], end[1], null[1], error_handlers=error_handlers)

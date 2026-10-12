@@ -118,7 +118,7 @@ All exceptions derive from `SLRError` and `ValueError`:
 | `ScanError` | the input contains text no token matches (and the grammar has no catch-all) |
 | `ParseError` | the input does not match the grammar; the message is one line, and `details()` gives the full parser state |
 
-`error_handler=[(condition, action), ...]` customises what happens at syntax
+`error_handlers=[(condition, action), ...]` customises what happens at syntax
 errors. `new_root_on_error` finishes the current tree and parses the rest of
 the input as further roots.
 

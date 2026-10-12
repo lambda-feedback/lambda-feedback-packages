@@ -32,11 +32,10 @@ from .data import (
     units_in,
 )
 from .errors import DisallowedUnitError, QuantityError, QuantityParamsError, QuantityParseError, UnitConversionError
-from .params import QuantityParams, Strictness
+from .params import MAX_INPUT_LENGTH, QuantityParams, Strictness
 from .parser import build_quantity_parser
 from .preprocessing import MAX_LEGACY_LENGTH, preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
 from .quantity import (
-    MAX_INPUT_LENGTH,
     MAX_UNIT_EXPONENT,
     PhysicalQuantity,
     RevertedUnit,

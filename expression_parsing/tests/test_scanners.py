@@ -122,3 +122,21 @@ def test_pm_command_swallows_spaces_but_is_not_the_start_of_pmod():
 )
 def test_superscripts(expr, expected):
     assert normalise_unicode_operators(expr) == expected
+
+
+@pytest.mark.parametrize(
+    "string, signed, expected",
+    [
+        ("12x", False, 2),
+        (".5e-3 m", False, 5),
+        ("-1.5", False, None),
+        ("-1.5", True, 4),
+        ("2 e3", False, 1),  # no spaces before the exponent
+        ("2E3", False, 1),  # only "e"
+        ("x", True, None),
+    ],
+)
+def test_plain_number_end(string, signed, expected):
+    from lambdafeedback.expression_parsing import plain_number_end
+
+    assert plain_number_end(string, signed=signed) == expected

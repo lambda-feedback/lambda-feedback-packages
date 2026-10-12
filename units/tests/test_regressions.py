@@ -234,7 +234,7 @@ class TestInputLimits:
 
         expr = "5 μ s " * (MAX_INPUT_LENGTH // 6 + 1)
         start = time.perf_counter()
-        assert preprocess_quantity("response", expr, NATURAL) == expr
+        assert preprocess_quantity(expr, NATURAL, name="response") == expr
         assert time.perf_counter() - start < 1
 
     def test_legacy_rewrites_skip_long_input(self):
@@ -248,8 +248,8 @@ class TestInputLimits:
             warnings.simplefilter("ignore", DeprecationWarning)
             legacy = QuantityParams(legacy_preprocessing=True)
         start = time.perf_counter()
-        assert preprocess_quantity("response", "μ " * (MAX_LEGACY_LENGTH // 2 + 1), legacy).startswith("μ μ")
-        assert preprocess_quantity("response", "100Pa", legacy) == "100 Pa"  # short input is still rewritten
+        assert preprocess_quantity("μ " * (MAX_LEGACY_LENGTH // 2 + 1), legacy, name="response").startswith("μ μ")
+        assert preprocess_quantity("100Pa", legacy, name="response") == "100 Pa"  # short input is still rewritten
         assert time.perf_counter() - start < 1
 
     def test_long_unit_chain_in_value_is_fast(self):

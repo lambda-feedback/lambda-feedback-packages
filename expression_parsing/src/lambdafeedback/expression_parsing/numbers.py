@@ -69,6 +69,16 @@ def _number_end(string: str, index: int, *, nonnegative: bool = False) -> int | 
     return end
 
 
+def plain_number_end(string: str, index: int = 0, *, signed: bool = False) -> int | None:
+    """Where a plainly written number at ``index`` ends (``12``, ``0.5``, ``.5``, ``2e-3``), if there is one.
+
+    Plainly written: only an ``e`` exponent, with no spaces before it, and a
+    leading ``-`` only if ``signed``. See :func:`is_number` for the full forms.
+    """
+    start = index + 1 if signed and string.startswith("-", index) else index
+    return _number_end(string, start, nonnegative=True)
+
+
 def _after_number(string: str, index: int, *, nonnegative: bool = False) -> int:
     """Past the number at ``index``, or ``index`` if there is none."""
     end = _number_end(string, index, nonnegative=nonnegative)

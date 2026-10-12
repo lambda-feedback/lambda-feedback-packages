@@ -331,7 +331,10 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
 
 
 def sanitise_latex(response: str) -> str:
-    """Remove whitespace, turn ``~`` into spaces and unwrap ``\\mathrm{...}`` / ``\\text{...}``."""
+    """Remove whitespace, turn ``~`` into spaces and unwrap ``\\mathrm{...}`` / ``\\text{...}``.
+
+    (units has its own, more lenient unwrapping for quantity previews: ``units.quantity._unwrap_upright``.)
+    """
     response = "".join(response.split()).replace("~", " ")
     for wrapper in (r"\mathrm", r"\text"):
         processed = []

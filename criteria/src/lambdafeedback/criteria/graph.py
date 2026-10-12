@@ -36,7 +36,11 @@ class CriteriaGraph:
     """
 
     END: ClassVar[OutputNode] = OutputNode("END", "END", "Evaluation completed.")
-    """Conventional terminal output; add it with ``graph.add_node(CriteriaGraph.END)``."""
+    """Conventional terminal output; add it with ``graph.add_node(CriteriaGraph.END)``.
+
+    Shared by every graph, so never attach to it directly: ``add_node`` adds a
+    copy, and a ``replacement`` pointing at it is followed by label.
+    """
 
     def __init__(self, identifier: str) -> None:
         """Create an empty graph named ``identifier`` (used to tell graphs apart, e.g. in test data)."""
@@ -44,9 +48,6 @@ class CriteriaGraph:
         self.evaluations: dict[str, EvaluationNode] = {}
         self.criteria: dict[str, CriterionNode] = {}
         self.outputs: dict[str, OutputNode] = {}
-        # Evaluation label -> criteria whose evaluations can stand in for it
-        # when choosing where to start (see starting_evaluations).
-        self.sufficiencies: dict[str, list[str] | None] = {}
 
     # ------------------------------------------------------------------
     # Building
@@ -71,8 +72,8 @@ class CriteriaGraph:
         """
         self._check_label_is_free(label)
         node = EvaluationNode(label, summary, details, evaluate)
+        node.sufficiencies = list(sufficiencies) if sufficiencies is not None else None
         self.evaluations[label] = node
-        self.sufficiencies[label] = list(sufficiencies) if sufficiencies is not None else None
         return node
 
     def add_criterion_node(
@@ -113,7 +114,7 @@ class CriteriaGraph:
     def add_node(self, node: Node) -> None:
         """Add a copy of ``node`` (e.g. ``CriteriaGraph.END``) to this graph, without its edges."""
         if isinstance(node, EvaluationNode):
-            copy = self.add_evaluation_node(node.label, node.summary, node.details, evaluate=node.evaluate)
+            copy = self.add_evaluation_node(node.label, node.summary, node.details, node.sufficiencies, node.evaluate)
             copy.replacement = node.replacement
         elif isinstance(node, CriterionNode):
             self.add_criterion_node(
@@ -178,19 +179,13 @@ class CriteriaGraph:
                     "specified."
                 )
             if isinstance(source, EvaluationNode):
-                if sufficiencies is not None:
-                    raise CriteriaGraphError("Criterion nodes cannot have sufficiencies.")
-                if evaluate is not None:
-                    raise CriteriaGraphError(
-                        f"{target_label} is a criterion node, criterion nodes cannot have an evaluate function."
-                    )
-                target = self.add_criterion_node(target_label, summary, details, feedback_string_generator)
+                target = self._new_criterion_target(
+                    target_label, summary, details, sufficiencies, evaluate, feedback_string_generator
+                )
             else:
-                if feedback_string_generator is not None:
-                    raise CriteriaGraphError(
-                        f"{target_label} is an evaluation node, evaluation nodes cannot generate feedback strings."
-                    )
-                target = self.add_evaluation_node(target_label, summary, details, sufficiencies, evaluate)
+                target = self._new_evaluation_target(
+                    target_label, summary, details, sufficiencies, evaluate, feedback_string_generator
+                )
         elif any(
             option is not None for option in (summary, details, sufficiencies, evaluate, feedback_string_generator)
         ):
@@ -205,19 +200,52 @@ class CriteriaGraph:
         source.outgoing.append(edge)
         target.incoming.append(edge)
 
+    def _new_criterion_target(
+        self,
+        label: str,
+        summary: str,
+        details: str,
+        sufficiencies: Iterable[str] | None,
+        evaluate: Evaluate | None,
+        feedback_string_generator: FeedbackStringGenerator | None,
+    ) -> CriterionNode:
+        """The criterion ``attach`` creates after an evaluation; evaluation-only options are errors."""
+        if sufficiencies is not None:
+            raise CriteriaGraphError("Criterion nodes cannot have sufficiencies.")
+        if evaluate is not None:
+            raise CriteriaGraphError(f"{label} is a criterion node, criterion nodes cannot have an evaluate function.")
+        return self.add_criterion_node(label, summary, details, feedback_string_generator)
+
+    def _new_evaluation_target(
+        self,
+        label: str,
+        summary: str,
+        details: str,
+        sufficiencies: Iterable[str] | None,
+        evaluate: Evaluate | None,
+        feedback_string_generator: FeedbackStringGenerator | None,
+    ) -> EvaluationNode:
+        """The evaluation ``attach`` creates after a criterion; criterion-only options are errors."""
+        if feedback_string_generator is not None:
+            raise CriteriaGraphError(
+                f"{label} is an evaluation node, evaluation nodes cannot generate feedback strings."
+            )
+        return self.add_evaluation_node(label, summary, details, sufficiencies, evaluate)
+
     def add_sufficiencies(self, source_label: str, sufficiencies: Iterable[str]) -> None:
         """Add criteria whose evaluations can stand in for evaluation ``source_label``.
 
         Criteria already listed are skipped. Raises ``CriteriaGraphError`` if
         ``source_label`` is not an evaluation.
         """
-        if source_label not in self.evaluations:
+        node = self.evaluations.get(source_label)
+        if node is None:
             raise CriteriaGraphError(
                 f"Unknown evaluation node {source_label}. Only evaluation nodes can have sufficiencies."
             )
-        existing = self.sufficiencies.get(source_label)
-        if existing is None:
-            existing = self.sufficiencies[source_label] = []
+        if node.sufficiencies is None:
+            node.sufficiencies = []
+        existing = node.sufficiencies
         for sufficiency in sufficiencies:
             if sufficiency not in existing:
                 existing.append(sufficiency)
@@ -255,7 +283,8 @@ class CriteriaGraph:
             if candidate in seen:
                 continue  # sufficiencies can form cycles
             seen.add(candidate)
-            sufficiencies = self.sufficiencies.get(candidate)
+            node = self.evaluations.get(candidate)
+            sufficiencies = None if node is None else node.sufficiencies
             if sufficiencies is None:
                 starting.append(candidate)
             else:

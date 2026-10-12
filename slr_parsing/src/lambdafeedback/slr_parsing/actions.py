@@ -18,6 +18,12 @@ from typing import Any
 from .grammar import Action, TagHandler, TokenProduction
 from .tokens import ExprNode, Token, traverse_group, traverse_infix
 
+GROUP_LABEL = "GROUP"
+"""Label of the nodes :func:`group` builds."""
+START_DELIMITER_LABEL = "START_DELIMITER"
+END_DELIMITER_LABEL = "END_DELIMITER"
+"""Labels of the delimiter tokens :func:`group` reads (``build_expression_parser`` declares them)."""
+
 
 def _as_nodes(items: list[Any], tag_handler: TagHandler | None) -> list[ExprNode]:
     return [item if isinstance(item, ExprNode) else ExprNode(item, [], tag_handler=tag_handler) for item in items]
@@ -99,8 +105,8 @@ def group(number_of_elements: int, empty: bool = False, delimiters: Sequence[str
             content = output[-number_of_elements:]
             output = output[:-number_of_elements]
             first = content[0]
-            start_delim = Token("START_DELIMITER", delimiters[0], first.original, first.start, first.end)
-            end_delim = Token("END_DELIMITER", delimiters[1], first.original, first.start, first.end)
+            start_delim = Token(START_DELIMITER_LABEL, delimiters[0], first.original, first.start, first.end)
+            end_delim = Token(END_DELIMITER_LABEL, delimiters[1], first.original, first.start, first.end)
         else:
             end_delim = output.pop()
             content = output[-number_of_elements:]
@@ -108,7 +114,11 @@ def group(number_of_elements: int, empty: bool = False, delimiters: Sequence[str
             start_delim = output.pop()
         children = _as_nodes(content, tag_handler)
         token = Token(
-            "GROUP", [start_delim.content, end_delim.content], children[0].original, start_delim.start, end_delim.end
+            GROUP_LABEL,
+            [start_delim.content, end_delim.content],
+            children[0].original,
+            start_delim.start,
+            end_delim.end,
         )
         output.append(ExprNode(token, children, traverse_step=traverse_group, tag_handler=tag_handler))
         return output
@@ -158,7 +168,10 @@ def insert_infix(content: str, label: str) -> Action:
     """Action inserting an implicit ``label`` operator between the last two items."""
 
     def apply(production: TokenProduction, output: list[Any], tag_handler: TagHandler | None) -> list[Any]:
-        operator_token = Token(label, content, output[-1].original, len(output[-1].original), -1)
+        # The operator wasn't in the input, so it spans none of it: starting past the end and ending
+        # before the start, it never widens ExprNode.original_string() beyond its operands.
+        original = output[-1].original
+        operator_token = Token(label, content, original, start=len(original), end=-1)
         return infix(production, [*output[:-1], operator_token, output[-1]], tag_handler)
 
     return apply

@@ -6,9 +6,10 @@ import json
 from collections.abc import Collection, Mapping
 from typing import TYPE_CHECKING, Any
 
+from .nodes import EvaluationNode, Node
+
 if TYPE_CHECKING:
     from .graph import CriteriaGraph
-    from .nodes import Node
     from .tree import CriteriaTree
 
 # Mermaid node shapes (opening, closing).
@@ -32,7 +33,7 @@ def _identifier(label: str) -> str:
 def graph_to_json(graph: CriteriaGraph) -> str:
     """``graph``'s evaluations, criteria and outputs (summary, details, edge labels) and sufficiencies as JSON."""
 
-    def entry(node: Any, outgoing: bool = True) -> dict[str, Any]:
+    def entry(node: Node, outgoing: bool = True) -> dict[str, Any]:
         data = {
             "summary": node.summary,
             "details": node.details,
@@ -48,9 +49,9 @@ def graph_to_json(graph: CriteriaGraph) -> str:
             "criteria": {label: entry(node) for label, node in graph.criteria.items()},
             "outputs": {label: entry(node, outgoing=False) for label, node in graph.outputs.items()},
             "sufficiencies": {
-                label: list(sufficiencies)
-                for label, sufficiencies in graph.sufficiencies.items()
-                if sufficiencies is not None
+                label: list(node.sufficiencies)
+                for label, node in graph.evaluations.items()
+                if node.sufficiencies is not None
             },
         }
     )
@@ -74,7 +75,7 @@ def graph_to_mermaid(graph: CriteriaGraph) -> str:
             edges.update(
                 dict.fromkeys((keys[e.source.label], keys[e.target.label]) for e in node.outgoing + node.incoming)
             )
-            node_sufficiencies = graph.sufficiencies.get(label)
+            node_sufficiencies = node.sufficiencies if isinstance(node, EvaluationNode) else None
             if node_sufficiencies is not None:
                 # A sufficiency naming no node has nothing to point at, so it is not drawn.
                 sufficiencies.update(dict.fromkeys((keys[label], keys[s]) for s in node_sufficiencies if s in keys))

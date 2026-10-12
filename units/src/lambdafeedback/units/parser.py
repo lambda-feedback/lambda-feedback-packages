@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from enum import StrEnum
 from functools import cache
 from typing import Any, NamedTuple
 
+from lambdafeedback.expression_parsing import plain_number_end
 from lambdafeedback.slr_parsing import (
+    END_DELIMITER_LABEL,
+    GROUP_LABEL,
+    START_DELIMITER_LABEL,
     ExprNode,
     Lexeme,
     SLRParser,
@@ -27,33 +32,23 @@ from .params import Strictness
 from .tags import QuantityTag
 
 
-def _integer_end(string: str, index: int) -> int:
-    """Where the integer at ``index`` ends: ``0``, or digits not starting with ``0`` (``index`` if none)."""
-    if string.startswith("0", index):
-        return index + 1
-    if index < len(string) and string[index] in "123456789":
-        index += 1
-        while index < len(string) and string[index].isdecimal():
-            index += 1
-    return index
+class Label(StrEnum):
+    """Labels of the quantity grammar's tokens and nodes (groups are ``GROUP_LABEL``, from slr_parsing)."""
+
+    UNIT = "UNIT"
+    NUMBER = "NUMBER"
+    NON_UNIT = "NON-UNIT"
+    """Text that is neither a unit nor a number."""
+    SPACE = "SPACE"
+    PRODUCT = "PRODUCT"
+    SOLIDUS = "SOLIDUS"
+    POWER = "POWER"
 
 
 def _number_prefix(string: str) -> str | None:
     """The number at the start of ``string`` (``-1.5``, ``.5``, ``2e-3``), if there is one."""
-    start = 1 if string.startswith("-") else 0
-    end = _integer_end(string, start)
-    if string.startswith(".", end) and string[end + 1 : end + 2].isdecimal():
-        end += 2
-        while end < len(string) and string[end].isdecimal():
-            end += 1
-    if end == start:
-        return None
-    if string.startswith("e", end):
-        exponent_start = end + 2 if string.startswith("-", end + 1) else end + 1
-        exponent_end = _integer_end(string, exponent_start)
-        if exponent_end > exponent_start:
-            end = exponent_end
-    return string[:end]
+    end = plain_number_end(string, signed=True)
+    return None if end is None else string[:end]
 
 
 class UnitDictionaries(NamedTuple):
@@ -118,28 +113,30 @@ def quantity_tag_handler(strictness: Strictness) -> Callable[[ExprNode], set[Any
     def tag_handler(node: ExprNode) -> set[Any]:
         tags: set[Any] = set().union(*(child.tags for child in node.children))
         children = node.children
-        if node.label == "UNIT":
+        if node.label == Label.UNIT:
             tags.add(QuantityTag.UNIT)
-        elif node.label == "NUMBER":
+        elif node.label == Label.NUMBER:
             tags.add(QuantityTag.NUMBER)
-        elif node.label == "NON-UNIT":
+        elif node.label == Label.NON_UNIT:
             tags.add(QuantityTag.NON_UNIT)
         elif (
-            node.label == "POWER" and QuantityTag.UNIT in children[0].tags and children[1].tags == {QuantityTag.NUMBER}
+            node.label == Label.POWER
+            and QuantityTag.UNIT in children[0].tags
+            and children[1].tags == {QuantityTag.NUMBER}
         ):
             tags.remove(QuantityTag.NUMBER)  # a unit to a numeric power is a unit
-        elif node.label == "SOLIDUS" and children[0].content == "1" and children[1].tags == {QuantityTag.UNIT}:
+        elif node.label == Label.SOLIDUS and children[0].content == "1" and children[1].tags == {QuantityTag.UNIT}:
             tags.remove(QuantityTag.NUMBER)  # 1/unit is a unit
-        elif node.label == "SOLIDUS" and children[0].tags == {QuantityTag.NUMBER} == children[1].tags:
+        elif node.label == Label.SOLIDUS and children[0].tags == {QuantityTag.NUMBER} == children[1].tags:
             pass  # number/number stays a number
-        elif node.label in ("PRODUCT", "SOLIDUS", "POWER"):
+        elif node.label in (Label.PRODUCT, Label.SOLIDUS, Label.POWER):
             if tags & {QuantityTag.NUMBER, QuantityTag.NON_UNIT, QuantityTag.REJECTED_UNIT}:
                 tags.discard(QuantityTag.UNIT)
                 if QuantityTag.NUMBER in tags:
                     tags.add(QuantityTag.NON_UNIT)
-        elif node.label == "SPACE" and QuantityTag.NON_UNIT in children[1].tags:
+        elif node.label == Label.SPACE and QuantityTag.NON_UNIT in children[1].tags:
             tags.discard(QuantityTag.UNIT)
-        elif node.label == "GROUP" and not node.content[0] + node.content[1]:
+        elif node.label == GROUP_LABEL and not node.content[0] + node.content[1]:
             # Juxtaposition (a group without delimiters)
             if strictness == "strict":
                 node.children = [remove_tag(child, QuantityTag.UNIT) for child in children]
@@ -165,14 +162,14 @@ def _juxtaposition_natural(production: TokenProduction, output: list[Any], tag_h
 
     def is_unit(item: Any) -> bool:
         if not isinstance(item, ExprNode):
-            return bool(item.label == "UNIT")
-        if item.label == "GROUP":
+            return bool(item.label == Label.UNIT)
+        if item.label == GROUP_LABEL:
             return bool(item.tags == {QuantityTag.UNIT})
         return QuantityTag.UNIT in item.tags
 
     pair = output[-2:]
     if all(is_unit(item) for item in pair):
-        return insert_infix(" ", "SPACE")(production, output, tag_handler)
+        return insert_infix(" ", Label.SPACE)(production, output, tag_handler)
     for item in pair:
         if is_unit(item):
             item.tags.add(QuantityTag.NON_UNIT)
@@ -227,16 +224,16 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
         ("START", "START"),
         ("END", "END"),
         ("NULL", "NULL"),
-        (Lexeme((" ",)), "SPACE"),
-        (Lexeme(("*",), space_before=True, space_after=True), "PRODUCT"),
-        (Lexeme(("/",), space_before=True, space_after=True), "SOLIDUS"),
-        (Lexeme(("^",), space_before=True, space_after=True), "POWER"),
-        (Lexeme(("**",), space_before=True, space_after=True), "POWER"),
-        (Lexeme(("(",), space_after=True), "START_DELIMITER"),
-        (Lexeme((")",), space_before=True), "END_DELIMITER"),
-        ("N", "NUMBER", starts_with_number),
-        ("U", "UNIT", starts_with_unit),
-        ("V", "NON-UNIT", catch_undefined),
+        (Lexeme((" ",)), Label.SPACE),
+        (Lexeme(("*",), space_before=True, space_after=True), Label.PRODUCT),
+        (Lexeme(("/",), space_before=True, space_after=True), Label.SOLIDUS),
+        (Lexeme(("^",), space_before=True, space_after=True), Label.POWER),
+        (Lexeme(("**",), space_before=True, space_after=True), Label.POWER),
+        (Lexeme(("(",), space_after=True), START_DELIMITER_LABEL),
+        (Lexeme((")",), space_before=True), END_DELIMITER_LABEL),
+        ("N", Label.NUMBER, starts_with_number),
+        ("U", Label.UNIT, starts_with_unit),
+        ("V", Label.NON_UNIT, catch_undefined),
         ("Q", "QUANTITY_NODE", None),
     ]
     juxtaposition = group(2, empty=True) if strictness == "strict" else _juxtaposition_natural
@@ -250,7 +247,7 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
         ("Q", "N", create_node),
         ("Q", "V", create_node),
     ]
-    error_handler = [
+    error_handlers = [
         (
             lambda items, next_symbol: next_symbol.label == "NULL",
             _raise("Parser reached impossible state: NULL token."),
@@ -261,7 +258,7 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
         ),
         (lambda items, next_symbol: next_symbol.label == "END", _raise("Input ended before expression was completed.")),
         (
-            lambda items, next_symbol: next_symbol.label in ("PRODUCT", "SOLIDUS", "POWER"),
+            lambda items, next_symbol: next_symbol.label in (Label.PRODUCT, Label.SOLIDUS, Label.POWER),
             _raise("Infix operator requires an argument on either side."),
         ),
     ]
@@ -272,5 +269,5 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
         "END",
         "NULL",
         tag_handler=quantity_tag_handler(strictness),
-        error_handler=error_handler,
+        error_handlers=error_handlers,
     )

@@ -92,7 +92,8 @@ class ExprNode(Token):
                 self.children.append(ExprNode(child, []))
             else:
                 raise TypeError(f"Invalid child {child!s}")
-        self._traverse_step = traverse_step
+        self.traverse_step = traverse_step
+        """How :meth:`traverse` expands this node (see :data:`TraverseStep`)."""
         self.tags: set[Any] = tag_handler(self) if tag_handler is not None else set(tags or ())
 
     # copy() and tree_string() walk the tree with an explicit stack: input
@@ -100,7 +101,7 @@ class ExprNode(Token):
 
     def _shallow_copy(self) -> ExprNode:
         token = Token(self.label, self.content, self.original, self.start, self.end)
-        return ExprNode(token, [], tags=self.tags, traverse_step=self._traverse_step)
+        return ExprNode(token, [], tags=self.tags, traverse_step=self.traverse_step)
 
     def copy(self) -> ExprNode:
         """Deep copy of the tree; the copies' tag sets are not shared."""
@@ -135,7 +136,7 @@ class ExprNode(Token):
 
         Returns the emitted results; nodes deeper than ``max_depth`` are skipped.
         """
-        stack = [(*item, 0) for item in reversed(self._traverse_step(self, action))]
+        stack = [(*item, 0) for item in reversed(self.traverse_step(self, action))]
         output = []
         while stack:
             is_output, elem, depth = stack.pop()
@@ -143,7 +144,7 @@ class ExprNode(Token):
                 if is_output:
                     output.append(elem)
                 else:
-                    stack += [(*item, depth + 1) for item in reversed(elem._traverse_step(elem, action))]
+                    stack += [(*item, depth + 1) for item in reversed(elem.traverse_step(elem, action))]
         return output
 
     def original_string(self) -> str:

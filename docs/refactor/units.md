@@ -13,14 +13,14 @@ Depends on `slr_parsing`, `expression_parsing` and `sympy`. Released as `0.2.0`;
 | `tags.py` | `QuantityTag`: `UNIT`, `NON_UNIT`, `NUMBER`, `REJECTED_UNIT` (was `U`/`V`/`N`/`R`) |
 | `parser.py` | Unit dictionaries, tag handler, natural juxtaposition, `build_quantity_parser` (cached per unit sets and strictness) |
 | `quantity.py` | `PhysicalQuantity`, `parse_quantity`, `RevertedUnit` |
-| `preprocessing.py` | `preprocess_quantity` → `Preprocessed`, `preprocess_legacy` (string searches built once, deprecated), `transform_prefixes_to_standard` |
+| `preprocessing.py` | `preprocess_quantity(expr, params, *, name=None)` → `str`, `preprocess_legacy` (string searches built once, deprecated), `transform_prefixes_to_standard` |
 | `errors.py` | `QuantityError` (a `ValueError`) → `QuantityParseError`, `UnitConversionError` |
 
 `preview.py` (`preview_function`, `fix_exponents`) was removed in 0.3.0 and moved to compareExpressions — see above.
 
 **Deviations from the plan:**
 - `R` became `REJECTED_UNIT`: units written next to each other in strict mode, which strict syntax doesn't accept as a unit.
-- `preprocess_quantity` returns `expression_parsing.Preprocessed` rather than a plain `str`, so it matches `preprocess_expression`: compareExpressions uses both interchangeably as a context's preprocessing hook.
+- `preprocess_quantity` has the same shape as `preprocess_expression` (`(expr, params, *, name=None) -> str`): compareExpressions uses both interchangeably as a context's preprocessing hook.
 - `PhysicalQuantity` stays a regular class (its constructor computes everything, as before, so errors surface at the same point). compareExpressions reads its attributes, so only the awkward names changed (`*_latex_string` → `*_latex`, `converted_unit_factor` → `unit_factor`, `parsing_params` → `parsing_config`, `parameters` → `params`).
 
 ## Checklist

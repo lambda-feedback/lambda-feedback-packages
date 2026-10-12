@@ -61,7 +61,9 @@ Matcher: TypeAlias = Callable[[str], tuple[str | None, Any]]
 
 def _skip_spaces(text: str, index: int) -> int:
     """The index of the first character at or after ``index`` that isn't a space."""
-    return len(text) - len(text[index:].lstrip(" "))
+    while text.startswith(" ", index):
+        index += 1
+    return index
 
 
 class Lexeme(NamedTuple):
@@ -77,17 +79,17 @@ class Lexeme(NamedTuple):
     space_before: bool = False
     space_after: bool = False
 
-    def match(self, text: str) -> int | None:
-        """The length of the lexeme at the start of ``text``, or ``None`` if it isn't there."""
-        start = _skip_spaces(text, 0) if self.space_before else 0
+    def match(self, text: str, index: int = 0) -> int | None:
+        """The length of the lexeme at ``index`` in ``text``, or ``None`` if it isn't there."""
+        start = _skip_spaces(text, index) if self.space_before else index
         for form in self.forms:
             # A form starting with a space can use the spaces already skipped.
-            if start > 0 and form.startswith(" "):
+            if start > index and form.startswith(" "):
                 end = _match_form(form.lstrip(" "), text, start)
             else:
                 end = _match_form(form, text, start)
             if end is not None:
-                return _skip_spaces(text, end) if self.space_after else end
+                return (_skip_spaces(text, end) if self.space_after else end) - index
         return None
 
     @property
@@ -109,11 +111,11 @@ def _match_form(form: str, text: str, index: int) -> int | None:
     return index
 
 
-def match_pattern(pattern: str | Lexeme, text: str) -> int | None:
-    """The length of ``pattern`` (a literal or :class:`Lexeme`) at the start of ``text``, or ``None``."""
+def match_pattern(pattern: str | Lexeme, text: str, index: int = 0) -> int | None:
+    """The length of ``pattern`` (a literal or :class:`Lexeme`) at ``index`` in ``text``, or ``None``."""
     if isinstance(pattern, Lexeme):
-        return pattern.match(text)
-    return len(pattern) if text.startswith(pattern) else None
+        return pattern.match(text, index)
+    return len(pattern) if text.startswith(pattern, index) else None
 
 
 def pattern_weight(pattern: str | Lexeme) -> int:
@@ -143,6 +145,8 @@ output)`` to continue parsing with, or raises.
 
 
 class Production(NamedTuple):
+    """A production ``head -> body``; ``action`` builds the output when it is reduced (see the module docstring)."""
+
     head: str
     body: str
     action: Action | None

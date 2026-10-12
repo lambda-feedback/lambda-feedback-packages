@@ -80,5 +80,5 @@ def new_root_on_error(
     as a :class:`ParseError` instead.
     """
     if len(stack) == 1 or a == parser.end_token:
-        raise parser._parse_error(stack, a, input_tokens, tokens, output)
+        raise parser.parse_error(stack, a, input_tokens, tokens, output)
     return stack, parser.end_token, input_tokens, [a, *tokens], output

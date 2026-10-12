@@ -36,6 +36,7 @@ from .numbers import (
     is_complex_number_on_cartesian_form,
     is_complex_number_on_exponential_form,
     is_number,
+    plain_number_end,
 )
 from .params import Convention, ExpressionParams, SymbolSpec, parse_symbol_assumptions
 from .preprocessing import (
@@ -97,6 +98,7 @@ __all__ = [
     "parse_expression",
     "parse_latex",
     "parse_symbol_assumptions",
+    "plain_number_end",
     "preprocess_expression",
     "sanitise_latex",
     "substitute",

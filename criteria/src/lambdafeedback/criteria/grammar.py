@@ -54,30 +54,32 @@ TOKENS: tuple[TokenSpec, ...] = (
 )
 
 # Order matters: when productions conflict, the one listed later wins.
+_OPERANDS = ("OTHER", "RESERVED")
+
+
+def _relation(head: str, operator: str) -> tuple[tuple[str, str, Action], ...]:
+    """``head -> left operator right`` for every combination of ``OTHER``/``RESERVED`` operands."""
+    return tuple((head, f"{left}{operator}{right}", infix) for right in _OPERANDS for left in _OPERANDS)
+
+
+def _reserved_relation(head: str, operator: str) -> tuple[tuple[str, str, Action], ...]:
+    """``head -> RESERVED operator right``, with an ``OTHER`` or ``RESERVED`` right operand."""
+    return tuple((head, f"RESERVED{operator}{right}", infix) for right in _OPERANDS)
+
+
 PRODUCTIONS: tuple[tuple[str, str, Action], ...] = (
     ("START", "BOOL", create_node),
     ("BOOL", "EQUAL", proceed),
     ("BOOL", "ORDER", proceed),
     ("BOOL", "EQUAL where EQUAL", infix),
     ("BOOL", "EQUAL where EQUAL_LIST", infix),
-    ("BOOL", "RESERVED written as OTHER", infix),
-    ("BOOL", "RESERVED written as RESERVED", infix),
-    ("EQUAL", "OTHER proportional to OTHER", infix),
-    ("EQUAL", "RESERVED proportional to OTHER", infix),
-    ("EQUAL", "OTHER proportional to RESERVED", infix),
-    ("EQUAL", "RESERVED proportional to RESERVED", infix),
-    ("BOOL", "RESERVED contains OTHER", infix),
-    ("BOOL", "RESERVED contains RESERVED", infix),
+    *_reserved_relation("BOOL", " written as "),
+    *_relation("EQUAL", " proportional to "),
+    *_reserved_relation("BOOL", " contains "),
     ("EQUAL_LIST", "EQUAL;EQUAL", infix),
     ("EQUAL_LIST", "EQUAL_LIST;EQUAL", append_last),
-    ("EQUAL", "OTHER = OTHER", infix),
-    ("EQUAL", "RESERVED = OTHER", infix),
-    ("EQUAL", "OTHER = RESERVED", infix),
-    ("EQUAL", "RESERVED = RESERVED", infix),
-    ("EQUAL", "OTHER ORDER OTHER", infix),
-    ("EQUAL", "RESERVED ORDER OTHER", infix),
-    ("EQUAL", "OTHER ORDER RESERVED", infix),
-    ("EQUAL", "RESERVED ORDER RESERVED", infix),
+    *_relation("EQUAL", " = "),
+    *_relation("EQUAL", " ORDER "),
     ("OTHER", "RESERVED OTHER", join),
     ("OTHER", "OTHER RESERVED", join),
     ("OTHER", "OTHER OTHER", join),

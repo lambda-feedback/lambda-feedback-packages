@@ -36,9 +36,9 @@ def inherit_tags(node: ExprNode, rule: TagRule = union_rule) -> set[Any]:
     return tags
 
 
-def add_tag(node: ExprNode, tag: Any = None, rule: TagCondition = _always) -> ExprNode:
+def add_tag(node: ExprNode, tag: Any, rule: TagCondition = _always) -> ExprNode:
     """Add ``tag`` to the node if ``rule(node.tags)`` holds."""
-    if tag is not None and rule(node.tags):
+    if rule(node.tags):
         node.tags.add(tag)
     return node
 

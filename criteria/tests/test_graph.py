@@ -96,7 +96,7 @@ class TestBuilding:
             graph.add_criterion_node("SIMPLIFIED", "s", "d")
         with pytest.raises(CriteriaGraphError, match="Criterion node EQ_TRUE is already defined"):
             graph.add_output_node("EQ_TRUE", "s", "d")
-        assert graph.sufficiencies["SIMPLIFIED"] == ["EQ_TRUE"]
+        assert graph.evaluations["SIMPLIFIED"].sufficiencies == ["EQ_TRUE"]
 
     def test_add_node_keeps_replacement(self):
         node = EvaluationNode("X", "s", "d")
@@ -109,7 +109,7 @@ class TestBuilding:
         graph = equality_graph()
         graph.add_sufficiencies("SIMPLIFIED", ["EQ_TRUE"])
         graph.add_sufficiencies("SIMPLIFIED", ["EQ_TRUE", "EQ_FALSE"])
-        assert graph.sufficiencies["SIMPLIFIED"] == ["EQ_TRUE", "EQ_FALSE"]
+        assert graph.evaluations["SIMPLIFIED"].sufficiencies == ["EQ_TRUE", "EQ_FALSE"]
         with pytest.raises(CriteriaGraphError, match="Only evaluation nodes"):
             graph.add_sufficiencies("EQ_TRUE", ["EQ_FALSE"])
 
@@ -289,3 +289,17 @@ class TestGraphRenderings:
         graph.add_evaluation_node("x = y", 'is "x" y?', "d")
         mermaid = graph.build_tree("x = y").to_mermaid()
         assert 'x___y_0>"is #quot;x#quot; y?"]' in mermaid.split("\n\t")
+
+
+class TestNodes:
+    def test_nodes_compare_by_identity(self):
+        first, second = CriteriaGraph("a"), CriteriaGraph("b")
+        assert first.add_output_node("O", "s", "d") != second.add_output_node("O", "s", "d")
+
+    def test_add_node_copies_sufficiencies(self):
+        source = CriteriaGraph("source")
+        node = source.add_evaluation_node("E", "s", "d", sufficiencies=["C"])
+        target = CriteriaGraph("target")
+        target.add_node(node)
+        assert target.evaluations["E"].sufficiencies == ["C"]
+        assert target.evaluations["E"].sufficiencies is not node.sufficiencies

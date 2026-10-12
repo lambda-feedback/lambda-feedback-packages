@@ -211,14 +211,14 @@ class TestErrorRecovery:
         return build_expression_parser(
             infix_operators=[("+", "ADD")],
             delimiters=[(("(", ")"), group(1))],
-            error_handler=[(lambda items, next_symbol: True, new_root_on_error)],
+            error_handlers=[(lambda items, next_symbol: True, new_root_on_error)],
         )
 
     def test_new_root_on_error_starts_a_new_root_at_the_offending_token(self):
         parser = build_expression_parser(
             infix_operators=[("+", "ADD")],
             delimiters=[(("(", ")"), group(1))],
-            error_handler=[(lambda items, next_symbol: next_symbol.label == "START_DELIMITER", new_root_on_error)],
+            error_handlers=[(lambda items, next_symbol: next_symbol.label == "START_DELIMITER", new_root_on_error)],
         )
         output = parser.parse(parser.scan("(1+2)(3)"))
         assert [node.content_string() for node in output] == ["(1+2)", "(3)"]
@@ -268,7 +268,7 @@ class TestShapeValidation:
     SYMBOLS = (("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "X"))
 
     @pytest.mark.parametrize(
-        ("productions", "error_handler"),
+        ("productions", "error_handlers"),
         [
             pytest.param([("START", "E"), ("E", "x", create_node)], (), id="two-tuple production"),
             pytest.param([("START", "E", None), ("E", "x", "create_node")], (), id="non-callable action"),
@@ -280,10 +280,10 @@ class TestShapeValidation:
             ),
         ],
     )
-    def test_malformed_grammar_entries_are_grammar_errors(self, productions, error_handler):
+    def test_malformed_grammar_entries_are_grammar_errors(self, productions, error_handlers):
         # These used to raise IndexError/TypeError, the non-callable action only on the first parse.
         with pytest.raises(GrammarError):
-            SLRParser(self.SYMBOLS, productions, "START", "END", "NULL", error_handler=error_handler)
+            SLRParser(self.SYMBOLS, productions, "START", "END", "NULL", error_handlers=error_handlers)
 
 
 class TestRelabel:

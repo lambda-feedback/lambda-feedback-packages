@@ -186,7 +186,7 @@ class TestErrors:
             ErrorHandler(lambda items, next_symbol: True, lambda *_args: pytest.fail("second handler ran")),
         ]
         with pytest.raises(IncompleteError):
-            parse("a+", make_parser(error_handler=handlers))
+            parse("a+", make_parser(error_handlers=handlers))
 
     def test_error_condition_receives_the_state_items(self):
         seen = []
@@ -195,7 +195,7 @@ class TestErrors:
             seen.append(("".join(t.content for t in items[0][0]), next_symbol.label))
             return False
 
-        make_parser(error_handler=[(condition, new_root_on_error)])  # action unused: condition is False
+        make_parser(error_handlers=[(condition, new_root_on_error)])  # action unused: condition is False
         assert ("E+", "END") in seen
 
 
@@ -206,3 +206,11 @@ def test_parse_tracing_is_logged(caplog):
     assert any(m.startswith("shift to") for m in messages)
     assert any(m.startswith("reduce by E --> E+T") for m in messages)
     assert messages[-1] == "accept"
+
+
+def test_parse_error_is_public_for_error_actions():
+    def give_up(parser, stack, a, input_tokens, tokens, output):
+        raise parser.parse_error(stack, a, input_tokens, tokens, output)
+
+    with pytest.raises(ParseError, match="end of input"):
+        parse("a+", make_parser(error_handlers=[(lambda items, next_symbol: True, give_up)]))

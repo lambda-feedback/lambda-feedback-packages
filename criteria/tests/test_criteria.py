@@ -10,6 +10,7 @@ import json
 import pytest
 
 from lambdafeedback.criteria import CriteriaGraph, CriteriaGraphError, build_criteria_parser
+from lambdafeedback.slr_parsing import append_last, create_node, infix, join, proceed
 
 RESERVED = {"learner": {"response": None}, "task": {"answer": None}}
 
@@ -67,3 +68,40 @@ class TestCriteriaGraph:
         g.add_evaluation_node("EVAL", "eval", "eval details")
         with pytest.raises(CriteriaGraphError):
             g.add_evaluation_node("EVAL", "eval", "eval details")
+
+
+# The production table as it was written out by hand, before it was generated.
+_HAND_WRITTEN_PRODUCTIONS = (
+    ("START", "BOOL", create_node),
+    ("BOOL", "EQUAL", proceed),
+    ("BOOL", "ORDER", proceed),
+    ("BOOL", "EQUAL where EQUAL", infix),
+    ("BOOL", "EQUAL where EQUAL_LIST", infix),
+    ("BOOL", "RESERVED written as OTHER", infix),
+    ("BOOL", "RESERVED written as RESERVED", infix),
+    ("EQUAL", "OTHER proportional to OTHER", infix),
+    ("EQUAL", "RESERVED proportional to OTHER", infix),
+    ("EQUAL", "OTHER proportional to RESERVED", infix),
+    ("EQUAL", "RESERVED proportional to RESERVED", infix),
+    ("BOOL", "RESERVED contains OTHER", infix),
+    ("BOOL", "RESERVED contains RESERVED", infix),
+    ("EQUAL_LIST", "EQUAL;EQUAL", infix),
+    ("EQUAL_LIST", "EQUAL_LIST;EQUAL", append_last),
+    ("EQUAL", "OTHER = OTHER", infix),
+    ("EQUAL", "RESERVED = OTHER", infix),
+    ("EQUAL", "OTHER = RESERVED", infix),
+    ("EQUAL", "RESERVED = RESERVED", infix),
+    ("EQUAL", "OTHER ORDER OTHER", infix),
+    ("EQUAL", "RESERVED ORDER OTHER", infix),
+    ("EQUAL", "OTHER ORDER RESERVED", infix),
+    ("EQUAL", "RESERVED ORDER RESERVED", infix),
+    ("OTHER", "RESERVED OTHER", join),
+    ("OTHER", "OTHER RESERVED", join),
+    ("OTHER", "OTHER OTHER", join),
+)
+
+
+def test_generated_productions_match_the_hand_written_table():
+    from lambdafeedback.criteria.grammar import PRODUCTIONS
+
+    assert PRODUCTIONS == _HAND_WRITTEN_PRODUCTIONS
