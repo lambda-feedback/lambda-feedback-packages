@@ -23,3 +23,6 @@ env/
 # Per-package lock files from running Poetry inside a package; only the
 # monorepo root lock is tracked.
 */poetry.lock
+
+# scripts/check_dist.py output in CI
+build-check/

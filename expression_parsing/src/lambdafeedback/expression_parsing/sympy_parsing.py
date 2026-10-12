@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -30,7 +31,7 @@ from sympy.parsing.sympy_parser import (
 )
 from sympy.utilities.exceptions import SymPyDeprecationWarning
 
-from ._safe_parse import MATH_NAMESPACE, check_evaluation_cost, safe_parse_expr
+from ._safe_parse import MATH_NAMESPACE, TOO_DEEP_MESSAGE, check_evaluation_cost, check_input_length, safe_parse_expr
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import ExpressionParams
@@ -43,6 +44,8 @@ from .substitution import (
     substitute,
 )
 from .symbol_tables import EMBEDDABLE_FUNCTION_NAMES
+
+logger = logging.getLogger(__name__)
 
 _APPLIED = ("(", "**", "^")
 
@@ -284,7 +287,12 @@ def _parse_one(expr: str, config: SympyParsingConfig, transformations: tuple[Any
         expr = convert_bracket_notation(expr)
     try:
         expr = _substitute_names(apply_convention(expr, config.params.convention), config)
-        return _evaluate(expr, config, transformations)
+        logger.debug("parse: convention %s and names applied: %r", config.params.convention, expr)
+        parsed = _evaluate(expr, config, transformations)
+        logger.debug("parse %r -> %s", expr, parsed)
+        return parsed
+    except RecursionError as e:
+        raise ExpressionParsingError(TOO_DEEP_MESSAGE, expression=expr) from e
     except Exception as e:
         function = _unapplied_function(expr, config.symbol_dict)
         if function is not None:
@@ -340,7 +348,9 @@ def parse_expressions(expr: str, config: SympyParsingConfig) -> tuple[Basic, ...
 
     Usually one, but ``{a, b}`` and ``±`` stand for several. They come in the
     order written, each once. ``a = b`` gives an unevaluated ``Equality``.
+    Raises :class:`ExpressionParsingError` for text longer than :data:`MAX_INPUT_LENGTH`.
     """
+    check_input_length(expr)
     transformations = config.transformations()
     parsed = (
         _parse_one(text, config, transformations) for text in create_expression_set(expr, config.substitution_params)

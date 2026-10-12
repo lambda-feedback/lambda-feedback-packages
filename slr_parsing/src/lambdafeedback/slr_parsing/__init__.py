@@ -9,6 +9,7 @@ Extracted from compareExpressions (app/utility/slr_parsing_utilities.py);
 depends only on the standard library.
 """
 
+import logging
 from importlib.metadata import PackageNotFoundError, version
 
 from .actions import (
@@ -67,6 +68,9 @@ from .tokens import (
     traverse_postfix,
     traverse_prefix,
 )
+
+# Library convention: callers decide where log records go (``logging.basicConfig(level=logging.DEBUG)`` shows them).
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
     __version__ = version("lambdafeedback-slr-parsing")

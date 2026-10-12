@@ -76,7 +76,7 @@ the same probes through the current API. Any difference fails, unless it is
 listed in `tools/parity/expected_changes.json` with its reason and exact new
 value (bug fixes only).
 
-## Building
+## Building and releasing
 
 Each package builds on its own:
 
@@ -86,6 +86,30 @@ cd units && poetry build
 
 During development, sibling dependencies resolve from the monorepo as path
 dependencies. The published metadata keeps plain version requirements.
+`poetry run python scripts/check_dist.py` builds all four, checks the
+wheels and sdists (namespace layout, `py.typed`, no local requirements,
+tests and changelog in the sdist), installs the wheels into a fresh venv
+and runs a smoke test; CI runs it with `twine check`.
+
+To release a package, push a tag `<package>-v<version>` (for example
+`units-v0.3.0`) matching its `pyproject.toml`: `.github/workflows/release.yml`
+builds it and publishes it with PyPI trusted publishing. Release dependencies
+first: `slr_parsing`, then `criteria` and `expression_parsing`, then `units`.
+
+## Logging
+
+The packages log at DEBUG only, through loggers named after their modules
+(`lambdafeedback.expression_parsing.preprocessing`, `lambdafeedback.units.quantity`, ...):
+how a response was preprocessed and read, how a quantity was split into value
+and unit, which evaluations a criteria graph ran. Failures are exceptions, not
+log records. To see them:
+
+```python
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("lambdafeedback.slr_parsing").setLevel(logging.INFO)  # the parser trace is verbose
+```
 
 ## Feedback decoupling
 

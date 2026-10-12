@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections import deque
 from collections.abc import Collection, Iterable, Mapping
 from typing import Any, ClassVar
@@ -21,6 +22,8 @@ from .nodes import (
 )
 from .render import graph_to_json, graph_to_mermaid
 from .tree import CriteriaTree, build_tree
+
+logger = logging.getLogger(__name__)
 
 
 class CriteriaGraph:
@@ -289,6 +292,7 @@ class CriteriaGraph:
             # Follow replacements; `visited` also stops replacement cycles.
             while node is not None and node.replacement is not None and label not in visited:
                 visited.add(label)
+                logger.debug("evaluation %s is replaced by %s", label, node.replacement)
                 label = node.replacement
                 node = self.evaluations.get(label)
                 if node is None and label not in self.outputs:
@@ -311,6 +315,7 @@ class CriteriaGraph:
             unknown = [criterion for criterion in results if criterion not in self.criteria]
             if unknown:
                 raise CriteriaGraphError(f"Evaluation node {label} reported unknown criteria: {', '.join(unknown)}.")
+            logger.debug("evaluation %s reported %s", label, list(results))
             feedback.update(results)
             for criterion in results:
                 queue.extend(edge.target.label for edge in self.criteria[criterion].outgoing)

@@ -249,6 +249,22 @@ class _UnevaluatedCalls(ast.NodeTransformer):
         return node
 
 
+MAX_INPUT_LENGTH = 10_000
+"""Longest text :func:`~lambdafeedback.expression_parsing.parse_expression` and ``parse_latex`` read, in characters."""
+
+TOO_DEEP_MESSAGE = "The expression is too long or too deeply nested."
+"""The message when parsing exceeds Python's recursion limit (a sum of hundreds of terms, say)."""
+
+
+def check_input_length(text: str, error: type[ExpressionParsingError] = ExpressionParsingError) -> None:
+    """Raise ``error`` if ``text`` is longer than :data:`MAX_INPUT_LENGTH`: a bound on parsing time."""
+    if len(text) > MAX_INPUT_LENGTH:
+        raise error(
+            f"The expression is too long: {len(text)} characters; at most {MAX_INPUT_LENGTH} are allowed.",
+            expression=text[:100],
+        )
+
+
 MAX_SIMPLIFY_POWER = 500
 """Largest power a sum containing symbols may be raised to when simplifying (``(x+1)**500``)."""
 

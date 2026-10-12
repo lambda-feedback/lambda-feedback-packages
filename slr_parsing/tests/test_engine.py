@@ -241,3 +241,12 @@ def test_walk_lists_each_node_before_its_children():
     for node in walked:
         for child in node.children:
             assert walked.index(node) < walked.index(child)
+
+
+def test_parsing_traces_at_debug_and_built_in_grammars_build_quietly(caplog):
+    import logging
+
+    with caplog.at_level(logging.DEBUG, logger="lambdafeedback.slr_parsing"):
+        parse("a+b")
+    assert "accept" in [record.getMessage() for record in caplog.records]
+    assert all(record.levelno == logging.DEBUG for record in caplog.records)

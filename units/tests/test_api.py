@@ -294,3 +294,13 @@ class TestProductSigns:
     def test_unicode_product_signs_are_products(self, sign):
         quantity = parse_quantity(f"2 kg{sign}m", QuantityParams())
         assert quantity.unit is not None and quantity.unit.content_string() == "kilogram*metre"
+
+
+def test_parse_quantity_logs_the_value_unit_split(caplog):
+    import logging
+
+    with caplog.at_level(logging.DEBUG, logger="lambdafeedback.units"):
+        parse_quantity("9.81 m/s^2", QuantityParams())
+    messages = [record.getMessage() for record in caplog.records if record.name.startswith("lambdafeedback.units")]
+    assert "split '9.81 m/s^2' into value '9.81' and unit 'metre/second^2'" in messages
+    assert all(record.levelno < logging.WARNING for record in caplog.records)

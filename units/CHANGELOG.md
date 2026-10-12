@@ -27,6 +27,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Added
 
+- DEBUG logging through module loggers (`lambdafeedback.units.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. `parse_quantity` logs the normalised text and the value/unit split.
 - `DisallowedUnitError` (see Breaking).
 - `PhysicalQuantity.base_dimension`: the dimension without the unit's factor (`5 km/h` gives `length/time`, where `dimension` is `10**3*length/((3600*time))`), and `same_dimension(a, b)` to compare two quantities' dimensions.
 - `MAX_INPUT_LENGTH` (10,000 characters): `parse_quantity` raises `QuantityParseError` for longer input, and `preprocess_quantity` returns it unchanged. This bounds the running time on any input.

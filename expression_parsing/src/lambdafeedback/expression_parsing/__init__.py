@@ -15,9 +15,10 @@ compareExpressions, not here. Failures are raised as typed exceptions (see
 ``.expression``, for a caller that wants to continue with the guess.
 """
 
+import logging
 from importlib.metadata import PackageNotFoundError, version
 
-from ._safe_parse import MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT, MAX_SIMPLIFY_POWER
+from ._safe_parse import MAX_INPUT_LENGTH, MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT, MAX_SIMPLIFY_POWER
 from ._scanning import find_matching_parenthesis
 from .conventions import apply_convention, convention_parser
 from .errors import (
@@ -57,12 +58,16 @@ from .substitution import (
 from .symbol_tables import UNICODE_OPERATORS
 from .sympy_parsing import SympyParsingConfig, parse_expression, parse_expressions, sympy_symbols
 
+# Library convention: callers decide where log records go (``logging.basicConfig(level=logging.DEBUG)`` shows them).
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 try:
     __version__ = version("lambdafeedback-expression-parsing")
 except PackageNotFoundError:  # running from a source checkout that isn't installed
     __version__ = "0+unknown"
 
 __all__ = [
+    "MAX_INPUT_LENGTH",
     "MAX_LATEX_NESTING",
     "MAX_NUMBER_DIGITS",
     "MAX_NUMBER_EXPONENT",

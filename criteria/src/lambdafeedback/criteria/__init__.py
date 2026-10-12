@@ -9,6 +9,7 @@
   and renders the graph.
 """
 
+import logging
 from importlib.metadata import PackageNotFoundError, version
 
 from .errors import CriteriaError, CriteriaEvaluationError, CriteriaGraphError
@@ -26,6 +27,9 @@ from .nodes import (
     ResultLike,
 )
 from .tree import CriteriaTree
+
+# Library convention: callers decide where log records go (``logging.basicConfig(level=logging.DEBUG)`` shows them).
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
     __version__ = version("lambdafeedback-criteria")

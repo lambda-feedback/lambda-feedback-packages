@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator, Mapping
 from string import ascii_letters
 from typing import Any, Literal, TypeAlias
@@ -14,7 +15,7 @@ from sympy.core.parameters import evaluate
 from sympy.parsing.sympy_parser import implicit_multiplication_application, standard_transformations
 from sympy.printing.latex import LatexPrinter
 
-from ._safe_parse import safe_parse_expr
+from ._safe_parse import TOO_DEEP_MESSAGE, check_input_length, safe_parse_expr
 from ._scanning import CLOSING_BRACKETS, OPENING_BRACKETS, find_matching_parenthesis
 from .errors import LatexParseError
 from .params import SymbolSpec
@@ -23,6 +24,8 @@ from .symbol_tables import MINUS_PLUS, PLUS_MINUS
 
 # Symbol aliases are parsed with ``Symbol`` as the only name: an alias that
 # needs anything more (a number, a function call) falls back to a plain name.
+logger = logging.getLogger(__name__)
+
 _ALIAS_NAMESPACE = {"Symbol": Symbol}
 _ALIAS_TRANSFORMATIONS = (*standard_transformations, implicit_multiplication_application)
 
@@ -303,6 +306,7 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     response or a symbol's LaTeX can't be parsed, or if brackets are nested
     more than :data:`MAX_LATEX_NESTING` deep.
     """
+    check_input_length(response, LatexParseError)
     _check_nesting(response)
     substitutions = _symbol_substitutions(symbols)
     expanded = _replace_command(_replace_command(response, "\\pm", PLUS_MINUS), "\\mp", MINUS_PLUS)
@@ -325,12 +329,14 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
             # A comma-separated list ("1, 2") is several answers, like "{1, 2}" in text;
             # merged with the ± expansion rather than nested in it.
             parsed_responses.update(text(item) for item in (parsed.args if isinstance(parsed, FiniteSet) else [parsed]))
+        except RecursionError as e:
+            raise LatexParseError(TOO_DEEP_MESSAGE, expression=expression) from e
         except Exception as e:
             raise LatexParseError(f"Failed to parse expression {expression!r}: {e}", expression=expression) from e
 
-    if len(parsed_responses) < 2:
-        return parsed_responses.pop()
-    return "{" + ", ".join(sorted(parsed_responses)) + "}"
+    result = parsed_responses.pop() if len(parsed_responses) < 2 else "{" + ", ".join(sorted(parsed_responses)) + "}"
+    logger.debug("parse_latex %r -> %r", response, result)
+    return result
 
 
 def sanitise_latex(response: str) -> str:

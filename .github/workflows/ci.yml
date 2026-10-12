@@ -40,3 +40,22 @@ jobs:
 
       - name: Parity with v0.1
         run: poetry run python tools/parity/check.py
+
+  build:
+    # The packages as they would be published: built, checked, installed together and smoke-tested.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.4.3
+
+      - name: Build, inspect and smoke-test the distributions
+        run: python scripts/check_dist.py --out build-check
+
+      - name: Check the package metadata renders on PyPI
+        run: pipx run twine check build-check/*/*.whl build-check/*/*.tar.gz

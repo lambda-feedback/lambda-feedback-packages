@@ -12,7 +12,7 @@ Each package has a checklist, and commits tick off items as they land:
 | 3 | [expression_parsing.md](expression_parsing.md) | `lambdafeedback.expression_parsing` |
 | 4 | [units.md](units.md) | `lambdafeedback.units` |
 
-Baseline before the refactor: **468 tests pass** (10 slr_parsing, 7 evaluation_result, 10 criteria, 157 expression_parsing, 284 units). After: **611** (45 slr_parsing, 47 criteria, 204 expression_parsing, 315 units; evaluation_result retired). **All four phases are done.**
+Baseline before the refactor: **468 tests pass** (10 slr_parsing, 7 evaluation_result, 10 criteria, 157 expression_parsing, 284 units). After: **611** (45 slr_parsing, 47 criteria, 204 expression_parsing, 315 units; evaluation_result retired). **All four phases are done.** After the pre-release reviews: **1171** (115 slr_parsing, 73 criteria, 454 expression_parsing, 529 units).
 
 ## Agreed decisions
 

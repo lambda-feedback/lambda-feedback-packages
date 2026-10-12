@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
@@ -28,6 +29,8 @@ from .params import MAX_INPUT_LENGTH, QuantityParams
 from .parser import Label, build_quantity_parser
 from .tags import QuantityTag
 from .text import called_names, disallowed_unit, mentions_celsius_or_fahrenheit, normalise_input
+
+logger = logging.getLogger(__name__)
 
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
@@ -268,6 +271,7 @@ class PhysicalQuantity:
                 return
             if previous is not None and rotate_right != previous:
                 raise QuantityParseError(f"Cannot separate the value from the unit in {self.ast_root.original!r}.")
+            logger.debug("rotate %s to split value from unit", "right" if rotate_right else "left")
             self._rotate(rotate_right)
             previous = rotate_right
 
@@ -285,6 +289,10 @@ class PhysicalQuantity:
         else:
             self.value = root
         # e.g. "2 m 3 s" or "1 hour 30 minutes": the unit would contain a number.
+        if logger.isEnabledFor(logging.DEBUG):
+            value = None if self.value is None else self.value.content_string()
+            unit = None if self.unit is None else self.unit.content_string()
+            logger.debug("split %r into value %r and unit %r", root.original, value, unit)
         if self.unit is not None and _has_stray_number(self.unit):
             raise QuantityParseError(f"Cannot separate the value from the unit in {root.original!r}.")
         if self.unit is not None and (problem := _exponent_problem(self.unit)) is not None:
@@ -436,8 +444,10 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
         )
     # Any whitespace (tabs, newlines, no-break and thin spaces) as one space; drop zero-width characters.
     text = normalise_input(expr, latex=params.is_latex)
+    logger.debug("parse_quantity %r: normalised to %r", expr, text)
     if (disallowed := disallowed_unit(text, params.unit_sets)) is not None:
         word, unit = disallowed
+        logger.debug("parse_quantity %r: %r is a unit outside %s", expr, word, sorted(params.unit_sets))
         sets = tuple(set_name for set_name, units in UNIT_SETS.items() if unit in units)
         raise DisallowedUnitError(
             f"{word!r} is a unit ({unit.name}) from the {' or '.join(sets)} unit set, which isn't allowed here.",

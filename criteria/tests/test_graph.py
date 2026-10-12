@@ -311,3 +311,13 @@ class TestNodes:
         graph.add_sufficiencies("SIMPLIFIED", [])
         assert graph.evaluations["SIMPLIFIED"].sufficiencies == ()
         assert graph.starting_evaluations("SIMPLIFIED_TRUE") == ["SIMPLIFIED"]
+
+
+def test_generate_feedback_logs_each_evaluation(caplog):
+    import logging
+
+    with caplog.at_level(logging.DEBUG, logger="lambdafeedback.criteria"):
+        equality_graph().generate_feedback("response", "EQ_TRUE")
+    messages = [record.getMessage() for record in caplog.records]
+    assert "evaluation EQ reported ['EQ_TRUE']" in messages
+    assert "evaluation SIMPLIFIED reported ['SIMPLIFIED_TRUE']" in messages

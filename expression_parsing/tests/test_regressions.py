@@ -483,7 +483,8 @@ class TestNumberSizeLimits:
             ("a.5e5000", "exponent"),  # Python reads .5e5000 as a number after the name a
             ("1e999999j", "exponent"),
             ("1e" + "9" * 5000, "exponent"),
-            ("1." + "1" * 100000, "digits"),  # Float of a 100000-digit mantissa: minutes
+            ("1." + "1" * 100000, "too long"),  # Float of a 100000-digit mantissa: minutes (now over MAX_INPUT_LENGTH)
+            ("1." + "1" * 5000, "digits"),
             ("1" * 5000, "digits"),  # over Python's 4300-digit limit: was "Invalid syntax"
             ("1" * 1200, "digits"),
         ],
@@ -685,3 +686,36 @@ class TestSimplifyIsBounded:
     )
     def test_reasonable_sizes_still_simplify(self, response, expected):
         assert str(parse_expression(response, parsing_params(simplify=True))) == expected
+
+
+class TestInputSize:
+    """Long input fails with a clear message instead of "maximum recursion depth exceeded"."""
+
+    def test_a_long_sum_is_too_deeply_nested(self):
+        # About 800 terms nest deeper than Python's recursion limit allows.
+        with pytest.raises(ExpressionParsingError, match="too long or too deeply nested"):
+            parse_expression("+".join(["x"] * 800), parsing_params())
+
+    def test_input_over_the_length_limit_is_rejected(self):
+        from lambdafeedback.expression_parsing import MAX_INPUT_LENGTH, parse_latex
+
+        text = "x" * (MAX_INPUT_LENGTH + 1)
+        with pytest.raises(ExpressionParsingError, match=f"at most {MAX_INPUT_LENGTH}"):
+            parse_expression(text, parsing_params())
+        with pytest.raises(ExpressionParsingError, match=f"at most {MAX_INPUT_LENGTH}"):
+            parse_latex(text, {})
+
+    def test_shorter_input_still_parses(self):
+        assert len(parse_expression("+".join(["x"] * 300), parsing_params()).args) == 300  # left unevaluated
+
+
+def test_parsing_logs_its_decisions_at_debug_only(caplog):
+    import logging
+
+    params = ExpressionParams(elementary_functions=True)
+    with caplog.at_level(logging.DEBUG, logger="lambdafeedback.expression_parsing"):
+        parse_expression(preprocess_expression("2 sin(x)", params), SympyParsingConfig.from_params(params))
+    messages = [record.getMessage() for record in caplog.records]
+    assert any(message.startswith("preprocess '2 sin(x)'") for message in messages)
+    assert any(message.startswith("parse ") and "sin(x)" in message for message in messages)
+    assert all(record.levelno == logging.DEBUG for record in caplog.records)

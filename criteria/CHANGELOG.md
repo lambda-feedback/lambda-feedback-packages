@@ -62,6 +62,7 @@ Behaviour differences to be aware of when adopting:
 
 ### Changed
 
+- DEBUG logging through module loggers (`lambdafeedback.criteria.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. `generate_feedback` logs each evaluation run, the criteria it reported and replacements followed.
 - `attach(source, target)` only connects existing nodes. `attach_new_criterion(evaluation, label, summary, details, feedback_string_generator=None)` and `attach_new_evaluation(criterion, label, summary, details, sufficiencies=(), evaluate=None)` create the target and attach it (`attach` used to do both, with keywords valid for one node kind or the other).
 - `CriteriaGraph.END` (one `OutputNode` shared by every graph) is replaced by `graph.add_end_node()` and `CriteriaGraph.END_LABEL`. `EvaluationNode.replacement` is a node label (was a node); `generate_feedback` raises `CriteriaGraphError` if it names neither an evaluation nor an output.
 - Sufficiencies are stored on the node: `EvaluationNode.sufficiencies`, a tuple, replaces `CriteriaGraph.sufficiencies`, and `add_node` copies them. An empty list means no sufficiencies (it used to remove the evaluation from the starting evaluations).

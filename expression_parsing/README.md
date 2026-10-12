@@ -6,7 +6,7 @@ Parse learner-written mathematical expressions (`2x^2 + |x-1|`, `a/bc`,
 by [Lambda Feedback](https://github.com/lambda-feedback) evaluation
 functions such as compareExpressions.
 
-## Installation
+## Install
 
 ```bash
 pip install lambdafeedback-expression-parsing
@@ -92,7 +92,10 @@ Parsing isn't thread-safe: it briefly changes process-wide warning
 filters. Parse from one thread at a time per process; one evaluation per
 process, as in a Lambda Feedback evaluation function, is fine.
 
-Number literals are limited to 1000 digits and exponents to ±1000
+Input is limited to 10,000 characters (`MAX_INPUT_LENGTH`), and an
+expression nested beyond Python's recursion limit (a sum of hundreds of
+terms) raises `ExpressionParsingError` saying it is too long or too deeply
+nested. Number literals are limited to 1000 digits and exponents to ±1000
 (`MAX_NUMBER_DIGITS`, `MAX_NUMBER_EXPONENT`): larger ones take SymPy minutes
 to read. LaTeX nested more than 10 brackets deep (`MAX_LATEX_NESTING`) is rejected: the LaTeX parser takes
 exponential time in nesting depth.

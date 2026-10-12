@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from ._scanning import CLOSING_BRACKETS, GROUPING, OPENING_BRACKETS, find_matching_parenthesis
@@ -11,6 +12,8 @@ from .symbol_tables import MINUS_PLUS, PLUS_MINUS
 
 if TYPE_CHECKING:
     from .params import ExpressionParams
+
+logger = logging.getLogger(__name__)
 
 _BRACKET_PAIRS = dict(zip(CLOSING_BRACKETS, OPENING_BRACKETS, strict=True))
 
@@ -206,6 +209,7 @@ def preprocess_expression(expr: str, params: ExpressionParams, *, name: str | No
     """
     original = expr.strip()
     expr = substitute_input_symbols(original, params)
+    logger.debug("preprocess %r: aliases substituted: %r", original, expr)
     bracket_error: BracketNotationError | None = None
     if not params.strict_syntax:
         try:
@@ -213,12 +217,15 @@ def preprocess_expression(expr: str, params: ExpressionParams, *, name: str | No
         except BracketNotationError as exc:
             expr = exc.expression
             bracket_error = exc
+            logger.debug("preprocess %r: mismatched brackets, best guess %r", original, expr)
     try:
         expr = convert_absolute_notation(expr, name=name)
     except AbsoluteValueNotationError as exc:
         expr = exc.expression
+        logger.debug("preprocess %r: ambiguous |...|, best guess %r", original, expr)
         if bracket_error is None:
             raise
     if bracket_error is not None:
         raise BracketNotationError(expr, original=original)
+    logger.debug("preprocess %r -> %r", original, expr)
     return expr

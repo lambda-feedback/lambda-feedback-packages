@@ -1,0 +1,73 @@
+name: Release
+
+# Publish one package to PyPI by pushing a tag named <package>-v<version>,
+# for example `units-v0.3.0`. The version must match the package's pyproject.toml.
+# Release dependencies first: slr_parsing, then criteria and expression_parsing, then units.
+#
+# Publishing uses PyPI trusted publishing: on PyPI, add this repository and
+# workflow (`release.yml`, environment `pypi`) as a trusted publisher for each
+# lambdafeedback-* project. No API token is stored.
+
+on:
+  push:
+    tags:
+      - "slr_parsing-v*"
+      - "criteria-v*"
+      - "expression_parsing-v*"
+      - "units-v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      package: ${{ steps.tag.outputs.package }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Poetry
+        run: pipx install poetry==2.4.3
+
+      - name: Read the package and version from the tag
+        id: tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          package="${tag%-v*}"
+          version="${tag##*-v}"
+          declared="$(cd "$package" && poetry version --short)"
+          if [ "$version" != "$declared" ]; then
+            echo "Tag version $version does not match $package/pyproject.toml ($declared)." >&2
+            exit 1
+          fi
+          echo "package=$package" >> "$GITHUB_OUTPUT"
+
+      - name: Check every package builds, installs and passes the smoke test
+        run: python scripts/check_dist.py --out build-check
+
+      - name: Build the tagged package
+        run: cd "${{ steps.tag.outputs.package }}" && poetry build --output ../dist
+
+      - name: Check the package metadata renders on PyPI
+        run: pipx run twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -13,6 +13,7 @@ Previewing a response (LaTeX/SymPy rendering) is an app-layer concern and
 lives in compareExpressions, not here.
 """
 
+import logging
 from importlib.metadata import PackageNotFoundError, version
 
 from .data import (
@@ -43,6 +44,9 @@ from .quantity import (
     same_dimension,
 )
 from .tags import QuantityTag
+
+# Library convention: callers decide where log records go (``logging.basicConfig(level=logging.DEBUG)`` shows them).
+logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
     __version__ = version("lambdafeedback-units")
