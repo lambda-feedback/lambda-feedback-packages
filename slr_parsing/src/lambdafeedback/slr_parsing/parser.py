@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import logging
+from collections import deque
 from collections.abc import Sequence
 from typing import Any, Literal
 
 from .errors import GrammarError, ParseError, ScanError
 from .grammar import (
     Action,
+    ErrorAction,
+    ErrorCondition,
     ErrorHandler,
     Lexeme,
     Matcher,
@@ -34,12 +37,20 @@ State = tuple[Item, ...]
 _ERROR = -1
 
 
+def _handler_entry(handler_index: int) -> int:
+    return -2 - handler_index
+
+
+def _handler_index(entry: int) -> int:
+    return -2 - entry
+
+
 class SLRParser:
     """An SLR(1) parser generated from token specifications and productions.
 
     See :mod:`lambdafeedback.slr_parsing.grammar` for how grammars are
     written. ``tag_handler`` computes the tags of nodes built by reduction
-    actions; ``error_handler`` entries recover from (or explain) syntax errors.
+    actions; ``error_handlers`` recover from (or explain) syntax errors.
     """
 
     def __init__(
@@ -49,7 +60,7 @@ class SLRParser:
         start_symbol: str,
         end_symbol: str,
         null_symbol: str,
-        error_handler: Sequence[ErrorHandler | tuple[Any, Any]] = (),
+        error_handlers: Sequence[ErrorHandler | tuple[ErrorCondition, ErrorAction]] = (),
         tag_handler: TagHandler = inherit_tags,
     ) -> None:
         # Heaviest patterns first: scan() keeps the longest match, so this
@@ -60,7 +71,7 @@ class SLRParser:
         self.end_symbol = end_symbol
         self.null_symbol = null_symbol
         self._check_production_shapes()
-        self.error_handler = [self._error_handler(handler) for handler in error_handler]
+        self.error_handlers = [self._error_handler(handler) for handler in error_handlers]
         self.tag_handler = tag_handler
 
         self._prepare_scanner()
@@ -121,13 +132,13 @@ class SLRParser:
             label: str | None = None
             content: Any = ""
             length = 0
-            rest = expr[index:]
             for pattern, symbol_label in symbols:
-                matched_length = match_pattern(pattern, rest)
+                matched_length = match_pattern(pattern, expr, index)
                 if matched_length is not None and matched_length > length:
                     length = matched_length
-                    content = rest[:length]
+                    content = expr[index : index + length]
                     label = symbol_label
+            rest = expr[index:] if rules else ""  # matchers read the text from where they are tried
             for rule_label, matcher in rules:
                 matched, rule_content = matcher(rest)
                 if matched is not None and len(matched) > length:
@@ -181,7 +192,7 @@ class SLRParser:
                 raise GrammarError(f"Production {production!r} is not a (head, body, action-or-None) triple.")
 
     @staticmethod
-    def _error_handler(handler: ErrorHandler | tuple[Any, Any]) -> ErrorHandler:
+    def _error_handler(handler: ErrorHandler | tuple[ErrorCondition, ErrorAction]) -> ErrorHandler:
         if not (isinstance(handler, tuple | list) and len(handler) == 2 and all(callable(part) for part in handler)):
             raise GrammarError(f"Error handler {handler!r} is not a (condition, action) pair of callables.")
         return ErrorHandler(*handler)
@@ -205,6 +216,10 @@ class SLRParser:
             self._productions_token.append((self._grammar_symbol(head, "Production head"), body_tokens))
         # Indexed like the productions: productions sharing a body keep their own actions.
         self._reductions: list[Action | None] = [production[2] for production in self.productions]
+        # Production indices by head, in production order.
+        self._productions_by_head: dict[Token, list[int]] = {}
+        for p, (head_token, _) in enumerate(self._productions_token):
+            self._productions_by_head.setdefault(head_token, []).append(p)
 
     def _classify_symbols(self) -> None:
         self._nonterminals: list[Token] = []
@@ -221,23 +236,22 @@ class SLRParser:
 
     def _compute_first(self) -> None:
         """FIRST sets of single symbols (ε-productions are not supported)."""
-        first: dict[Token, list[Token]] = {t: [t] for t in self._terminals}
-        first.update({nt: [] for nt in self._nonterminals})
+        # Dicts as ordered sets: membership is constant-time and the order stays deterministic.
+        first: dict[Token, dict[Token, None]] = {t: {t: None} for t in self._terminals}
+        first.update({nt: {} for nt in self._nonterminals})
         changed = True
         while changed:
             changed = False
             for nt in self._nonterminals:
-                for head, body in self._productions_token:
-                    if head != nt:
-                        continue
-                    for token in body:
+                for p in self._productions_by_head[nt]:
+                    for token in self._productions_token[p][1]:
                         for x in first[token]:
                             if x not in first[nt]:
-                                first[nt].append(x)
+                                first[nt][x] = None
                                 changed = True
                         if self.null_token not in first[token]:
                             break
-        self._first_dict = first
+        self._first_dict = {symbol: list(symbols) for symbol, symbols in first.items()}
 
     def _first(self, tokens: Sequence[Token]) -> list[Token]:
         """FIRST set of a string of symbols."""
@@ -253,8 +267,8 @@ class SLRParser:
         return result
 
     def _compute_follow(self) -> None:
-        follow: dict[Token, list[Token]] = {nt: [] for nt in self._nonterminals}
-        follow[self.start_token].append(self.end_token)
+        follow: dict[Token, dict[Token, None]] = {nt: {} for nt in self._nonterminals}
+        follow[self.start_token][self.end_token] = None
         changed = True
         while changed:
             changed = False
@@ -269,9 +283,9 @@ class SLRParser:
                         additions = [*follow[head], *rest_first]
                     for item in additions:
                         if item != self.null_token and item not in follow[token]:
-                            follow[token].append(item)
+                            follow[token][item] = None
                             changed = True
-        self._follow = follow
+        self._follow = {symbol: list(symbols) for symbol, symbols in follow.items()}
 
     def _closure(self, item_set: Sequence[Item]) -> tuple[Item, ...]:
         key = tuple(item_set)
@@ -279,44 +293,32 @@ class SLRParser:
         if cached is not None:
             return cached
         productions = self._productions_token
-        closure: list[Item] = []
-        new_items = list(item_set)
-        added = [False] * len(self._nonterminals)
-        while new_items:
-            closure += new_items
-            new_items = []
-            for i, j in closure:
-                if j < len(productions[i][1]):
-                    symbol = productions[i][1][j]
-                    k = next((k for k, nt in enumerate(self._nonterminals) if nt == symbol), None)
-                    if k is not None and not added[k]:
-                        new_items += [(p, 0) for p, (head, _) in enumerate(productions) if head == symbol]
-                        added[k] = True
+        closure = list(item_set)
+        expanded: set[Token] = set()  # nonterminals whose productions are already in the closure
+        for i, j in closure:  # the loop also visits the items it appends
+            body = productions[i][1]
+            if j < len(body) and body[j] in self._productions_by_head and body[j] not in expanded:
+                expanded.add(body[j])
+                closure += [(p, 0) for p in self._productions_by_head[body[j]]]
         self._closures[key] = result = tuple(closure)
         return result
 
     def _compute_transitions(self, item_set: Sequence[Item]) -> list[tuple[Token, list[Item]]]:
-        transitions: list[tuple[Token, list[Item]]] = []
+        transitions: dict[Token, list[Item]] = {}  # in order of first appearance
         for i, j in item_set:
             body = self._productions_token[i][1]
             if j < len(body):
-                symbol = body[j]
-                for existing, targets in transitions:
-                    if existing == symbol:
-                        targets.append((i, j + 1))
-                        break
-                else:
-                    transitions.append((symbol, [(i, j + 1)]))
-        return transitions
+                transitions.setdefault(body[j], []).append((i, j + 1))
+        return list(transitions.items())
 
     def _build_states(self) -> None:
         start: State = tuple((p, 0) for p, (head, _) in enumerate(self._productions_token) if head == self.start_token)
         self.states: list[State] = [start]
         self._state_ids: dict[State, int] = {start: 0}
         self._transitions: dict[State, list[tuple[Token, list[Item]]]] = {}
-        queue = [start]
+        queue = deque([start])
         while queue:
-            state = queue.pop(0)
+            state = queue.popleft()
             transitions = self._compute_transitions(self._closure(state))
             self._transitions[state] = transitions
             for _, kernel in transitions:
@@ -327,23 +329,19 @@ class SLRParser:
                     queue.append(target)
 
     def _build_table(self) -> None:
-        n_states = len(self.states)
         candidates: list[list[list[tuple[int, int]]]] = [[[] for _ in self._symbols] for _ in self.states]
         for s, state in enumerate(self.states):
+            targets = {symbol: self._state_ids[tuple(kernel)] for symbol, kernel in self._transitions[state]}
             for production_index, dot in self._closure(state):
                 head, body = self._productions_token[production_index]
                 if dot < len(body):  # shift / goto
                     symbol = body[dot]
-                    for transition_symbol, kernel in self._transitions[state]:
-                        if transition_symbol == symbol:
-                            target = self._state_ids[tuple(kernel)]
-                            candidates[s][self._symbol_ids[symbol]].append((production_index, target))
-                            break
+                    candidates[s][self._symbol_ids[symbol]].append((production_index, targets[symbol]))
                 elif head == self.start_token:  # accept
-                    candidates[s][self._symbol_ids[self.end_token]].append((production_index, n_states))
+                    candidates[s][self._symbol_ids[self.end_token]].append((production_index, self._accept))
                 else:  # reduce
                     for symbol in self._follow[head]:
-                        reduction = (production_index, n_states + production_index)
+                        reduction = (production_index, self._reduce_entry(production_index))
                         candidates[s][self._symbol_ids[symbol]].append(reduction)
 
         self.parsing_table: list[list[int]] = [
@@ -362,9 +360,9 @@ class SLRParser:
                 (self._productions_token[i][1][:dot], self._productions_token[i][1][dot:]) for i, dot in self.states[s]
             ]
             next_symbol = self._symbols[j]
-            for k, handler in enumerate(self.error_handler, 2):
+            for k, handler in enumerate(self.error_handlers):
                 if handler.condition(items, next_symbol):
-                    return -k
+                    return _handler_entry(k)
             return _ERROR
         best = entries[0]
         for entry in entries[1:]:
@@ -373,16 +371,29 @@ class SLRParser:
         return best[1]
 
     def _report_unreachable(self) -> None:
-        n_states = len(self.states)
         targets = {entry for row in self.parsing_table for entry in row}
-        states = [self.state_string(self.states[s]) for s in range(1, n_states) if s not in targets]
+        states = [self.state_string(self.states[s]) for s in range(1, len(self.states)) if s not in targets]
         reductions = [
             f"{head} --> {body}"
             for p, (head, body, *_) in enumerate(self.productions)
-            if self._productions_token[p][0] != self.start_token and n_states + p not in targets
+            if self._productions_token[p][0] != self.start_token and self._reduce_entry(p) not in targets
         ]
         if states or reductions:
             logger.warning("Unreachable states: %s; unreachable reductions: %s", states, reductions)
+
+    # Table entries (see _ERROR): shifts are state numbers, then accept, then one reduction per production.
+
+    @property
+    def _accept(self) -> int:
+        return len(self.states)
+
+    def _reduce_entry(self, production_index: int) -> int:
+        return len(self.states) + production_index
+
+    def _reduction_index(self, entry: int) -> int | None:
+        """The production an entry reduces by (``None`` if it doesn't reduce)."""
+        p = entry - len(self.states)
+        return p if 0 <= p < len(self._productions_token) else None
 
     # ------------------------------------------------------------------
     # Parsing
@@ -391,35 +402,35 @@ class SLRParser:
     def parsing_action(self, state: int, symbol: Token) -> int:
         return self.parsing_table[state][self._symbol_ids[symbol]]
 
-    def _run_error_handlers(
+    def _next_action(
         self,
-        action: int,
         stack: list[int],
         a: Token,
         input_tokens: list[Token],
-        tokens: list[Token],
+        tokens: deque[Token],
         output: list[Any],
-    ) -> tuple[list[int], Token, list[Token], list[Token], list[Any], int]:
-        """Apply error-recovery handlers until ``action`` is non-negative, or raise."""
+    ) -> tuple[list[int], Token, list[Token], deque[Token], list[Any], int]:
+        """The table entry for the current state and lookahead, after any error-recovery handlers, or raise."""
+        action = self.parsing_action(stack[-1], a)
         while action < 0:
             if action == _ERROR:
-                raise self._parse_error(stack, a, input_tokens, tokens, output)
-            handler = self.error_handler[-2 - action].action
-            stack, a, input_tokens, tokens, output = handler(self, stack, a, input_tokens, tokens, output)
+                raise self.parse_error(stack, a, input_tokens, list(tokens), output)
+            handler = self.error_handlers[_handler_index(action)].action
+            stack, a, input_tokens, remaining, output = handler(self, stack, a, input_tokens, list(tokens), output)
+            tokens = deque(remaining)
             action = self.parsing_action(stack[-1], a)
         return stack, a, input_tokens, tokens, output, action
 
     def _shift(
-        self, action: int, a: Token, stack: list[int], tokens: list[Token], output: list[Any], trace: bool
+        self, action: int, a: Token, stack: list[int], tokens: deque[Token], output: list[Any], trace: bool
     ) -> Token:
         stack.append(action)
         output.append(ExprNode(a, []))
         if trace:
             logger.debug("shift to %s  %s", self.state_string(self.states[action]), output)
-        return tokens.pop(0)
+        return tokens.popleft()
 
-    def _reduce(self, action: int, n_states: int, stack: list[int], output: list[Any], trace: bool) -> list[Any]:
-        p = action - n_states
+    def _reduce(self, p: int, stack: list[int], output: list[Any], trace: bool) -> list[Any]:
         production = self._productions_token[p]
         reduction = self._reductions[p]
         if reduction is None:
@@ -451,34 +462,33 @@ class SLRParser:
         """Parse from the start state until accept; returns the output and the tokens left after it."""
         if input_tokens and input_tokens[-1] == self.end_token:
             input_tokens = input_tokens[:-1]
-        tokens = [*input_tokens, self.end_token]
-        n_states = len(self.states)
+        tokens = deque([*input_tokens, self.end_token])
         trace = logger.isEnabledFor(logging.DEBUG)
-        a = tokens.pop(0)
+        a = tokens.popleft()
         stack = [0]
         output: list[Any] = []
-        accepted = False
-        while not accepted:
-            action = self.parsing_action(stack[-1], a)
-            stack, a, input_tokens, tokens, output, action = self._run_error_handlers(
-                action, stack, a, input_tokens, tokens, output
-            )
-            if action < n_states:
+        stack, a, input_tokens, tokens, output, action = self._next_action(stack, a, input_tokens, tokens, output)
+        while action != self._accept:
+            if action < self._accept:
                 a = self._shift(action, a, stack, tokens, output, trace)
-            elif action == n_states:
-                logger.debug("accept")
-                accepted = True
-            elif action < n_states + len(self._productions_token):
-                output = self._reduce(action, n_states, stack, output, trace)
+            elif (p := self._reduction_index(action)) is not None:
+                output = self._reduce(p, stack, output, trace)
             else:
                 raise ParseError(
-                    f"Invalid parse table entry {action}.", lookahead=a, remaining=tokens, stack=stack, output=output
+                    f"Invalid parse table entry {action}.",
+                    lookahead=a,
+                    remaining=list(tokens),
+                    stack=stack,
+                    output=output,
                 )
-        return output, tokens
+            stack, a, input_tokens, tokens, output, action = self._next_action(stack, a, input_tokens, tokens, output)
+        logger.debug("accept")
+        return output, list(tokens)
 
-    def _parse_error(
+    def parse_error(
         self, stack: list[int], a: Token, input_tokens: list[Token], tokens: list[Token], output: list[Any]
     ) -> ParseError:
+        """The :class:`ParseError` for a syntax error at ``a`` (for error actions that give up)."""
         if a == self.end_token:
             message = "Unexpected end of input."
         else:
@@ -508,16 +518,15 @@ class SLRParser:
         return f"I{self._state_ids[state]}: ({', '.join(self._item_strings(state))})"
 
     def parsing_table_to_string(self) -> str:
-        n_states = len(self.states)
         lines = ["\t" + "\t".join(x.content for x in self._symbols)]
         for s, row in enumerate(self.parsing_table):
             cells = []
             for entry in row:
                 if entry < 0:
                     cells.append(f"e{-entry}")
-                elif entry < n_states:
+                elif entry < self._accept:
                     cells.append(f"s{entry}")
                 else:
-                    cells.append(f"r{entry - n_states}")
+                    cells.append(f"r{entry - self._accept}")
             lines.append(f"{s}\t" + "\t".join(cells))
         return "\n".join(lines) + "\n"
