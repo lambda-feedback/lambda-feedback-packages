@@ -17,13 +17,13 @@ tag. They depend on each other by version, so install the ones you use
 **and the packages they depend on** from the same tag:
 
 ```bash
-pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=slr_parsing"
-pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=criteria"
-pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=expression_parsing"
-pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=units"
+pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=slr_parsing"
+pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=criteria"
+pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=expression_parsing"
+pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=units"
 ```
 
-With Poetry: `lambdafeedback-units = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0", subdirectory = "units" }`, and likewise for each package.
+With Poetry: `lambdafeedback-units = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0-rc.1", subdirectory = "units" }`, and likewise for each package.
 
 ## Packages
 

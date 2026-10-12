@@ -11,7 +11,7 @@ functions such as compareExpressions.
 From git (not on PyPI yet):
 
 ```bash
-pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=expression_parsing"
+pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=expression_parsing"
 ```
 
 Install the packages it depends on (`slr_parsing`) from the same tag; see the [repository README](../README.md#install).

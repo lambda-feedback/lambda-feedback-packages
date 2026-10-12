@@ -1,0 +1,20 @@
+name: Pre-release
+
+# A pre-release of all four packages: push a tag vMAJOR.MINOR.PATCH-alpha.N,
+# -beta.N or -rc.N, for example `v0.4.0-rc.1`. Each pyproject.toml must hold the
+# Python spelling of that version (0.4.0rc1), and the ranges between the
+# packages must admit it (>=0.4.0rc1,<0.5.0). The GitHub Release is marked as
+# a pre-release, so it never becomes "latest".
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
+
+jobs:
+  prerelease:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/build-release.yml
+    with:
+      prerelease: true

@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-expression-parsing
 
-## 0.3.0 (unreleased)
+## 0.3.0 (unreleased; pre-release 0.3.0rc1, tag v0.3.0-rc.1)
 
 The first public release. Further tidy-up after the 0.2.0 extraction: previewing a response and mapping failures to learner-facing feedback text are app-layer concerns, so they move out of this package. `__version__` gives the installed version.
 

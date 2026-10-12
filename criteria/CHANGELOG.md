@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-criteria
 
-## 0.3.0 (unreleased)
+## 0.3.0 (unreleased; pre-release 0.3.0rc1, tag v0.3.0-rc.1)
 
 The first public release, after the extraction refactor. The import path is now `lambdafeedback.criteria` (was `criteria`). There was no 0.2.0 release: all four `lambdafeedback-*` packages share one version, and the first release is 0.3.0. Supports Python 3.11 to 3.14; `__version__` gives the installed version.
 

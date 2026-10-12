@@ -1325,7 +1325,7 @@ type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
 name = "lambdafeedback-criteria"
-version = "0.3.0"
+version = "0.3.0rc1"
 description = "Criteria parser and criteria graphs that turn evaluations into feedback, for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.11"
@@ -1334,7 +1334,7 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-slr-parsing = ">=0.3.0,<0.4.0"
+lambdafeedback-slr-parsing = ">=0.3.0rc1,<0.4.0"
 
 [package.source]
 type = "directory"
@@ -1342,7 +1342,7 @@ url = "criteria"
 
 [[package]]
 name = "lambdafeedback-expression-parsing"
-version = "0.3.0"
+version = "0.3.0rc1"
 description = "Safe SymPy parsing and preprocessing of learner-written mathematical expressions, for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.11"
@@ -1351,7 +1351,7 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-slr-parsing = ">=0.3.0,<0.4.0"
+lambdafeedback-slr-parsing = ">=0.3.0rc1,<0.4.0"
 latex2sympy2-extended = {version = ">=1.11.0,<2.0", extras = ["antlr4-13-2"]}
 sympy = ">=1.14,<2.0"
 
@@ -1361,7 +1361,7 @@ url = "expression_parsing"
 
 [[package]]
 name = "lambdafeedback-slr-parsing"
-version = "0.3.0"
+version = "0.3.0rc1"
 description = "Dependency-free SLR(1) parser generator for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.11"
@@ -1375,7 +1375,7 @@ url = "slr_parsing"
 
 [[package]]
 name = "lambdafeedback-units"
-version = "0.3.0"
+version = "0.3.0rc1"
 description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
 optional = false
 python-versions = ">=3.11"
@@ -1384,8 +1384,8 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-expression-parsing = ">=0.3.0,<0.4.0"
-lambdafeedback-slr-parsing = ">=0.3.0,<0.4.0"
+lambdafeedback-expression-parsing = ">=0.3.0rc1,<0.4.0"
+lambdafeedback-slr-parsing = ">=0.3.0rc1,<0.4.0"
 sympy = ">=1.14,<2.0"
 
 [package.source]

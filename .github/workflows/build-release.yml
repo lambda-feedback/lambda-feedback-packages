@@ -1,0 +1,54 @@
+name: Build release
+
+# Shared by release.yml (vX.Y.Z) and prerelease.yml (vX.Y.Z-alpha.N / -beta.N / -rc.N).
+# Checks the tag against every package's version, builds and checks all four
+# packages, and attaches the wheels and sdists to a GitHub Release. The
+# packages are distributed through git for now; nothing goes to PyPI.
+
+on:
+  workflow_call:
+    inputs:
+      prerelease:
+        description: Whether the tag is a pre-release (marks the GitHub Release as one).
+        type: boolean
+        required: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the GitHub Release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Check the tag against the packages' versions
+        run: python scripts/release_version.py "$GITHUB_REF_NAME" ${{ inputs.prerelease && '--prerelease' || '' }}
+
+      - name: Install Poetry
+        run: pipx install poetry==2.4.3
+
+      - name: Install the dev environment
+        run: poetry install
+
+      - name: Test
+        run: poetry run scripts/test.sh -q
+
+      - name: Build, inspect and smoke-test the distributions
+        run: python scripts/check_dist.py --out build-check
+
+      - name: Check the package metadata
+        run: pipx run twine check build-check/*/*.whl build-check/*/*.tar.gz
+
+      - name: Create the GitHub Release with the built packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Wheels and sdists of the four lambdafeedback packages at $GITHUB_REF_NAME. See each package's CHANGELOG.md." \
+            ${{ inputs.prerelease && '--prerelease' || '--latest' }} \
+            build-check/*/*.whl build-check/*/*.tar.gz

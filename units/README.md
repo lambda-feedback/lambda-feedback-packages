@@ -17,7 +17,7 @@ evaluation function.
 From git (not on PyPI yet):
 
 ```bash
-pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=units"
+pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=units"
 ```
 
 Install the packages it depends on (`slr_parsing`, `expression_parsing`) from the same tag; see the [repository README](../README.md#install).
