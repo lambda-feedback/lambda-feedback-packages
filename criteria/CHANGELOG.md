@@ -1,12 +1,12 @@
 # Changelog: lambdafeedback-criteria
 
-## 0.2.0 (unreleased)
+## 0.3.0 (unreleased)
 
-The first public release, after the extraction refactor. The import path is now `lambdafeedback.criteria` (was `criteria`). Supports Python 3.11 to 3.14; `__version__` gives the installed version.
+The first public release, after the extraction refactor. The import path is now `lambdafeedback.criteria` (was `criteria`). There was no 0.2.0 release: all four `lambdafeedback-*` packages share one version, and the first release is 0.3.0. Supports Python 3.11 to 3.14; `__version__` gives the installed version.
 
 ### Renamed and restructured
 
-| v0.1 | 0.2.0 |
+| v0.1 | 0.3.0 |
 |---|---|
 | `criteria` (import) | `lambdafeedback.criteria` |
 | `generate_criteria_parser(reserved, token_list=, productions=)` | `build_criteria_parser(reserved, token_list=, productions=)`; the defaults are the tuples `grammar.TOKENS` / `grammar.PRODUCTIONS` |

@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "lambdafeedback-slr-parsing"
-version = "0.2.0"
+version = "0.3.0"
 description = "Dependency-free SLR(1) parser generator for Lambda Feedback evaluation functions."
 readme = "README.md"
 license = "MIT"

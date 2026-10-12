@@ -1325,7 +1325,7 @@ type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
 name = "lambdafeedback-criteria"
-version = "0.2.0"
+version = "0.3.0"
 description = "Criteria parser and criteria graphs that turn evaluations into feedback, for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.11"
@@ -1334,7 +1334,7 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-slr-parsing = ">=0.2.0,<0.3.0"
+lambdafeedback-slr-parsing = ">=0.3.0,<0.4.0"
 
 [package.source]
 type = "directory"
@@ -1351,7 +1351,7 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-slr-parsing = ">=0.2.0,<0.3.0"
+lambdafeedback-slr-parsing = ">=0.3.0,<0.4.0"
 latex2sympy2-extended = {version = ">=1.11.0,<2.0", extras = ["antlr4-13-2"]}
 sympy = ">=1.14,<2.0"
 
@@ -1361,7 +1361,7 @@ url = "expression_parsing"
 
 [[package]]
 name = "lambdafeedback-slr-parsing"
-version = "0.2.0"
+version = "0.3.0"
 description = "Dependency-free SLR(1) parser generator for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.11"
@@ -1385,7 +1385,7 @@ develop = true
 
 [package.dependencies]
 lambdafeedback-expression-parsing = ">=0.3.0,<0.4.0"
-lambdafeedback-slr-parsing = ">=0.2.0,<0.3.0"
+lambdafeedback-slr-parsing = ">=0.3.0,<0.4.0"
 sympy = ">=1.14,<2.0"
 
 [package.source]

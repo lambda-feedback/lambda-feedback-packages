@@ -1,6 +1,6 @@
 # Phase 2: `lambdafeedback.criteria`, and retiring `evaluation_result`: done
 
-Depends on `slr_parsing`. Version `0.2.0` (unreleased); see [`criteria/CHANGELOG.md`](../../criteria/CHANGELOG.md) for the migration tables (including `EvaluationResult` → `lf_toolkit.evaluation.Result`).
+Depends on `slr_parsing`. Version `0.3.0` (unreleased; all four packages share one version); see [`criteria/CHANGELOG.md`](../../criteria/CHANGELOG.md) for the migration tables (including `EvaluationResult` → `lf_toolkit.evaluation.Result`).
 
 ## Modules
 

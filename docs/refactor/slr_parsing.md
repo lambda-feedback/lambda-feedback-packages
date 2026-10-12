@@ -1,6 +1,6 @@
 # Phase 1: `lambdafeedback.slr_parsing`: done
 
-No dependencies. The single `parser.py` (845 lines) is now 7 modules. Released as `0.2.0`; see [`slr_parsing/CHANGELOG.md`](../../slr_parsing/CHANGELOG.md) for the migration table.
+No dependencies. The single `parser.py` (845 lines) is now 7 modules. Version `0.3.0` (unreleased; all four packages share one version); see [`slr_parsing/CHANGELOG.md`](../../slr_parsing/CHANGELOG.md) for the migration table.
 
 ## Target modules
 
