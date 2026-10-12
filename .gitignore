@@ -26,3 +26,9 @@ env/
 
 # scripts/check_dist.py output in CI
 build-check/
+
+# Local editor and assistant settings
+.idea/
+.junie/
+.mcp.json
+.claude/settings.local.json

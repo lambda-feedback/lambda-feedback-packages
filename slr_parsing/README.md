@@ -14,8 +14,10 @@ evaluation function.
 
 ## Install
 
+From git (not on PyPI yet):
+
 ```bash
-pip install lambdafeedback-slr-parsing
+pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=slr_parsing"
 ```
 
 Requires Python 3.11+. The import root is `lambdafeedback.slr_parsing`.

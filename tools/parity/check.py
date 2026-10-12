@@ -6,8 +6,9 @@
     poetry run python tools/parity/check.py --accept "why"   # record every unexpected diff as
                                                              # an expected change (review first!)
 
-Probes mirror ``capture_v0_1.py`` key-for-key; only the calls into the
-packages are adapted as their APIs change during the refactor. Intentional
+The baseline was captured from the v0.1 extraction (compareExpressions'
+code). The probes keep its keys; only the calls into the packages follow
+their current APIs. Intentional
 behaviour changes (bug fixes) are listed in ``expected_changes.json`` as
 ``{key: {"reason": ..., "value": <new output>}}`` and must match exactly.
 """
@@ -109,7 +110,7 @@ def quantity_parse(expr: str, variant: str) -> dict[str, Any]:
     }
 
 
-# --- Probe layout: must stay key-for-key identical to capture_v0_1.py. ---
+# --- Probe layout: must stay key-for-key identical to the baseline. ---
 
 
 def collect() -> dict[str, Any]:

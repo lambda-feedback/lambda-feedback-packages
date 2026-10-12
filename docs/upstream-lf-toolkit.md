@@ -1,6 +1,6 @@
 # Proposed upstream changes: lambda-feedback/toolkit-python
 
-Draft issues/patches against `toolkit-python@ae52fa6` (2026-09-01). Once both land, these packages can switch from structural typing to a real `lf_toolkit` dependency (see [criteria.md](criteria.md)). Nothing has been filed upstream yet.
+Draft issues/patches against `toolkit-python@ae52fa6` (2026-09-01). Once both land, these packages can switch from structural typing to a real `lf_toolkit` dependency (criteria's `ResultLike` protocol stands in for `lf_toolkit.evaluation.Result` until then). Nothing has been filed upstream yet.
 
 ## 1. Dev and optional tools are declared as runtime requirements
 

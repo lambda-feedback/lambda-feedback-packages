@@ -1,7 +1,9 @@
 """Parity corpus: plain data, independent of any package API.
 
-Quantity cases are frozen copies of the response strings in the v0.1 units
-test suites; the rest are hand-picked to cover each preprocessing feature.
+The probe outputs in ``baseline.json`` were captured from the v0.1 extraction
+(compareExpressions' code) with these inputs. Quantity cases are frozen copies
+of the response strings in the v0.1 units test suites; the rest are
+hand-picked to cover each preprocessing feature.
 """
 
 from typing import Any
@@ -146,24 +148,6 @@ EXPRESSION_INPUTS = [
     "x +",
 ]
 
-# Used by capture_v0_1.py only (the expr.preview_latex probes were dropped from
-# check.py in 0.3.0: preview_function moved out of the expression_parsing package it checks).
-LATEX_INPUTS = [
-    r"\frac{x + x^2 + x}{x}",
-    r"\frac{x + x^2 + x}{x} = y",
-    r"\pm \frac{3}{\sqrt{5}} i",
-    r"4 \pm \sqrt{6}",
-    r"\mu + x + 1",
-    r"\Lambda_0 + 1",
-    r"x_{1}^2",
-    r"E + e",
-    r"Ex + 2e",
-    r"\sin(x) \cdot \cos(x)",
-    r"\left| x \right|",
-    r"\frac{1}{2}",
-    r"\frac{x",
-]
-
 QUANTITY_VARIANTS: dict[str, dict[str, Any]] = {
     "strict_si": {"units_string": "SI", "strictness": "strict", "elementary_functions": True},
     "strict_all": {"units_string": "SI common imperial", "strictness": "strict"},
@@ -277,15 +261,3 @@ _EXTRA_QUANTITY_CASES = [
 ]
 
 QUANTITY_INPUTS = _TEST_SUITE_CASES + [f"10 {u}" for u in _UNIT_NAMES_AND_SYMBOLS] + _EXTRA_QUANTITY_CASES
-
-# Used by capture_v0_1.py only (the quantity.preview_latex probes were dropped from
-# check.py in 0.3.0: preview_function moved out of the units package it checks).
-QUANTITY_LATEX_INPUTS = [
-    r"162 \mathrm{~N} / \mathrm{m}^{2}",
-    r"\frac{F}{p \cdot \mu}",
-    r"F \cdot p",
-    r"\frac{10}{2} \mathrm{~kg}",
-    r"9.81 \mathrm{m} \mathrm{s}^{-2}",
-    r"9.81 \mathrm{m} \mathrm{s}**{-2}",
-    r"3 \text{kg}",
-]

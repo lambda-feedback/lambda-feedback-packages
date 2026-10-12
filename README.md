@@ -8,9 +8,22 @@ share the `lambdafeedback` namespace. The app-specific *core evaluation*
 logic stays in compareExpressions.
 
 The extraction refactor reshaped every package's API. Each package's
-`CHANGELOG.md` has the old → new migration table;
-[`docs/refactor/`](docs/refactor/README.md) has the plan, decisions and
-per-package checklists.
+`CHANGELOG.md` has the old → new migration table.
+
+## Install
+
+The packages are distributed through git for now (not PyPI), from a release
+tag. They depend on each other by version, so install the ones you use
+**and the packages they depend on** from the same tag:
+
+```bash
+pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=slr_parsing"
+pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=criteria"
+pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=expression_parsing"
+pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=units"
+```
+
+With Poetry: `lambdafeedback-units = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0", subdirectory = "units" }`, and likewise for each package.
 
 ## Packages
 
@@ -71,7 +84,7 @@ CI runs all of these, on Python 3.11 to 3.14.
 ### Parity check
 
 `tools/parity/baseline.json` holds 1608 probe outputs captured from the v0.1
-extraction (`tools/parity/capture_v0_1.py`). `tools/parity/check.py` rebuilds
+extraction (compareExpressions' code). `tools/parity/check.py` rebuilds
 the same probes through the current API. Any difference fails, unless it is
 listed in `tools/parity/expected_changes.json` with its reason and exact new
 value (bug fixes only).
@@ -91,10 +104,19 @@ wheels and sdists (namespace layout, `py.typed`, no local requirements,
 tests and changelog in the sdist), installs the wheels into a fresh venv
 and runs a smoke test; CI runs it with `twine check`.
 
-To release a package, push a tag `<package>-v<version>` (for example
-`units-v0.3.0`) matching its `pyproject.toml`: `.github/workflows/release.yml`
-builds it and publishes it with PyPI trusted publishing. Release dependencies
-first: `slr_parsing`, then `criteria` and `expression_parsing`, then `units`.
+The four packages share one version and are released together, through git
+(nothing is published to PyPI yet). Bump every `pyproject.toml` and the
+`>=lower,<upper` ranges between the packages, then push a tag:
+
+- **Release:** `vMAJOR.MINOR.PATCH` (e.g. `v0.4.0`) runs `release.yml`.
+- **Pre-release:** `vMAJOR.MINOR.PATCH-alpha.N`, `-beta.N` or `-rc.N` (e.g.
+  `v0.4.0-rc.1`) runs `prerelease.yml`. Python spells it `0.4.0rc1` in
+  `pyproject.toml`, and the ranges must admit it: `>=0.4.0rc1,<0.5.0`.
+
+Both run `build-release.yml`: `scripts/release_version.py` checks the tag
+against every package's version and the ranges between them, then the tests,
+`scripts/check_dist.py` and `twine check` run, and the wheels and sdists are
+attached to a GitHub Release (marked as a pre-release for pre-release tags).
 
 ## Logging
 
@@ -124,4 +146,3 @@ decide entirely on their own whether/how to surface any of this as feedback.
 `CriteriaGraph.export_feedback` turns reached criteria into feedback on a
 result object such as `lf_toolkit.evaluation.Result`; subclass the graph and
 override it to export feedback differently.
-See [`NOTES.md`](NOTES.md).

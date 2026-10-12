@@ -11,13 +11,17 @@ evaluation function.
 
 ## Install
 
+From git (not on PyPI yet):
+
 ```bash
-pip install lambdafeedback-criteria
+pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=criteria"
 ```
+
+Install the packages it depends on (`slr_parsing`) from the same tag; see the [repository README](../README.md#install).
 
 Requires Python 3.11+. The import root is `lambdafeedback.criteria`. The only
 dependency is
-[`lambdafeedback-slr-parsing`](https://pypi.org/project/lambdafeedback-slr-parsing/).
+[`lambdafeedback-slr-parsing`](../slr_parsing/README.md).
 
 ## Parsing criteria
 

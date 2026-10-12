@@ -14,9 +14,13 @@ evaluation function.
 
 ## Install
 
+From git (not on PyPI yet):
+
 ```bash
-pip install lambdafeedback-units
+pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=units"
 ```
+
+Install the packages it depends on (`slr_parsing`, `expression_parsing`) from the same tag; see the [repository README](../README.md#install).
 
 Requires Python 3.11 or later. The import root is `lambdafeedback.units`.
 

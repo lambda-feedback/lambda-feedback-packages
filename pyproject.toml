@@ -16,7 +16,7 @@ lambdafeedback-expression-parsing = { path = "expression_parsing", develop = tru
 lambdafeedback-units = { path = "units", develop = true }
 # Dev-only: tests check the criteria feedback helpers against the real
 # lf_toolkit Result. Not a runtime dependency until lf_toolkit stops shipping
-# its dev tools as runtime requirements (docs/refactor/upstream-lf-toolkit.md).
+# its dev tools as runtime requirements (docs/upstream-lf-toolkit.md).
 lf-toolkit = { git = "https://github.com/lambda-feedback/toolkit-python.git", rev = "ae52fa6f23c585f2595e6f32dc56ac8984c8fc50" }
 pytest = "^9.1"
 pytest-cov = "^7.0"
@@ -33,16 +33,6 @@ filterwarnings = [
 [tool.ruff]
 target-version = "py311"
 line-length = 120
-# Packages are removed from this list as their refactor phase lands
-# (see docs/refactor/). tools/parity/capture_v0_1.py targets the frozen
-# v0.1 API and is kept verbatim.
-extend-exclude = [
-    "tools/parity/capture_v0_1.py",
-]
-
-[tool.ruff.format]
-# NOTES.md quotes the original v0.1 code verbatim.
-exclude = ["NOTES.md"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "N", "TID"]
@@ -63,8 +53,7 @@ known-first-party = ["lambdafeedback"]
 
 [tool.mypy]
 python_version = "3.11"
-# Packages are added here as their refactor phase lands (see docs/refactor/).
-files = ["scripts/check_dist.py", "tools/parity/corpus.py", "tools/parity/check.py", "slr_parsing/src", "criteria/src", "expression_parsing/src", "units/src"]
+files = ["scripts/check_dist.py", "scripts/release_version.py", "tools/parity/corpus.py", "tools/parity/check.py", "slr_parsing/src", "criteria/src", "expression_parsing/src", "units/src"]
 namespace_packages = true
 explicit_package_bases = true
 mypy_path = [

@@ -8,9 +8,13 @@ functions such as compareExpressions.
 
 ## Install
 
+From git (not on PyPI yet):
+
 ```bash
-pip install lambdafeedback-expression-parsing
+pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0#subdirectory=expression_parsing"
 ```
+
+Install the packages it depends on (`slr_parsing`) from the same tag; see the [repository README](../README.md#install).
 
 Python 3.11 and later is supported. LaTeX input uses
 [latex2sympy2_extended](https://pypi.org/project/latex2sympy2-extended/).
