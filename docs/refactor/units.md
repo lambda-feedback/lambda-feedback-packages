@@ -12,7 +12,8 @@ Depends on `slr_parsing`, `expression_parsing` and `sympy`. Released as `0.2.0`;
 | `params.py` | `QuantityParams(ExpressionParams)`: `strictness`, `legacy_preprocessing`, `unit_sets`; `from_dict` maps `"legacy"` and `units_string` |
 | `tags.py` | `QuantityTag`: `UNIT`, `NON_UNIT`, `NUMBER`, `REJECTED_UNIT` (was `U`/`V`/`N`/`R`) |
 | `parser.py` | Unit dictionaries, tag handler, natural juxtaposition, `build_quantity_parser` (cached per unit sets and strictness) |
-| `quantity.py` | `PhysicalQuantity`, `parse_quantity`, `RevertedUnit` |
+| `quantity.py` | `PhysicalQuantity`, `parse_quantity`, `RevertedUnit`, `same_dimension` |
+| `text.py` | Cleaning up the input text (whitespace, product signs, LaTeX spacing and upright text) and checks on it (Celsius/Fahrenheit, disallowed units) |
 | `preprocessing.py` | `preprocess_quantity(expr, params, *, name=None)` → `str`, `preprocess_legacy` (string searches built once, deprecated), `transform_prefixes_to_standard` |
 | `errors.py` | `QuantityError` (a `ValueError`) → `QuantityParseError`, `UnitConversionError` |
 

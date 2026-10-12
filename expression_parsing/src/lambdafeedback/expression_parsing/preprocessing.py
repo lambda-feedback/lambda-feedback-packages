@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from ._scanning import CLOSING_BRACKETS, GROUPING, OPENING_BRACKETS, find_matching_parenthesis
@@ -50,21 +49,19 @@ def is_multiple_answers_wrapper(expr: str) -> bool:
     return find_matching_parenthesis(stripped, 0, delimiters=("{", "}")) == len(stripped) - 1
 
 
-def create_expression_set(exprs: str | Sequence[str], params: ExpressionParams) -> list[str]:
+def create_expression_set(expr: str, params: ExpressionParams) -> list[str]:
     """Expand a response into the expressions it stands for.
 
     A top-level ``{a, b}`` gives one expression per element, and ``±``/``∓``
     (``plus_minus``/``minus_plus``) give both signs. Symbol aliases are
     substituted. The result is de-duplicated, in first-seen order.
     """
-    if isinstance(exprs, str):
-        exprs = (
-            [e.strip() for e in _split_top_level(exprs.strip()[1:-1])]
-            if is_multiple_answers_wrapper(exprs)
-            else [exprs]
-        )
+    if is_multiple_answers_wrapper(expr):
+        parts = [part.strip() for part in _split_top_level(expr.strip()[1:-1])]
+    else:
+        parts = [expr]
     expanded: dict[str, None] = {}
-    for original in exprs:
+    for original in parts:
         # substitute_input_symbols also writes params.plus_minus/minus_plus as PLUS_MINUS/MINUS_PLUS.
         expr = substitute_input_symbols(original, params)
         expanded.update(dict.fromkeys(expand_plus_minus(expr)))

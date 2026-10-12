@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Mapping
 from string import ascii_letters
-from typing import Any
+from typing import Any, Literal, TypeAlias
 
 from latex2sympy2_extended import NormalizationConfig, normalize_latex
 from latex2sympy2_extended.latex2sympy2 import ConversionConfig, _Latex2Sympy
@@ -109,7 +109,7 @@ def sympy_to_latex(
 # ----------------------------------------------------------------------
 
 
-def find_placeholder(exp: str) -> str | None:
+def _find_placeholder(exp: str) -> str | None:
     """A letter not occurring in ``exp`` (``None`` if every candidate does)."""
     for char in "abcdfghjkoqrtvwxyzABCDFGHIJKLMNOPQRSTUVWXYZ":
         if char not in exp:
@@ -117,7 +117,10 @@ def find_placeholder(exp: str) -> str | None:
     return None
 
 
-def _e_tokens(latex: str) -> Iterator[tuple[int, int, str]]:
+_ETokenKind: TypeAlias = Literal["command", "exponent", "letter"]
+
+
+def _e_tokens(latex: str) -> Iterator[tuple[int, int, _ETokenKind]]:
     """``(start, end, kind)`` for each LaTeX command, ``E``/``e`` in scientific notation and other ``E``/``e``.
 
     ``kind`` is ``"command"`` (protected if it is ``\\gamma`` or ``\\Gamma``,
@@ -165,7 +168,7 @@ def _protect_e_symbols(latex_str: str) -> tuple[str, dict[str, str]]:
     replacements: dict[str, str] = {}
     for original in _PROTECTED:
         if original in found:
-            placeholder = find_placeholder(latex_str + "".join(replacements.values()))
+            placeholder = _find_placeholder(latex_str + "".join(replacements.values()))
             if placeholder:
                 replacements[original] = placeholder
 
@@ -333,7 +336,7 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
 def sanitise_latex(response: str) -> str:
     """Remove whitespace, turn ``~`` into spaces and unwrap ``\\mathrm{...}`` / ``\\text{...}``.
 
-    (units has its own, more lenient unwrapping for quantity previews: ``units.quantity._unwrap_upright``.)
+    (units has its own, more lenient unwrapping for quantity previews: ``units.text._unwrap_upright``.)
     """
     response = "".join(response.split()).replace("~", " ")
     for wrapper in (r"\mathrm", r"\text"):

@@ -13,7 +13,7 @@ from tokenize import TokenError, generate_tokens
 from typing import Any
 
 import sympy
-from sympy import Basic, Equality, Function, Set, Symbol, Tuple
+from sympy import Basic, Chi, E, Equality, Function, I, Lambda, Set, Symbol, Tuple, beta, gamma, zeta
 from sympy.parsing.sympy_parser import (
     _token_splittable,
     auto_number,
@@ -94,8 +94,6 @@ def sympy_symbols(symbols: Iterable[str]) -> dict[str, Symbol]:
 
 def _base_symbol_dict(params: ExpressionParams) -> dict[str, Any]:
     """Names SymPy would otherwise read as special objects, unless enabled by the parameters."""
-    from sympy import Chi, E, I, Lambda, beta, gamma, zeta
-
     special: dict[str, Any] = {"beta": beta, "gamma": gamma, "zeta": zeta, "Lambda": Lambda, "Chi": Chi}
     if not params.special_functions:
         special = {name: Symbol(name) for name in special}
@@ -337,13 +335,27 @@ def _parse_side(
     return parsed.simplify() if isinstance(parsed, Basic) else parsed
 
 
-def parse_expression(expr_string: str | Sequence[str], config: SympyParsingConfig) -> Basic | set[Basic]:
-    """Parse a (preprocessed) response into a SymPy expression.
+def parse_expressions(expr: str, config: SympyParsingConfig) -> tuple[Basic, ...]:
+    """Parse a (preprocessed) response into the SymPy expressions it stands for.
 
-    A response standing for several expressions (``{a, b}`` or ``±``) gives a
-    set of them. ``a = b`` gives an unevaluated ``Equality``.
+    Usually one, but ``{a, b}`` and ``±`` stand for several. They come in the
+    order written, each once. ``a = b`` gives an unevaluated ``Equality``.
     """
-    expressions = create_expression_set(expr_string, config.substitution_params)
     transformations = config.transformations()
-    parsed = {_parse_one(expr, config, transformations) for expr in expressions}
-    return parsed.pop() if len(expressions) == 1 else parsed
+    parsed = (
+        _parse_one(text, config, transformations) for text in create_expression_set(expr, config.substitution_params)
+    )
+    return tuple(dict.fromkeys(parsed))
+
+
+def parse_expression(expr: str, config: SympyParsingConfig) -> Basic:
+    """Parse a (preprocessed) response that stands for one expression (see :func:`parse_expressions`).
+
+    Raises :class:`ExpressionParsingError` if it stands for several (``{a, b}`` or ``±``).
+    """
+    expressions = parse_expressions(expr, config)
+    if len(expressions) > 1:
+        raise ExpressionParsingError(
+            f"{expr!r} stands for {len(expressions)} expressions, not one; use parse_expressions.", expression=expr
+        )
+    return expressions[0]

@@ -2,25 +2,26 @@
 
 A grammar is a list of token specifications plus a list of productions.
 
-Token specifications are tuples in one of four shapes:
+Each token specification has a ``pattern`` (a literal string or a
+:class:`Lexeme`), which is also how the symbol is written in production
+strings, and a ``label``. There are four kinds:
 
-``(pattern, label)``
-    A literal string or a :class:`Lexeme`; input text matching it becomes a
-    ``label`` token. Grammar symbols (``START``, nonterminals, ...) are
-    declared this way too, since production strings are scanned with the same
-    specifications. Text that needs more than a :class:`Lexeme` (a run of
-    digits, say) is scanned by a matcher.
-``(pattern, label, matcher)``
+:class:`TokenPattern`
+    Input text matching the pattern becomes a ``label`` token. Grammar
+    symbols that may also appear in input (``START``, ...) are declared this
+    way too.
+:class:`TokenMatcher`
     ``matcher(text) -> (matched, content)`` is tried at each position:
     ``matched`` is the consumed text (or ``None``) and ``content`` the
-    token's content.
-``(symbol, label, catch_undefined)``
+    token's content. For text that needs more than a :class:`Lexeme` (a run
+    of digits, say).
+:class:`CatchAll`
     At most one per grammar: runs of text that no other specification
     matches become ``label`` tokens (without it, such text is a
     :class:`ScanError`).
-``(symbol, label, None)``
-    A symbol that only appears in productions and is never scanned from
-    input.
+:class:`GrammarSymbol`
+    A symbol that only appears in productions (a nonterminal) and is never
+    scanned from input.
 
 Productions are ``(head, body, action)`` triples (or :class:`Production`),
 where ``head`` and ``body`` are scanned into grammar symbols and ``action``
@@ -125,8 +126,41 @@ def pattern_weight(pattern: str | Lexeme) -> int:
     return pattern.weight if isinstance(pattern, Lexeme) else len(pattern)
 
 
-TokenSpec: TypeAlias = tuple["str | Lexeme", str] | tuple["str | Lexeme", str, Any]
-"""A token specification; see the module docstring for the accepted shapes."""
+@dataclass(frozen=True)
+class TokenPattern:
+    """Input matching ``pattern`` becomes a ``label`` token (see the module docstring)."""
+
+    pattern: str | Lexeme
+    label: str
+
+
+@dataclass(frozen=True)
+class TokenMatcher:
+    """``matcher`` reads ``label`` tokens from the input; ``pattern`` is the symbol in productions."""
+
+    pattern: str | Lexeme
+    label: str
+    matcher: Matcher
+
+
+@dataclass(frozen=True)
+class CatchAll:
+    """Runs of input no other specification matches become ``label`` tokens (at most one per grammar)."""
+
+    pattern: str | Lexeme
+    label: str
+
+
+@dataclass(frozen=True)
+class GrammarSymbol:
+    """A symbol used only in productions (a nonterminal), never scanned from input."""
+
+    pattern: str | Lexeme
+    label: str
+
+
+TokenSpec: TypeAlias = TokenPattern | TokenMatcher | CatchAll | GrammarSymbol
+"""A token specification; see the module docstring for the four kinds."""
 
 ErrorCondition: TypeAlias = Callable[[list[tuple[list[Token], list[Token]]], Token], bool]
 """``condition(items, next_symbol)``: whether an error action applies.
@@ -168,8 +202,3 @@ class ErrorHandler(NamedTuple):
 
     condition: ErrorCondition
     action: ErrorAction
-
-
-def catch_undefined(label: str, content: str, original: str, start: int, end: int) -> Token:
-    """Marker for the catch-all token specification (see module docstring)."""
-    return Token(label, content, original, start, end)

@@ -9,12 +9,12 @@ No dependencies. The single `parser.py` (845 lines) is now 7 modules. Released a
 | `tokens.py` | `Token`, `ExprNode`, traversal steps |
 | `actions.py` | Reduction actions (`proceed`, `append`, `append_last`, `join`, `create_node`, `relabel`, `group`, `operate`, `infix`, `insert_infix`, `compose`, `flatten`) |
 | `tags.py` | `add_tag`, `remove_tag`, `replace_tag`, `inherit_tags`, `union_rule`, `intersection_rule` |
-| `grammar.py` | Documented grammar format; `Production`, `ErrorHandler` named tuples; type aliases; `catch_undefined` |
+| `grammar.py` | Documented grammar format; token specifications `TokenPattern`, `TokenMatcher`, `CatchAll`, `GrammarSymbol`; `Production`, `ErrorHandler`, `ParseState`; type aliases |
 | `parser.py` | `SLRParser`, with `__init__` split into `_prepare_scanner`, `_check_duplicate_productions`, `_tokenise_productions`, `_classify_symbols`, `_compute_first`, `_compute_follow`, `_build_states`, `_build_table`/`_resolve`, `_report_unreachable` |
 | `builder.py` | `build_expression_parser` |
 | `errors.py` | `SLRError` → `GrammarError`, `ScanError`, `ParseError` (with `details()`), plus `new_root_on_error` |
 
-**Deviation:** there is no `TokenRule` named tuple. Token specifications distinguish 2-tuples (literal patterns) from 3-tuples (matcher / catch-all / grammar-only) by length, so a `TokenRule(pattern, label, matcher=None)` would be ambiguous. The three shapes are documented in `grammar.py` and typed as `TokenSpec` instead.
+**Deviation:** there is no single `TokenRule` named tuple. Token specifications were 2- and 3-tuples told apart by length and by a marker function (`catch_undefined`); the pre-release review replaced them with four typed classes (`TokenPattern`, `TokenMatcher`, `CatchAll`, `GrammarSymbol`), since one `TokenRule(pattern, label, matcher=None)` couldn't express a catch-all or grammar-only symbol.
 
 ## Checklist
 

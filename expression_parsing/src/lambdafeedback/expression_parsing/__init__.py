@@ -55,7 +55,7 @@ from .substitution import (
     substitutions_sort_key,
 )
 from .symbol_tables import UNICODE_OPERATORS
-from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
+from .sympy_parsing import SympyParsingConfig, parse_expression, parse_expressions, sympy_symbols
 
 try:
     __version__ = version("lambdafeedback-expression-parsing")
@@ -98,6 +98,7 @@ __all__ = [
     "latex_symbols",
     "normalise_unicode_operators",
     "parse_expression",
+    "parse_expressions",
     "parse_latex",
     "parse_symbol_assumptions",
     "plain_number_end",

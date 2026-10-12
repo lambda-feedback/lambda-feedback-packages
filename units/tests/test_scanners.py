@@ -5,11 +5,11 @@ import pytest
 from lambdafeedback.units import QuantityParams
 from lambdafeedback.units.parser import _number_prefix
 from lambdafeedback.units.preprocessing import transform_prefixes_to_standard
-from lambdafeedback.units.quantity import (
-    _called_names,
-    _collapse_whitespace,
-    _mentions_celsius_or_fahrenheit,
-    _normalise_latex,
+from lambdafeedback.units.text import (
+    called_names,
+    collapse_whitespace,
+    mentions_celsius_or_fahrenheit,
+    normalise_latex,
 )
 
 
@@ -47,7 +47,7 @@ def test_number_prefix(string, expected):
     ],
 )
 def test_celsius_or_fahrenheit(expr, expected):
-    assert _mentions_celsius_or_fahrenheit(expr) is expected
+    assert mentions_celsius_or_fahrenheit(expr) is expected
 
 
 @pytest.mark.parametrize(
@@ -63,16 +63,16 @@ def test_celsius_or_fahrenheit(expr, expected):
     ],
 )
 def test_normalise_latex(expr, expected):
-    assert _normalise_latex(expr) == expected
+    assert normalise_latex(expr) == expected
 
 
 def test_called_names():
-    assert _called_names("sin (2) + 9log(x) + é(y) + _f(z) + (w)") == ["sin", "log", "_f"]
+    assert called_names("sin (2) + 9log(x) + é(y) + _f(z) + (w)") == ["sin", "log", "_f"]
 
 
 @pytest.mark.parametrize(("text", "expected"), [("a \t b", "a b"), (" a\n", " a "), ("\t", " "), ("", "")])
 def test_collapse_whitespace(text, expected):
-    assert _collapse_whitespace(text) == expected
+    assert collapse_whitespace(text) == expected
 
 
 @pytest.mark.parametrize(

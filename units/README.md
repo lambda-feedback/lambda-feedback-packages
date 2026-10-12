@@ -29,7 +29,7 @@ q = parse_quantity("5 km/h", QuantityParams())
 q  # PhysicalQuantity(value='5', unit='kilometre/hour')
 q.value.content_string()  # '5'
 q.unit.content_string()  # 'kilometre/hour'   (symbols become unit names)
-q.standard_value  # 5*5/18             (SymPy, unevaluated; .simplify() → 25/18)
+q.standard_values  # (5*5/18,)        (SymPy, unevaluated; .simplify() → 25/18)
 q.standard_unit  # metre/second
 q.unit_factor  # 5/18
 q.latex  # 5~\frac{\mathrm{kilometre}}{\mathrm{hour}}
@@ -61,7 +61,7 @@ parse_quantity(text, params)  # PhysicalQuantity(value='2', unit='micrometre')
 | Attribute | Meaning |
 |---|---|
 | `value`, `unit` | The value and unit parse trees (`ExprNode`), or `None`. `content_string()` gives the normalised text. |
-| `standard_value` | The value with the unit's factor applied, as a SymPy expression, so it is the quantity's magnitude in SI base units. |
+| `standard_values` | The value with the unit's factor applied, as a tuple of SymPy expressions (several for a value such as `{1, 2}` or `±`), so it is the quantity's magnitude in SI base units. |
 | `standard_unit` | The unit in SI base units, without its numeric factor. |
 | `expanded_unit` | The unit in SI base units, with its factor. |
 | `unit_factor` | The factor between the unit and SI base units. |

@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import cache
-from string import ascii_letters
 from typing import Any
 
 from sympy import Basic, Integer, simplify
 
 from lambdafeedback.expression_parsing import (
-    UNICODE_OPERATORS,
     AbsoluteValueNotationError,
     BracketNotationError,
     ExpressionParsingError,
     SympyParsingConfig,
     parse_expression,
+    parse_expressions,
     parse_latex,
     preprocess_expression,
     substitute,
@@ -23,188 +22,16 @@ from lambdafeedback.expression_parsing import (
 )
 from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode, SLRError, SLRParser
 
-from .data import ALL_UNITS, CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, UNIT_SETS, AnyUnit, units_in
+from .data import CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, UNIT_SETS, units_in
 from .errors import DisallowedUnitError, QuantityError, QuantityParseError, UnitConversionError
 from .params import MAX_INPUT_LENGTH, QuantityParams
 from .parser import Label, build_quantity_parser
 from .tags import QuantityTag
+from .text import called_names, disallowed_unit, mentions_celsius_or_fahrenheit, normalise_input
 
 _BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
 _BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
 _DIMENSION_NAMES = frozenset(unit.dimension for unit in SI_BASE_UNITS)
-# Product signs as in expression parsing (·, ⋅, ∙, ×), and zero-width characters dropped.
-_PRODUCT_SIGNS = str.maketrans(
-    {
-        **{sign: "*" for sign, ascii_sign in UNICODE_OPERATORS.items() if ascii_sign == "*"},
-        **dict.fromkeys("\u200b\u200c\u200d\ufeff"),
-    }
-)
-_LETTERS = frozenset(ascii_letters)
-_UPRIGHT_COMMANDS = ("mathrm", "text", "textrm", "operatorname")
-
-
-def _is_word_character(char: str) -> bool:
-    return char.isalnum() or char == "_"
-
-
-def _called_names(expr: str) -> list[str]:
-    """The names followed by ``(`` (function calls) in ``expr``; a name starts with an ASCII letter or ``_``."""
-    names = []
-    bracket = expr.find("(")
-    while bracket != -1:
-        end = bracket
-        while end > 0 and expr[end - 1].isspace():
-            end -= 1
-        start = end
-        while start > 0 and _is_word_character(expr[start - 1]):
-            start -= 1
-        while start < end and not (expr[start] in ascii_letters or expr[start] == "_"):
-            start += 1
-        if start < end:
-            names.append(expr[start:end])
-        bracket = expr.find("(", bracket + 1)
-    return names
-
-
-def _collapse_whitespace(text: str) -> str:
-    """Each run of whitespace in ``text`` as one space (including at either end)."""
-    collapsed = " ".join(text.split())
-    if text[:1].isspace():
-        collapsed = " " + collapsed
-    if text[-1:].isspace() and collapsed != " ":
-        collapsed += " "
-    return collapsed
-
-
-def _mentions_celsius_or_fahrenheit(expr: str) -> bool:
-    """Whether ``expr`` has ``℃``, ``℉``, or ``°``/``deg``/``degree``/``degrees`` then ``C`` or ``F``.
-
-    Read as degree times coulomb (or farad) otherwise.
-    """
-    if "℃" in expr or "℉" in expr:
-        return True
-
-    def celsius_or_fahrenheit_at(index: int) -> bool:
-        while index < len(expr) and expr[index].isspace():
-            index += 1
-        return expr[index : index + 1] in ("C", "F") and expr[index + 1 : index + 2] not in _LETTERS
-
-    for index, char in enumerate(expr):
-        if char == "°" and celsius_or_fahrenheit_at(index + 1):
-            return True
-        if (
-            expr.startswith("deg", index)
-            and (index == 0 or expr[index - 1] not in ascii_letters)
-            and any(
-                expr.startswith(suffix, index + 3) and celsius_or_fahrenheit_at(index + 3 + len(suffix))
-                for suffix in ("rees", "ree", "")
-            )
-        ):
-            return True
-    return False
-
-
-@cache
-def _unselected_unit_forms(unit_sets: frozenset[str]) -> dict[str, AnyUnit]:
-    """Spellings (names, alternatives, plurals, with or without a prefix name) of units outside ``unit_sets``.
-
-    Symbols are left out: a letter such as ``h`` or ``L`` in a value is more
-    likely a variable than an hour or a litre. A spelling of a selected unit is
-    never included.
-    """
-    prefixes = ("", *(prefix.name for prefix in SI_PREFIXES))
-
-    def spellings(unit: AnyUnit) -> set[str]:
-        return {prefix + form for form in (unit.name, *unit.alternatives, *unit.plurals) for prefix in prefixes}
-
-    selected = units_in(unit_sets)
-    allowed = set().union(*map(spellings, selected))
-    forms: dict[str, AnyUnit] = {}
-    for unit in ALL_UNITS:
-        if unit not in selected:
-            for form in spellings(unit) - allowed:
-                forms.setdefault(form, unit)
-    return forms
-
-
-def _disallowed_unit(text: str, unit_sets: frozenset[str]) -> tuple[str, AnyUnit] | None:
-    """The first whole word of ``text`` (and its unit) that spells a unit outside ``unit_sets``, if any.
-
-    A word is a run of letters and ``_``; one after ``\\`` is a LaTeX command.
-    Characters that aren't letters (``°``) are checked one at a time.
-    """
-    forms = _unselected_unit_forms(unit_sets)
-    index = 0
-    while index < len(text):
-        start = index
-        if text[index].isalpha() or text[index] == "_":
-            while index < len(text) and (text[index].isalpha() or text[index] == "_"):
-                index += 1
-            if start > 0 and text[start - 1] == "\\":
-                continue
-        else:
-            index += 1
-        unit = forms.get(text[start:index])
-        if unit is not None:
-            return text[start:index], unit
-    return None
-
-
-def _normalise_latex(expr: str) -> str:
-    """LaTeX spacing (``~``, ``\\,``) as spaces and upright text (``\\mathrm{m}``) as plain text.
-
-    MathLive writes ``2~\\mathrm{m}``; the quantity grammar needs ``2 m``.
-    """
-    spaced = []
-    index = 0
-    while index < len(expr):
-        if expr[index] == "~":
-            spaced.append(" ")
-            index += 1
-        elif expr.startswith("\\", index) and expr[index + 1 : index + 2] in (",", ";", ":", " "):
-            spaced.append(" ")
-            index += 2
-        elif quad := next((q for q in ("\\qquad", "\\quad") if expr.startswith(q, index)), None):
-            after = index + len(quad)
-            if after < len(expr) and _is_word_character(expr[after]):
-                spaced.append(expr[index])
-                index += 1
-            else:
-                spaced.append(" ")
-                index = after
-        else:
-            spaced.append(expr[index])
-            index += 1
-    return _unwrap_upright("".join(spaced))
-
-
-def _unwrap_upright(expr: str) -> str:
-    """``\\mathrm{m}``, ``\\text{m}``, ... as ``m`` (when the braces hold no other braces).
-
-    Unlike ``expression_parsing.sanitise_latex`` this also unwraps ``\\textrm``
-    and ``\\operatorname``, leaves nested braces alone and never raises: a unit
-    preview should degrade, not fail.
-    """
-    unwrapped = []
-    index = 0
-    while (backslash := expr.find("\\", index)) != -1:
-        unwrapped.append(expr[index:backslash])
-        index = backslash + 1
-        for command in _UPRIGHT_COMMANDS:
-            start = backslash + 1 + len(command) + 1
-            if not expr.startswith(command + "{", backslash + 1):
-                continue
-            end = expr.find("}", start)
-            if end != -1 and "{" not in expr[start:end]:
-                unwrapped.append(expr[start:end])
-                index = end + 1
-                break
-        else:
-            unwrapped.append("\\")
-    unwrapped.append(expr[index:])
-    return "".join(unwrapped)
-
-
 MAX_UNIT_EXPONENT = 100
 """Largest exponent a unit may have (``m^100``), of either sign."""
 
@@ -334,8 +161,8 @@ class PhysicalQuantity:
         reverted_units: :class:`RevertedUnit` facts for unit-like text read
             as part of the value.
         value_latex, unit_latex, latex: LaTeX for the value, the unit, and both.
-        standard_value: the value with the unit's factor applied (SymPy), or a
-            set of them for a value such as ``{1, 2}``.
+        standard_values: the value with the unit's factor applied (SymPy), as a
+            tuple: one expression, or several for a value such as ``{1, 2}``.
         standard_unit: the unit in SI base units without its factor.
         expanded_unit: the unit in SI base units.
         dimension: the unit's dimension, keeping the unit's factor (``km/h``
@@ -357,7 +184,7 @@ class PhysicalQuantity:
     value_latex: str | None
     unit_latex: str | None
     latex: str
-    standard_value: Basic | set[Basic] | None
+    standard_values: tuple[Basic, ...] | None
     standard_unit: Basic | None
     expanded_unit: Basic | None
     dimension: Basic
@@ -492,7 +319,7 @@ class PhysicalQuantity:
         original = self.value.original_string()
         # Unit forms inside a called name (``s`` and ``in`` in ``sin(2)``) would split
         # the call in the preview, though the value itself is parsed as the call.
-        calls = _called_names(original)
+        calls = called_names(original)
         unit_forms = [
             form
             for form in _unsplittable_names(self.params, all_forms=True)
@@ -508,12 +335,12 @@ class PhysicalQuantity:
         except (BracketNotationError, AbsoluteValueNotationError) as exc:
             # Best-effort: preview with the guessed rewrite rather than failing outright.
             preprocessed = exc.expression
-        parsed = parse_expression(preprocessed, SympyParsingConfig.from_params(params))
+        parsed = parse_expressions(preprocessed, SympyParsingConfig.from_params(params))
         settings = {"mul_symbol": r" \cdot "}
-        if isinstance(parsed, set):
+        if len(parsed) > 1:
             parts = sorted(sympy_to_latex(expr, params.symbols, settings=settings) for expr in parsed)
             return "\\left\\{" + ",~".join(parts) + "\\right\\}"
-        return sympy_to_latex(parsed, params.symbols, settings=settings)
+        return sympy_to_latex(parsed[0], params.symbols, settings=settings)
 
     def _unit_latex(self, node: ExprNode) -> list[str]:
         children = node.children
@@ -523,8 +350,9 @@ class PhysicalQuantity:
             return [*self._unit_latex(children[0]), "~", *self._unit_latex(children[1])]
         if node.label == Label.UNIT:
             return ["\\mathrm{", node.content, "}"]
-        if node.label == GROUP_LABEL:
-            return [node.content[0], *(part for child in children for part in self._unit_latex(child)), node.content[1]]
+        if node.label == GROUP_LABEL and node.delimiters is not None:
+            opening, closing = node.delimiters
+            return [opening.content, *(part for child in children for part in self._unit_latex(child)), closing.content]
         if node.label == Label.POWER:
             return [*self._unit_latex(children[0]), "^{", *self._braced_latex(children[1]), "}"]
         if node.label == Label.SOLIDUS:
@@ -570,9 +398,7 @@ class PhysicalQuantity:
                 unit = (unit / unit_factor).simplify(rational=True)
                 value = f"({value})*({unit_factor})"
             dimension = parse_expression(substitute(expanded_unit_string, _BASE_UNIT_DIMENSIONS), config)
-        if value is not None:
-            value = parse_expression(value, config)
-        self.standard_value = value
+        self.standard_values = None if value is None else parse_expressions(value, config)
         self.standard_unit = unit
         self.expanded_unit = expanded_unit
         self.dimension = dimension
@@ -604,15 +430,13 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
             expression=expr,
             name=name,
         )
-    if _mentions_celsius_or_fahrenheit(expr):
+    if mentions_celsius_or_fahrenheit(expr):
         raise QuantityParseError(
             "Temperatures in degrees Celsius or Fahrenheit aren't supported; use kelvin.", expression=expr, name=name
         )
     # Any whitespace (tabs, newlines, no-break and thin spaces) as one space; drop zero-width characters.
-    text = _collapse_whitespace(expr.translate(_PRODUCT_SIGNS))
-    if params.is_latex:
-        text = _normalise_latex(text)
-    if (disallowed := _disallowed_unit(text, params.unit_sets)) is not None:
+    text = normalise_input(expr, latex=params.is_latex)
+    if (disallowed := disallowed_unit(text, params.unit_sets)) is not None:
         word, unit = disallowed
         sets = tuple(set_name for set_name, units in UNIT_SETS.items() if unit in units)
         raise DisallowedUnitError(

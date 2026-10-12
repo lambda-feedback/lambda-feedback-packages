@@ -6,6 +6,8 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Breaking
 
+- `PhysicalQuantity.standard_values` is a tuple of expressions (several for a value such as `{1, 2}`), replacing `standard_value`, which was one expression or a set.
+
 - `preprocess_quantity(expr, params, *, name=None)`, the same shape as `expression_parsing.preprocess_expression`.
 - `∙` (bullet operator) is a product sign, like `·`, `⋅` and `×` (as in expression parsing).
 - Unit LaTeX drops the brackets around a whole numerator, denominator or exponent, which the fraction or superscript already groups: `kg/(m s)` gives `\frac{\mathrm{kilogram}}{\mathrm{metre}~\mathrm{second}}` (was `\frac{\mathrm{kilogram}}{(\mathrm{metre}~\mathrm{second})}`).

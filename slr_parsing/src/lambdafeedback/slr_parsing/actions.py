@@ -94,8 +94,9 @@ def group(number_of_elements: int, empty: bool = False, delimiters: Sequence[str
     """Action wrapping the last ``number_of_elements`` items in a ``GROUP`` node.
 
     With ``empty=False`` the items are enclosed by delimiter tokens in the
-    body, which become the group's content. With ``empty=True`` there are no
-    delimiter tokens and ``delimiters`` supplies the content instead.
+    body, which become the group's ``delimiters``. With ``empty=True`` there
+    are no delimiter tokens and ``delimiters`` gives their text instead. The
+    group's ``content`` is the two delimiters' text (``""`` for an empty group).
     """
     if number_of_elements < 1:
         raise ValueError("Groups must have at least one element.")
@@ -113,14 +114,10 @@ def group(number_of_elements: int, empty: bool = False, delimiters: Sequence[str
             output = output[:-number_of_elements]
             start_delim = output.pop()
         children = _as_nodes(content, tag_handler)
-        token = Token(
-            GROUP_LABEL,
-            [start_delim.content, end_delim.content],
-            children[0].original,
-            start_delim.start,
-            end_delim.end,
-        )
-        output.append(ExprNode(token, children, traverse_step=traverse_group, tag_handler=tag_handler))
+        text = start_delim.content + end_delim.content
+        token = Token(GROUP_LABEL, text, children[0].original, start_delim.start, end_delim.end)
+        pair = (start_delim, end_delim)
+        output.append(ExprNode(token, children, tag_handler, traverse_step=traverse_group, delimiters=pair))
         return output
 
     return wrap

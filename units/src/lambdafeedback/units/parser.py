@@ -12,12 +12,15 @@ from lambdafeedback.slr_parsing import (
     END_DELIMITER_LABEL,
     GROUP_LABEL,
     START_DELIMITER_LABEL,
+    CatchAll,
     ExprNode,
+    GrammarSymbol,
     Lexeme,
     SLRParser,
+    TokenMatcher,
+    TokenPattern,
     TokenProduction,
     TokenSpec,
-    catch_undefined,
     create_node,
     group,
     infix,
@@ -136,7 +139,7 @@ def quantity_tag_handler(strictness: Strictness) -> Callable[[ExprNode], set[Any
                     tags.add(QuantityTag.NON_UNIT)
         elif node.label == Label.SPACE and QuantityTag.NON_UNIT in children[1].tags:
             tags.discard(QuantityTag.UNIT)
-        elif node.label == GROUP_LABEL and not node.content[0] + node.content[1]:
+        elif node.label == GROUP_LABEL and not node.content:
             # Juxtaposition (a group without delimiters)
             if strictness == "strict":
                 node.children = [remove_tag(child, QuantityTag.UNIT) for child in children]
@@ -221,20 +224,20 @@ def build_quantity_parser(unit_sets: frozenset[str], strictness: Strictness) -> 
         return number, number
 
     token_list: list[TokenSpec] = [
-        ("START", "START"),
-        ("END", "END"),
-        ("NULL", "NULL"),
-        (Lexeme((" ",)), Label.SPACE),
-        (Lexeme(("*",), space_before=True, space_after=True), Label.PRODUCT),
-        (Lexeme(("/",), space_before=True, space_after=True), Label.SOLIDUS),
-        (Lexeme(("^",), space_before=True, space_after=True), Label.POWER),
-        (Lexeme(("**",), space_before=True, space_after=True), Label.POWER),
-        (Lexeme(("(",), space_after=True), START_DELIMITER_LABEL),
-        (Lexeme((")",), space_before=True), END_DELIMITER_LABEL),
-        ("N", Label.NUMBER, starts_with_number),
-        ("U", Label.UNIT, starts_with_unit),
-        ("V", Label.NON_UNIT, catch_undefined),
-        ("Q", "QUANTITY_NODE", None),
+        TokenPattern("START", "START"),
+        TokenPattern("END", "END"),
+        TokenPattern("NULL", "NULL"),
+        TokenPattern(Lexeme((" ",)), Label.SPACE),
+        TokenPattern(Lexeme(("*",), space_before=True, space_after=True), Label.PRODUCT),
+        TokenPattern(Lexeme(("/",), space_before=True, space_after=True), Label.SOLIDUS),
+        TokenPattern(Lexeme(("^",), space_before=True, space_after=True), Label.POWER),
+        TokenPattern(Lexeme(("**",), space_before=True, space_after=True), Label.POWER),
+        TokenPattern(Lexeme(("(",), space_after=True), START_DELIMITER_LABEL),
+        TokenPattern(Lexeme((")",), space_before=True), END_DELIMITER_LABEL),
+        TokenMatcher("N", Label.NUMBER, starts_with_number),
+        TokenMatcher("U", Label.UNIT, starts_with_unit),
+        CatchAll("V", Label.NON_UNIT),
+        GrammarSymbol("Q", "QUANTITY_NODE"),
     ]
     juxtaposition = group(2, empty=True) if strictness == "strict" else _juxtaposition_natural
     productions = [

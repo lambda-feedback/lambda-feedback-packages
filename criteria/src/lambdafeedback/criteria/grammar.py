@@ -13,11 +13,12 @@ from typing import Any
 
 from lambdafeedback.slr_parsing import (
     Action,
+    CatchAll,
     Lexeme,
     SLRParser,
+    TokenPattern,
     TokenSpec,
     append_last,
-    catch_undefined,
     create_node,
     infix,
     join,
@@ -35,22 +36,22 @@ def _spaced(*forms: str) -> Lexeme:
 
 
 TOKENS: tuple[TokenSpec, ...] = (
-    (START_SYMBOL, START_SYMBOL),
-    (END_SYMBOL, END_SYMBOL),
-    (NULL_SYMBOL, NULL_SYMBOL),
-    (_spaced("BOOL"), "BOOL"),
-    (_spaced("EQUALITY"), "EQUALITY"),
-    (_spaced("EQUAL"), "EQUAL"),
-    (_spaced("EQUAL_LIST"), "EQUAL_LIST"),
-    (_spaced("RESERVED"), "RESERVED"),
-    (_spaced("="), "EQUALITY"),
-    (_spaced(">=", ">", "<=", "<", "ORDER"), "ORDER"),
-    (_spaced("where"), "WHERE"),
-    (_spaced("written as"), "WRITTEN_AS"),
-    (_spaced("proportional to"), "PROPORTIONAL_TO"),
-    (_spaced("contains"), "CONTAINS"),
-    (_spaced(";"), "SEPARATOR"),
-    (_spaced("OTHER"), "OTHER", catch_undefined),
+    TokenPattern(START_SYMBOL, START_SYMBOL),
+    TokenPattern(END_SYMBOL, END_SYMBOL),
+    TokenPattern(NULL_SYMBOL, NULL_SYMBOL),
+    TokenPattern(_spaced("BOOL"), "BOOL"),
+    TokenPattern(_spaced("EQUALITY"), "EQUALITY"),
+    TokenPattern(_spaced("EQUAL"), "EQUAL"),
+    TokenPattern(_spaced("EQUAL_LIST"), "EQUAL_LIST"),
+    TokenPattern(_spaced("RESERVED"), "RESERVED"),
+    TokenPattern(_spaced("="), "EQUALITY"),
+    TokenPattern(_spaced(">=", ">", "<=", "<", "ORDER"), "ORDER"),
+    TokenPattern(_spaced("where"), "WHERE"),
+    TokenPattern(_spaced("written as"), "WRITTEN_AS"),
+    TokenPattern(_spaced("proportional to"), "PROPORTIONAL_TO"),
+    TokenPattern(_spaced("contains"), "CONTAINS"),
+    TokenPattern(_spaced(";"), "SEPARATOR"),
+    CatchAll(_spaced("OTHER"), "OTHER"),
 )
 
 # Order matters: when productions conflict, the one listed later wins.
@@ -96,5 +97,5 @@ def build_criteria_parser(
     ``reserved_expressions`` maps groups (e.g. ``"learner"``, ``"task"``) to
     ``{name: expression}``; only the names are used here.
     """
-    reserved = [(name, "RESERVED") for group in reserved_expressions.values() for name in group]
+    reserved = [TokenPattern(name, "RESERVED") for group in reserved_expressions.values() for name in group]
     return SLRParser([*token_list, *reserved], productions, START_SYMBOL, END_SYMBOL, NULL_SYMBOL)

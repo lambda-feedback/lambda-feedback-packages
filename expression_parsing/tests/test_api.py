@@ -18,6 +18,7 @@ from lambdafeedback.expression_parsing import (
     is_complex_number_on_exponential_form,
     is_number,
     parse_expression,
+    parse_expressions,
     parse_latex,
     parse_symbol_assumptions,
     sanitise_latex,
@@ -128,11 +129,17 @@ class TestSympyParsingConfig:
         assert config.replace(strict_syntax=True).params.strict_syntax is True
         assert config.params.strict_syntax is False
 
-    def test_plus_minus_parses_to_a_set(self):
+    def test_plus_minus_parses_to_both_expressions_in_order(self):
         config = SympyParsingConfig.from_params(ExpressionParams())
         x = Symbol("x")
         # Parsed unevaluated (x - 1 stays x - 1*1), so compare evaluated forms.
-        assert {e.doit() for e in parse_expression("x plus_minus 1", config)} == {x + 1, x - 1}
+        assert [e.doit() for e in parse_expressions("x plus_minus 1", config)] == [x + 1, x - 1]
+
+    def test_parse_expression_rejects_several_expressions(self):
+        config = SympyParsingConfig.from_params(ExpressionParams())
+        with pytest.raises(ExpressionParsingError, match="stands for 2 expressions"):
+            parse_expression("{x, y}", config)
+        assert parse_expression("{x, x}", config) == Symbol("x")  # the same expression twice is one
 
 
 class TestConventions:

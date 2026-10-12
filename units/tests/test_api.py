@@ -128,7 +128,8 @@ class TestData:
 
 
 def _si_value(text):
-    return parse_quantity(text, QuantityParams()).standard_value
+    [value] = parse_quantity(text, QuantityParams()).standard_values
+    return value
 
 
 class TestDimensions:

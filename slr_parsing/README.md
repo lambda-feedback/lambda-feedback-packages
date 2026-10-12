@@ -52,9 +52,11 @@ around operators and delimiters are kept in their tokens' content, so
 ## Writing a grammar
 
 For full control, pass token specifications and productions to `SLRParser`.
-Grammar symbols (`START`, `END`, `NULL` and the nonterminals) are declared as
-tokens too, because production strings are scanned with the same
-specifications. Each production is `(head, body, action)`; the action builds
+A `TokenPattern` scans its pattern from input, a `TokenMatcher` scans with a
+function, a `CatchAll` collects text nothing else matches, and a
+`GrammarSymbol` (a nonterminal) only appears in productions. Every grammar
+symbol is declared this way, because production strings are scanned with the
+same specifications. Each production is `(head, body, action)`; the action builds
 the output tree when the production is reduced. When productions conflict,
 the one listed later wins. Productions headed by the start symbol are never
 reduced (reaching their end accepts the input), so their action is never
@@ -68,7 +70,17 @@ matcher function.
 ```python
 from itertools import takewhile
 
-from lambdafeedback.slr_parsing import Lexeme, SLRParser, create_node, group, infix, proceed
+from lambdafeedback.slr_parsing import (
+    GrammarSymbol,
+    Lexeme,
+    SLRParser,
+    TokenMatcher,
+    TokenPattern,
+    create_node,
+    group,
+    infix,
+    proceed,
+)
 
 
 def number(text):
@@ -77,17 +89,17 @@ def number(text):
 
 
 tokens = [
-    ("START", "START"),
-    ("END", "END"),
-    ("NULL", "NULL"),
-    ("E", "E"),
-    ("T", "T"),
-    ("F", "F"),
-    (Lexeme(("+",), space_before=True, space_after=True), "PLUS"),
-    (Lexeme(("*",), space_before=True, space_after=True), "TIMES"),
-    ("(", "LPAR"),
-    (")", "RPAR"),
-    ("n", "NUM", number),  # in productions "n"; in input, whatever `number` matches
+    TokenPattern("START", "START"),
+    TokenPattern("END", "END"),
+    TokenPattern("NULL", "NULL"),
+    GrammarSymbol("E", "E"),
+    GrammarSymbol("T", "T"),
+    GrammarSymbol("F", "F"),
+    TokenPattern(Lexeme(("+",), space_before=True, space_after=True), "PLUS"),
+    TokenPattern(Lexeme(("*",), space_before=True, space_after=True), "TIMES"),
+    TokenPattern("(", "LPAR"),
+    TokenPattern(")", "RPAR"),
+    TokenMatcher("n", "NUM", number),  # in productions "n"; in input, whatever `number` matches
 ]
 productions = [
     ("START", "E", None),  # start productions accept; their action never runs

@@ -5,7 +5,17 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from .actions import END_DELIMITER_LABEL, START_DELIMITER_LABEL, create_node, infix, relabel
-from .grammar import Action, ErrorAction, ErrorCondition, ErrorHandler, Lexeme, TokenSpec, catch_undefined
+from .grammar import (
+    Action,
+    CatchAll,
+    ErrorAction,
+    ErrorCondition,
+    ErrorHandler,
+    GrammarSymbol,
+    Lexeme,
+    TokenPattern,
+    TokenSpec,
+)
 from .parser import SLRParser
 
 
@@ -26,8 +36,7 @@ def build_expression_parser(
 
     The grammar has one expression nonterminal (``expression_node``, default
     ``EXPRESSION_NODE``) with productions ``E -> label`` for each operand
-    token spec in ``nodes`` (``(pattern, label)`` with a literal or
-    :class:`Lexeme` pattern, or ``(symbol, label, matcher)``) and
+    token spec in ``nodes`` (a :class:`TokenPattern` or :class:`TokenMatcher`) and
     ``E -> undefined`` for undefined text, ``E -> E op E`` for each
     ``(symbol, label)`` in ``infix_operators`` and ``E -> open E close`` for each
     ``((open, close), action)`` in ``delimiters``. ``custom_tokens`` and
@@ -55,36 +64,34 @@ def build_expression_parser(
     # One production per operator label, written with its first symbol.
     operator_symbols = [symbols[0] for symbols in labels_to_symbols.values()]
     operator_tokens: list[TokenSpec] = [
-        (Lexeme(tuple(symbols), space_before=True, space_after=True), label)
+        TokenPattern(Lexeme(tuple(symbols), space_before=True, space_after=True), label)
         for label, symbols in labels_to_symbols.items()
     ]
 
-    undefined_spec = (*(undefined or ("UNDEFINED", "UNDEFINED")), catch_undefined)
-    # A third element of None keeps the node symbol out of the scanner.
-    expression_spec = (*(expression_node or ("EXPRESSION_NODE", "EXPRESSION_NODE")), None)
-    start = start or ("START", "START")
-    end = end or ("END", "END")
-    null = null or ("NULL", "NULL")
-    e = expression_spec[0]
+    undefined_spec = CatchAll(*(undefined or ("UNDEFINED", "UNDEFINED")))
+    expression_spec = GrammarSymbol(*(expression_node or ("EXPRESSION_NODE", "EXPRESSION_NODE")))
+    start_spec = TokenPattern(*(start or ("START", "START")))
+    end_spec = TokenPattern(*(end or ("END", "END")))
+    null_spec = TokenPattern(*(null or ("NULL", "NULL")))
+    e = str(expression_spec.pattern)
 
     # Productions refer to nodes by label: a node's pattern (e.g. a Lexeme) is
     # not a usable grammar symbol. Tokens compare by label, so a grammar-only
     # symbol spelled as the label matches every token the pattern scans.
-    node_labels = list(dict.fromkeys(node[1] for node in nodes))
-    node_symbols: list[TokenSpec] = [(label, label, None) for label in node_labels]
+    node_labels = list(dict.fromkeys(node.label for node in nodes))
+    node_symbols: list[TokenSpec] = [GrammarSymbol(label, label) for label in node_labels]
 
-    token_list: list[TokenSpec] = [undefined_spec, null, expression_spec, start, end, *nodes, *operator_tokens]
-    token_list += node_symbols
-    token_list += custom_tokens
+    token_list: list[TokenSpec] = [undefined_spec, null_spec, expression_spec, start_spec, end_spec]
+    token_list += [*nodes, *operator_tokens, *node_symbols, *custom_tokens]
 
-    productions: list[tuple[str, str, Action | None]] = [(start[0], e, relabel)]
+    productions: list[tuple[str, str, Action | None]] = [(str(start_spec.pattern), e, relabel)]
     productions += [(e, label, create_node) for label in node_labels]
-    productions += [(e, undefined_spec[0], create_node)]
+    productions += [(e, str(undefined_spec.pattern), create_node)]
     productions += [(e, e + operator + e, infix) for operator in operator_symbols]
     for (open_delimiter, close_delimiter), _ in delimiters:
         token_list += [
-            (Lexeme((open_delimiter,), space_after=True), START_DELIMITER_LABEL),
-            (Lexeme((close_delimiter,), space_before=True), END_DELIMITER_LABEL),
+            TokenPattern(Lexeme((open_delimiter,), space_after=True), START_DELIMITER_LABEL),
+            TokenPattern(Lexeme((close_delimiter,), space_before=True), END_DELIMITER_LABEL),
         ]
     if delimiters:
         # Every pair scans to the same START_DELIMITER E END_DELIMITER body, so
@@ -94,4 +101,6 @@ def build_expression_parser(
         productions += [(e, open_delimiter + e + close_delimiter, action)]
     productions += custom_productions
 
-    return SLRParser(token_list, productions, start[1], end[1], null[1], error_handlers=error_handlers)
+    return SLRParser(
+        token_list, productions, start_spec.label, end_spec.label, null_spec.label, error_handlers=error_handlers
+    )

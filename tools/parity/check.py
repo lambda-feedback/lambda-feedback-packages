@@ -39,7 +39,7 @@ from lambdafeedback.criteria import build_criteria_parser  # noqa: E402
 from lambdafeedback.expression_parsing import (  # noqa: E402
     ExpressionParams,
     SympyParsingConfig,
-    parse_expression,
+    parse_expressions,
     sympy_to_latex,
 )
 from lambdafeedback.units import QuantityParams, parse_quantity  # noqa: E402
@@ -70,10 +70,10 @@ def expression_params(variant: str) -> dict[str, Any]:
 
 def expression_parse(expr: str, variant: str) -> dict[str, Any]:
     params = ExpressionParams.from_dict(expression_params(variant))
-    parsed = parse_expression(expr, SympyParsingConfig.from_params(params))
-    if isinstance(parsed, set):
+    parsed = parse_expressions(expr, SympyParsingConfig.from_params(params))
+    if len(parsed) > 1:
         return {"parsed": sorted(str(p) for p in parsed)}
-    return {"parsed": str(parsed), "latex": sympy_to_latex(parsed, params.symbols)}
+    return {"parsed": str(parsed[0]), "latex": sympy_to_latex(parsed[0], params.symbols)}
 
 
 def quantity_params(variant: str) -> dict[str, Any]:
@@ -89,6 +89,10 @@ def quantity_parse(expr: str, variant: str) -> dict[str, Any]:
     def s(x: Any) -> str | None:
         return None if x is None else str(x)
 
+    # v0.1 gave one expression, or a set of several.
+    values = q.standard_values
+    standard_value = None if values is None else values[0] if len(values) == 1 else set(values)
+
     return {
         "value": None if q.value is None else q.value.original_string(),
         "unit": None if q.unit is None else q.unit.original_string(),
@@ -96,7 +100,7 @@ def quantity_parse(expr: str, variant: str) -> dict[str, Any]:
         "value_latex": q.value_latex,
         "unit_latex": q.unit_latex,
         "latex": q.latex,
-        "standard_value": s(q.standard_value),
+        "standard_value": s(standard_value),
         "standard_unit": s(q.standard_unit),
         "expanded_unit": s(q.expanded_unit),
         "dimension": s(q.dimension),

@@ -29,9 +29,14 @@ def traverse_infix(expr_node: ExprNode, action: Callable[[ExprNode], Any]) -> li
 
 
 def traverse_group(expr_node: ExprNode, action: Callable[[ExprNode], Any]) -> list[tuple[bool, Any]]:
-    """Like prefix traversal, but emits ``action(node)[0]`` before and ``[1]`` after the children."""
-    delimiters = action(expr_node)
-    return [(True, delimiters[0]), *((False, child) for child in expr_node.children), (True, delimiters[1])]
+    """For a group: ``action`` of its opening delimiter, the children, then ``action`` of its closing one.
+
+    Like every step, it applies ``action`` when the node is expanded, so to both delimiters before the children.
+    """
+    if expr_node.delimiters is None:
+        raise TypeError(f"{expr_node} is not a group: it has no delimiters.")
+    opening, closing = expr_node.delimiters
+    return [(True, action(opening)), *((False, child) for child in expr_node.children), (True, action(closing))]
 
 
 class Token:
@@ -82,8 +87,16 @@ class ExprNode(Token):
         tag_handler: TagHandler | None = None,
         tags: Iterable[Any] | None = None,
         traverse_step: TraverseStep = traverse_prefix,
+        delimiters: tuple[Token, Token] | None = None,
     ) -> None:
         super().__init__(token.label, token.content, token.original, token.start, token.end)
+        self.delimiters: tuple[ExprNode, ExprNode] | None = None
+        """A group's opening and closing delimiters (see :func:`traverse_group`); ``None`` for other nodes."""
+        if delimiters is not None:
+            opening, closing = (
+                delimiter if isinstance(delimiter, ExprNode) else ExprNode(delimiter, []) for delimiter in delimiters
+            )
+            self.delimiters = (opening, closing)
         self.children: list[ExprNode] = []
         for child in children:
             if isinstance(child, ExprNode):
@@ -101,7 +114,12 @@ class ExprNode(Token):
 
     def _shallow_copy(self) -> ExprNode:
         token = Token(self.label, self.content, self.original, self.start, self.end)
-        return ExprNode(token, [], tags=self.tags, traverse_step=self.traverse_step)
+        delimiters = (
+            None
+            if self.delimiters is None
+            else (self.delimiters[0]._shallow_copy(), self.delimiters[1]._shallow_copy())
+        )
+        return ExprNode(token, [], tags=self.tags, traverse_step=self.traverse_step, delimiters=delimiters)
 
     def copy(self) -> ExprNode:
         """Deep copy of the tree; the copies' tag sets are not shared."""

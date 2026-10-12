@@ -371,10 +371,6 @@ class TestCreateExpressionSet:
         result = create_expression_set("{x, y}", ExpressionParams())
         assert sorted(result) == ["x", "y"]
 
-    def test_list_input_accepted(self):
-        result = create_expression_set(["x", "y"], ExpressionParams())
-        assert sorted(result) == ["x", "y"]
-
     def test_plus_minus_expands_to_two_expressions(self):
         params = {"plus_minus": "±"}
         result = create_expression_set("±x", ExpressionParams.from_dict(params))

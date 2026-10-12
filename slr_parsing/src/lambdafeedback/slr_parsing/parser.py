@@ -10,15 +10,18 @@ from typing import Any, Literal
 from .errors import GrammarError, ParseError, ScanError
 from .grammar import (
     Action,
+    CatchAll,
     ErrorAction,
     ErrorCondition,
     ErrorHandler,
+    GrammarSymbol,
     Lexeme,
     Matcher,
     ParseState,
     TagHandler,
+    TokenMatcher,
+    TokenPattern,
     TokenSpec,
-    catch_undefined,
     match_pattern,
     pattern_weight,
 )
@@ -66,7 +69,8 @@ class SLRParser:
     ) -> None:
         # Heaviest patterns first: scan() keeps the longest match, so this
         # order only breaks ties between equal-length matches.
-        self.token_list: list[TokenSpec] = sorted(token_list, key=lambda spec: -pattern_weight(spec[0]))
+        self._check_token_specs(token_list)
+        self.token_list: list[TokenSpec] = sorted(token_list, key=lambda spec: -pattern_weight(spec.pattern))
         self.productions = list(productions)
         self.start_symbol = start_symbol
         self.end_symbol = end_symbol
@@ -94,18 +98,25 @@ class SLRParser:
     # Scanner
     # ------------------------------------------------------------------
 
-    def _prepare_scanner(self) -> None:
-        catch_all = [spec for spec in self.token_list if len(spec) > 2 and spec[2] is catch_undefined]
-        if len(catch_all) > 1:
+    @staticmethod
+    def _check_token_specs(token_list: Sequence[TokenSpec]) -> None:
+        for spec in token_list:
+            if not isinstance(spec, TokenPattern | TokenMatcher | CatchAll | GrammarSymbol):
+                raise GrammarError(
+                    f"Token specification {spec!r} is not a TokenPattern, TokenMatcher, CatchAll or GrammarSymbol."
+                )
+        if sum(isinstance(spec, CatchAll) for spec in token_list) > 1:
             raise GrammarError("Only one token type can be used to catch undefined lexemes.")
-        self._catch_undefined: TokenSpec | None = catch_all[0] if catch_all else None
-        self._expression_symbols = [(spec[0], spec[1]) for spec in self.token_list if len(spec) == 2]
-        self._expression_rules: list[tuple[str, Matcher]] = [
-            (spec[1], spec[2])
-            for spec in self.token_list
-            if len(spec) > 2 and spec[2] is not None and spec[2] is not catch_undefined
+
+    def _prepare_scanner(self) -> None:
+        self._catch_all = next((spec for spec in self.token_list if isinstance(spec, CatchAll)), None)
+        self._expression_symbols = [
+            (spec.pattern, spec.label) for spec in self.token_list if isinstance(spec, TokenPattern)
         ]
-        self._bnf_symbols: list[tuple[str | Lexeme, str]] = [(spec[0], spec[1]) for spec in self.token_list]
+        self._expression_rules: list[tuple[str, Matcher]] = [
+            (spec.label, spec.matcher) for spec in self.token_list if isinstance(spec, TokenMatcher)
+        ]
+        self._bnf_symbols: list[tuple[str | Lexeme, str]] = [(spec.pattern, spec.label) for spec in self.token_list]
 
     def scan(self, expr: str, mode: Literal["expression", "bnf"] = "expression") -> list[Token]:
         """Split ``expr`` into tokens, preferring the longest match at each position.
@@ -164,9 +175,9 @@ class SLRParser:
         return tokens
 
     def _undefined_token(self, text: str, expr: str, index: int) -> Token:
-        if self._catch_undefined is None:
+        if self._catch_all is None:
             raise ScanError(f"Undefined input: {text}")
-        return catch_undefined(self._catch_undefined[1], text, expr, index - len(text), index - 1)
+        return Token(self._catch_all.label, text, expr, index - len(text), index - 1)
 
     def _grammar_symbol(self, symbol: str, role: str) -> Token:
         try:

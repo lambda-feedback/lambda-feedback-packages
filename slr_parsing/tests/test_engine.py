@@ -9,13 +9,15 @@ from itertools import takewhile
 import pytest
 
 from lambdafeedback.slr_parsing import (
+    CatchAll,
     ErrorHandler,
     GrammarError,
     ParseError,
     ScanError,
     SLRError,
     SLRParser,
-    catch_undefined,
+    TokenMatcher,
+    TokenPattern,
     create_node,
     group,
     infix,
@@ -30,17 +32,17 @@ def identifier(text):
 
 
 TOKENS = [
-    ("START", "START"),
-    ("END", "END"),
-    ("NULL", "NULL"),
-    ("E", "E"),
-    ("T", "T"),
-    ("F", "F"),
-    ("+", "PLUS"),
-    ("*", "TIMES"),
-    ("(", "LPAR"),
-    (")", "RPAR"),
-    ("id", "ID", identifier),
+    TokenPattern("START", "START"),
+    TokenPattern("END", "END"),
+    TokenPattern("NULL", "NULL"),
+    TokenPattern("E", "E"),
+    TokenPattern("T", "T"),
+    TokenPattern("F", "F"),
+    TokenPattern("+", "PLUS"),
+    TokenPattern("*", "TIMES"),
+    TokenPattern("(", "LPAR"),
+    TokenPattern(")", "RPAR"),
+    TokenMatcher("id", "ID", identifier),
 ]
 
 PRODUCTIONS = [
@@ -97,7 +99,7 @@ class TestTableConstruction:
             SLRParser(TOKENS, [*PRODUCTIONS, ("F", "id", proceed)], "START", "END", "NULL")
 
     def test_only_one_catch_all_token(self):
-        tokens = [*TOKENS, ("U", "UNDEFINED", catch_undefined), ("V", "OTHER", catch_undefined)]
+        tokens = [*TOKENS, CatchAll("U", "UNDEFINED"), CatchAll("V", "OTHER")]
         with pytest.raises(GrammarError, match="catch undefined"):
             SLRParser(tokens, PRODUCTIONS, "START", "END", "NULL")
 
@@ -131,7 +133,13 @@ class TestParsing:
 
 class TestScanner:
     def test_longest_match_wins(self):
-        tokens = [("START", "START"), ("END", "END"), ("NULL", "NULL"), ("<", "LT"), ("<=", "LE")]
+        tokens = [
+            TokenPattern("START", "START"),
+            TokenPattern("END", "END"),
+            TokenPattern("NULL", "NULL"),
+            TokenPattern("<", "LT"),
+            TokenPattern("<=", "LE"),
+        ]
         parser = SLRParser(tokens, [("START", "<=", proceed), ("START", "<", proceed)], "START", "END", "NULL")
         assert [t.label for t in parser.scan("<=<")] == ["LE", "LT"]
 
@@ -147,7 +155,7 @@ class TestScanner:
             make_parser().scan("a$b")
 
     def test_catch_all_token_collects_undefined_runs(self):
-        parser = SLRParser([*TOKENS, ("U", "UNDEFINED", catch_undefined)], PRODUCTIONS, "START", "END", "NULL")
+        parser = SLRParser([*TOKENS, CatchAll("U", "UNDEFINED")], PRODUCTIONS, "START", "END", "NULL")
         assert [(t.label, t.content) for t in parser.scan("a+$$")] == [("ID", "a"), ("PLUS", "+"), ("UNDEFINED", "$$")]
 
 

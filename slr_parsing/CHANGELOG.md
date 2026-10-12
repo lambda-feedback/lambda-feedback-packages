@@ -19,6 +19,9 @@ The first public release, after the extraction refactor. The import path is now 
 
 ### Changed
 
+- **Token specifications are typed:** `TokenPattern(pattern, label)`, `TokenMatcher(pattern, label, matcher)`, `CatchAll(pattern, label)` and `GrammarSymbol(pattern, label)` replace the 2- and 3-tuples (told apart by length, with `catch_undefined` as a marker function and `None` for grammar-only symbols). `catch_undefined` is removed, and anything else in a token list is a `GrammarError`.
+- **Group delimiters are nodes:** a `GROUP` node's `delimiters` are its opening and closing tokens, and its `content` is their text (`"()"`, or `""` for a group without delimiters); it was a `[open, close]` list. `traverse_group` applies the action to each delimiter, so an action no longer returns a pair for groups. `content_string()` is unchanged.
+
 - `SLRParser(..., error_handlers=...)` and `build_expression_parser(..., error_handlers=...)` (was `error_handler`); the parser keeps them as `error_handlers`. `SLRParser.parse_error(...)` is public, for error actions that give up (as `new_root_on_error` does).
 - Error actions take `(parser, state)` and change the `ParseState` (`stack`, `lookahead`, `input_tokens`, `remaining`, `output`) in place, instead of receiving and returning those five values. `SLRParser.parse_error(state)` builds the `ParseError` for an action that gives up.
 - `ExprNode.traverse_step` is public (was `_traverse_step`), for callers that expand one node at a time, and `ExprNode.walk()` lists the nodes, each before its children.

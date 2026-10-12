@@ -29,7 +29,7 @@ class TestUnitData:
     def test_angle_units_share_one_base(self):
         # Degrees and radians were in turns but arcminutes in radians, so 60' != 1°.
         assert parse("1 radian").unit_factor == 1
-        assert simplify(parse("60 angleminute").standard_value - parse("1 degree").standard_value) == 0
+        assert simplify(parse("60 angleminute").standard_values[0] - parse("1 degree").standard_values[0]) == 0
 
 
 class TestParsing:

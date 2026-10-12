@@ -23,6 +23,7 @@ from lambdafeedback.expression_parsing import (
     create_expression_set,
     is_number,
     parse_expression,
+    parse_expressions,
     parse_latex,
     preprocess_expression,
     substitute_input_symbols,
@@ -569,7 +570,7 @@ class TestLatexBackend:
         assert parse_latex("1, 2", {}) == "{1, 2}"
         out = parse_latex(r"2 \pm \theta, -e", {})
         assert out == "{-e, 2 - theta, theta + 2}"
-        assert len(parse_expression(out, parsing_params())) == 3
+        assert len(parse_expressions(out, parsing_params())) == 3
 
     @pytest.mark.parametrize(
         "latex",

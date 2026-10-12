@@ -12,6 +12,8 @@ from lambdafeedback.slr_parsing import (
     ParseError,
     SLRParser,
     Token,
+    TokenMatcher,
+    TokenPattern,
     append,
     append_last,
     build_expression_parser,
@@ -74,9 +76,12 @@ class TestExpressionParserBuilder:
     @pytest.mark.parametrize(
         "nodes",
         [
-            pytest.param([(Lexeme(("12", "13")), "NUM")], id="lexeme pattern"),
-            pytest.param([("NUM", "NUM", number.__func__)], id="matcher"),
-            pytest.param([("N", "NUM", number.__func__), ("D", "NUM", decimal.__func__)], id="shared label"),
+            pytest.param([TokenPattern(Lexeme(("12", "13")), "NUM")], id="lexeme pattern"),
+            pytest.param([TokenMatcher("NUM", "NUM", number.__func__)], id="matcher"),
+            pytest.param(
+                [TokenMatcher("N", "NUM", number.__func__), TokenMatcher("D", "NUM", decimal.__func__)],
+                id="shared label",
+            ),
         ],
     )
     def test_nodes_are_operands_whatever_their_pattern(self, nodes):
@@ -91,7 +96,7 @@ class TestExpressionParserBuilder:
         ]
 
     def test_literal_node_still_parses(self):
-        parser = build_expression_parser(nodes=[("pi", "PI")], infix_operators=[("+", "ADD")])
+        parser = build_expression_parser(nodes=[TokenPattern("pi", "PI")], infix_operators=[("+", "ADD")])
         root = parser.parse(parser.scan("pi+x"))[0]
         assert [n.label for n in root.children] == ["PI", "UNDEFINED"]
 
@@ -128,12 +133,12 @@ class TestExpressionParserBuilder:
 class TestParserConstruction:
     def test_token_list_argument_is_not_mutated(self):
         token_list = [
-            ("START", "START"),
-            ("END", "END"),
-            ("NULL", "NULL"),
-            ("E", "E"),
-            (Lexeme(("+",), True, True), "+"),
-            ("x", "x"),
+            TokenPattern("START", "START"),
+            TokenPattern("END", "END"),
+            TokenPattern("NULL", "NULL"),
+            TokenPattern("E", "E"),
+            TokenPattern(Lexeme(("+",), True, True), "+"),
+            TokenPattern("x", "x"),
         ]
         before = list(token_list)
         SLRParser(token_list, [("START", "E", None), ("E", "E+E", None), ("E", "x", None)], "START", "END", "NULL")
@@ -158,7 +163,7 @@ class TestParserConstruction:
 
         symbols = ["START", "END", "NULL", "S", "A", "B", "x", "y", "z"]
         parser = SLRParser(
-            [(s, s) for s in symbols],
+            [TokenPattern(s, s) for s in symbols],
             [
                 ("START", "S", record("START")),
                 ("S", "Ay", record("S->Ay")),
@@ -180,7 +185,13 @@ class TestParserConstruction:
 
 
 class TestGrammarValidation:
-    SYMBOLS = (("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "x"))
+    SYMBOLS = (
+        TokenPattern("START", "START"),
+        TokenPattern("END", "END"),
+        TokenPattern("NULL", "NULL"),
+        TokenPattern("E", "E"),
+        TokenPattern("x", "x"),
+    )
 
     def build(self, productions, start="START"):
         return SLRParser(self.SYMBOLS, productions, start, "END", "NULL")
@@ -258,14 +269,26 @@ class TestOneSymbolBodies:
     # A one-symbol body made output[:1 - 1] select nothing (IndexError).
     @pytest.mark.parametrize(("action", "label"), [(append, "X"), (append_last, "X"), (join, "E")])
     def test_action_on_one_symbol_body(self, action, label):
-        symbols = [("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "X")]
+        symbols = [
+            TokenPattern("START", "START"),
+            TokenPattern("END", "END"),
+            TokenPattern("NULL", "NULL"),
+            TokenPattern("E", "E"),
+            TokenPattern("x", "X"),
+        ]
         parser = SLRParser(symbols, [("START", "E", proceed), ("E", "x", action)], "START", "END", "NULL")
         (root,) = parser.parse(parser.scan("x"))
         assert (root.label, root.content, root.children) == (label, "x", [])
 
 
 class TestShapeValidation:
-    SYMBOLS = (("START", "START"), ("END", "END"), ("NULL", "NULL"), ("E", "E"), ("x", "X"))
+    SYMBOLS = (
+        TokenPattern("START", "START"),
+        TokenPattern("END", "END"),
+        TokenPattern("NULL", "NULL"),
+        TokenPattern("E", "E"),
+        TokenPattern("x", "X"),
+    )
 
     @pytest.mark.parametrize(
         ("productions", "error_handlers"),
@@ -286,17 +309,23 @@ class TestShapeValidation:
             SLRParser(self.SYMBOLS, productions, "START", "END", "NULL", error_handlers=error_handlers)
 
 
+class TestTokenSpecs:
+    def test_a_plain_tuple_is_not_a_token_spec(self):
+        with pytest.raises(GrammarError, match="is not a TokenPattern"):
+            SLRParser([*TestShapeValidation.SYMBOLS, ("y", "Y")], [("START", "E", None)], "START", "END", "NULL")
+
+
 class TestRelabel:
     def test_relabel_keeps_the_subtree(self):
         # relabel used to replace the node with a plain Token, dropping its children.
         symbols = [
-            ("START", "START"),
-            ("END", "END"),
-            ("NULL", "NULL"),
-            ("E", "E"),
-            ("F", "F"),
-            ("x", "X"),
-            ("+", "P"),
+            TokenPattern("START", "START"),
+            TokenPattern("END", "END"),
+            TokenPattern("NULL", "NULL"),
+            TokenPattern("E", "E"),
+            TokenPattern("F", "F"),
+            TokenPattern("x", "X"),
+            TokenPattern("+", "P"),
         ]
         parser = SLRParser(
             symbols, [("START", "E", None), ("E", "F", relabel), ("F", "x+x", infix)], "START", "END", "NULL"
@@ -337,7 +366,7 @@ class TestDeepNesting:
         root = parser.parse(parser.scan("(a+b)+c"))[0]
         assert root.tree_string() == (
             "ADD: + tags: {}\n"
-            "0: GROUP: ['(', ')'] tags: {}\n"
+            "0: GROUP: () tags: {}\n"
             "|   0: ADD: + tags: {}\n"
             "|       0: UNDEFINED: a tags: {}\n"
             "|       1: UNDEFINED: b tags: {}\n"
@@ -357,4 +386,14 @@ class TestTraversal:
             return node.content
 
         assert "".join(root.traverse(action)) == "(x)"
-        assert visited == ["GROUP", "UNDEFINED"]
+        assert sorted(visited) == ["END_DELIMITER", "START_DELIMITER", "UNDEFINED"]
+
+    def test_group_delimiters_are_nodes_and_survive_copying(self):
+        parser = build_expression_parser(delimiters=[(("(", ")"), group(1))])
+        root = parser.parse(parser.scan("( x )"))[0]
+        assert root.content == "(  )"  # the delimiters' text, spaces included
+        assert [delimiter.content for delimiter in root.delimiters] == ["( ", " )"]
+        clone = root.copy()
+        assert [delimiter.content for delimiter in clone.delimiters] == ["( ", " )"]
+        assert clone.delimiters[0] is not root.delimiters[0]
+        assert clone.content_string() == "( x )"
