@@ -6,9 +6,10 @@ callers that treat bad input as a ``ValueError`` keep working.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .grammar import ParseState
     from .parser import SLRParser
     from .tokens import Token
 
@@ -69,9 +70,7 @@ class ParseError(SLRError, ValueError):
         return "\n".join(lines)
 
 
-def new_root_on_error(
-    parser: SLRParser, stack: list[int], a: Token, input_tokens: list[Token], tokens: list[Token], output: list[Any]
-) -> tuple[list[int], Token, list[Token], list[Token], list[Any]]:
+def new_root_on_error(parser: SLRParser, state: ParseState) -> None:
     """Error action: finish the current root here and parse the rest as new roots.
 
     The offending token is put back, so parsing resumes with it; ``parse``
@@ -79,6 +78,7 @@ def new_root_on_error(
     here (nothing parsed yet, or the input already ended) the error is raised
     as a :class:`ParseError` instead.
     """
-    if len(stack) == 1 or a == parser.end_token:
-        raise parser.parse_error(stack, a, input_tokens, tokens, output)
-    return stack, parser.end_token, input_tokens, [a, *tokens], output
+    if len(state.stack) == 1 or state.lookahead == parser.end_token:
+        raise parser.parse_error(state)
+    state.remaining.appendleft(state.lookahead)
+    state.lookahead = parser.end_token

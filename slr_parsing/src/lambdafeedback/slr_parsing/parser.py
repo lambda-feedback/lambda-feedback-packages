@@ -15,6 +15,7 @@ from .grammar import (
     ErrorHandler,
     Lexeme,
     Matcher,
+    ParseState,
     TagHandler,
     TokenSpec,
     catch_undefined,
@@ -402,46 +403,34 @@ class SLRParser:
     def parsing_action(self, state: int, symbol: Token) -> int:
         return self.parsing_table[state][self._symbol_ids[symbol]]
 
-    def _next_action(
-        self,
-        stack: list[int],
-        a: Token,
-        input_tokens: list[Token],
-        tokens: deque[Token],
-        output: list[Any],
-    ) -> tuple[list[int], Token, list[Token], deque[Token], list[Any], int]:
+    def _next_action(self, state: ParseState) -> int:
         """The table entry for the current state and lookahead, after any error-recovery handlers, or raise."""
-        action = self.parsing_action(stack[-1], a)
+        action = self.parsing_action(state.stack[-1], state.lookahead)
         while action < 0:
             if action == _ERROR:
-                raise self.parse_error(stack, a, input_tokens, list(tokens), output)
-            handler = self.error_handlers[_handler_index(action)].action
-            stack, a, input_tokens, remaining, output = handler(self, stack, a, input_tokens, list(tokens), output)
-            tokens = deque(remaining)
-            action = self.parsing_action(stack[-1], a)
-        return stack, a, input_tokens, tokens, output, action
+                raise self.parse_error(state)
+            self.error_handlers[_handler_index(action)].action(self, state)
+            action = self.parsing_action(state.stack[-1], state.lookahead)
+        return action
 
-    def _shift(
-        self, action: int, a: Token, stack: list[int], tokens: deque[Token], output: list[Any], trace: bool
-    ) -> Token:
-        stack.append(action)
-        output.append(ExprNode(a, []))
+    def _shift(self, target: int, state: ParseState, trace: bool) -> None:
+        state.stack.append(target)
+        state.output.append(ExprNode(state.lookahead, []))
         if trace:
-            logger.debug("shift to %s  %s", self.state_string(self.states[action]), output)
-        return tokens.popleft()
+            logger.debug("shift to %s  %s", self.state_string(self.states[target]), state.output)
+        state.lookahead = state.remaining.popleft()
 
-    def _reduce(self, p: int, stack: list[int], output: list[Any], trace: bool) -> list[Any]:
+    def _reduce(self, p: int, state: ParseState, trace: bool) -> None:
         production = self._productions_token[p]
         reduction = self._reductions[p]
         if reduction is None:
             raise GrammarError(f"Production {tuple(self.productions[p][:2])} has no reduction action.")
-        output = reduction(production, output, self.tag_handler)
-        del stack[-len(production[1]) :]
-        stack.append(self.parsing_action(stack[-1], production[0]))
+        state.output = reduction(production, state.output, self.tag_handler)
+        del state.stack[-len(production[1]) :]
+        state.stack.append(self.parsing_action(state.stack[-1], production[0]))
         if trace:
             body = "".join(x.content for x in production[1])
-            logger.debug("reduce by %s --> %s  %s", production[0].content, body, output)
-        return output
+            logger.debug("reduce by %s --> %s  %s", production[0].content, body, state.output)
 
     def parse(self, input_tokens: Sequence[Token]) -> list[Any]:
         """Parse scanned tokens; returns the output roots (normally exactly one).
@@ -462,45 +451,44 @@ class SLRParser:
         """Parse from the start state until accept; returns the output and the tokens left after it."""
         if input_tokens and input_tokens[-1] == self.end_token:
             input_tokens = input_tokens[:-1]
-        tokens = deque([*input_tokens, self.end_token])
+        remaining = deque([*input_tokens, self.end_token])
+        state = ParseState(
+            stack=[0], lookahead=remaining.popleft(), input_tokens=input_tokens, remaining=remaining, output=[]
+        )
         trace = logger.isEnabledFor(logging.DEBUG)
-        a = tokens.popleft()
-        stack = [0]
-        output: list[Any] = []
-        stack, a, input_tokens, tokens, output, action = self._next_action(stack, a, input_tokens, tokens, output)
+        action = self._next_action(state)
         while action != self._accept:
             if action < self._accept:
-                a = self._shift(action, a, stack, tokens, output, trace)
+                self._shift(action, state, trace)
             elif (p := self._reduction_index(action)) is not None:
-                output = self._reduce(p, stack, output, trace)
+                self._reduce(p, state, trace)
             else:
                 raise ParseError(
                     f"Invalid parse table entry {action}.",
-                    lookahead=a,
-                    remaining=list(tokens),
-                    stack=stack,
-                    output=output,
+                    lookahead=state.lookahead,
+                    remaining=list(state.remaining),
+                    stack=state.stack,
+                    output=state.output,
                 )
-            stack, a, input_tokens, tokens, output, action = self._next_action(stack, a, input_tokens, tokens, output)
+            action = self._next_action(state)
         logger.debug("accept")
-        return output, list(tokens)
+        return state.output, list(state.remaining)
 
-    def parse_error(
-        self, stack: list[int], a: Token, input_tokens: list[Token], tokens: list[Token], output: list[Any]
-    ) -> ParseError:
-        """The :class:`ParseError` for a syntax error at ``a`` (for error actions that give up)."""
-        if a == self.end_token:
+    def parse_error(self, state: ParseState) -> ParseError:
+        """The :class:`ParseError` for a syntax error at ``state.lookahead`` (for error actions that give up)."""
+        lookahead = state.lookahead
+        if lookahead == self.end_token:
             message = "Unexpected end of input."
         else:
-            message = f"Unexpected {a.label} {a.content!r} at position {a.start}."
+            message = f"Unexpected {lookahead.label} {lookahead.content!r} at position {lookahead.start}."
         return ParseError(
             message,
-            lookahead=a,
-            accepted=input_tokens[: len(input_tokens) - len(tokens)],
-            remaining=tokens,
-            stack=stack,
-            output=output,
-            state=self.state_string(self.states[stack[-1]]),
+            lookahead=lookahead,
+            accepted=state.input_tokens[: len(state.input_tokens) - len(state.remaining)],
+            remaining=list(state.remaining),
+            stack=state.stack,
+            output=state.output,
+            state=self.state_string(self.states[state.stack[-1]]),
         )
 
     # ------------------------------------------------------------------
@@ -520,13 +508,17 @@ class SLRParser:
     def parsing_table_to_string(self) -> str:
         lines = ["\t" + "\t".join(x.content for x in self._symbols)]
         for s, row in enumerate(self.parsing_table):
-            cells = []
-            for entry in row:
-                if entry < 0:
-                    cells.append(f"e{-entry}")
-                elif entry < self._accept:
-                    cells.append(f"s{entry}")
-                else:
-                    cells.append(f"r{entry - self._accept}")
-            lines.append(f"{s}\t" + "\t".join(cells))
+            lines.append(f"{s}\t" + "\t".join(self._entry_string(entry) for entry in row))
         return "\n".join(lines) + "\n"
+
+    def _entry_string(self, entry: int) -> str:
+        """``s<state>`` (shift), ``acc``, ``r<production>``, ``h<handler>`` (error handler) or ``-`` (error)."""
+        if entry == _ERROR:
+            return "-"
+        if entry < 0:
+            return f"h{_handler_index(entry)}"
+        if entry < self._accept:
+            return f"s{entry}"
+        if entry == self._accept:
+            return "acc"
+        return f"r{self._reduction_index(entry)}"

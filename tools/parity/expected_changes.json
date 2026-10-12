@@ -372,13 +372,30 @@
    "value_latex": null
   }
  },
+ "quantity.parse|legacy|(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere*second**4)",
+   "standard_value": "(5*27/11 + 5*7)**(2*3)*100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": "(5*27/11 + 5*7)^(2*3)",
+   "value_latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}"
+  }
+ },
  "quantity.parse|legacy|(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples; units: the value preview no longer splits function calls containing unit symbols (sin -> s*in, sqrt -> s*q*r*t); it now matches the parsed value",
   "value": {
    "content": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -400,7 +417,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(2 + 23/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}"
   }
@@ -444,7 +461,7 @@
    "content": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -466,7 +483,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(43/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}"
   }
@@ -542,6 +559,23 @@
    "unit_latex": null,
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogrammegametre^2)/(fs^4daA)",
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2} \\cdot \\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
+  }
+ },
+ "quantity.parse|legacy|(kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "standard_value": null,
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|legacy|(kilogrammegametre^2)/(fs^4daA)": {
@@ -752,6 +786,74 @@
    "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{metre}}{\\mathrm{second}^{2}}",
    "value": "10 kgm/s^2 + 10",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
+  }
+ },
+ "quantity.parse|legacy|10 kilogram*metre*second**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram*metre*second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogram*metre*second**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 kilogram/(metresecond^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metresecond^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 kilogrammetresecond**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram metre second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}~\\mathrm{metre}~\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogrammetresecond**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}~\\mathrm{metre}~\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|legacy|10 pint": {
@@ -1322,6 +1424,57 @@
    "value_latex": "A \\cdot a \\cdot d \\cdot f \\cdot s^{4}"
   }
  },
+ "quantity.parse|legacy|kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
+ "quantity.parse|legacy|kilogram/(metresecond^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metresecond^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
+ "quantity.parse|legacy|metre^(3/2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "metre^(3/2)",
+   "dimension": "length**(3/2)",
+   "expanded_unit": "metre**(3/2)",
+   "latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "messages": [],
+   "standard_unit": "metre**(3/2)",
+   "standard_value": null,
+   "unit": "metre^(3/2)",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
  "quantity.parse|legacy|pi+metre second+pi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -1412,13 +1565,30 @@
    "value_latex": null
   }
  },
+ "quantity.parse|natural_si|(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere*second**4)",
+   "standard_value": "(5*27/11 + 5*7)**(2*3)*100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": "(5*27/11 + 5*7)^(2*3)",
+   "value_latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}"
+  }
+ },
  "quantity.parse|natural_si|(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
    "content": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -1430,7 +1600,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(2 + 23/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}"
   }
@@ -1464,7 +1634,7 @@
    "content": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -1476,7 +1646,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(43/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}"
   }
@@ -1542,6 +1712,23 @@
    "unit_latex": null,
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogrammegametre^2)/(fs^4daA)",
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2} \\cdot \\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
+  }
+ },
+ "quantity.parse|natural_si|(kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "standard_value": null,
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|natural_si|(kilogrammegametre^2)/(fs^4daA)": {
@@ -1897,6 +2084,74 @@
    "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{metre}}{\\mathrm{second}^{2}}",
    "value": "10 kgm/s^2 + 10",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
+  }
+ },
+ "quantity.parse|natural_si|10 kilogram*metre*second**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram*metre*second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogram*metre*second**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural_si|10 kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural_si|10 kilogram/(metresecond^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metresecond^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural_si|10 kilogrammetresecond**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram metre second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}~\\mathrm{metre}~\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogrammetresecond**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}~\\mathrm{metre}~\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|natural_si|10 knot": {
@@ -2456,6 +2711,57 @@
    "value_latex": "A \\cdot a \\cdot d \\cdot f \\cdot s^{4}"
   }
  },
+ "quantity.parse|natural_si|kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
+ "quantity.parse|natural_si|kilogram/(metresecond^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metresecond^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
+ "quantity.parse|natural_si|metre^(3/2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "metre^(3/2)",
+   "dimension": "length**(3/2)",
+   "expanded_unit": "metre**(3/2)",
+   "latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "messages": [],
+   "standard_unit": "metre**(3/2)",
+   "standard_value": null,
+   "unit": "metre^(3/2)",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
  "quantity.parse|natural_si|pi+metre second+pi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -2541,13 +2847,30 @@
    "value_latex": null
   }
  },
+ "quantity.parse|natural|(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere*second**4)",
+   "standard_value": "(5*27/11 + 5*7)**(2*3)*100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": "(5*27/11 + 5*7)^(2*3)",
+   "value_latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}"
+  }
+ },
  "quantity.parse|natural|(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
    "content": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -2569,7 +2892,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(2 + 23/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}"
   }
@@ -2613,7 +2936,7 @@
    "content": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -2635,7 +2958,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(43/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}"
   }
@@ -2711,6 +3034,23 @@
    "unit_latex": null,
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogrammegametre^2)/(fs^4daA)",
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2} \\cdot \\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
+  }
+ },
+ "quantity.parse|natural|(kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "standard_value": null,
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|natural|(kilogrammegametre^2)/(fs^4daA)": {
@@ -2921,6 +3261,74 @@
    "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{metre}}{\\mathrm{second}^{2}}",
    "value": "10 kgm/s^2 + 10",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + 10"
+  }
+ },
+ "quantity.parse|natural|10 kilogram*metre*second**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram*metre*second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogram*metre*second**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 kilogram/(metresecond^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metresecond^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 kilogrammetresecond**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram metre second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}~\\mathrm{metre}~\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogrammetresecond**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}~\\mathrm{metre}~\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|natural|10 pint": {
@@ -3491,6 +3899,57 @@
    "value_latex": "A \\cdot a \\cdot d \\cdot f \\cdot s^{4}"
   }
  },
+ "quantity.parse|natural|kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
+ "quantity.parse|natural|kilogram/(metresecond^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metresecond^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
+ "quantity.parse|natural|metre^(3/2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "metre^(3/2)",
+   "dimension": "length**(3/2)",
+   "expanded_unit": "metre**(3/2)",
+   "latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "messages": [],
+   "standard_unit": "metre**(3/2)",
+   "standard_value": null,
+   "unit": "metre^(3/2)",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
  "quantity.parse|natural|pi+metre second+pi": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -3581,13 +4040,30 @@
    "value_latex": null
   }
  },
+ "quantity.parse|strict_all|(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere*second**4)",
+   "standard_value": "(5*27/11 + 5*7)**(2*3)*100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": "(5*27/11 + 5*7)^(2*3)",
+   "value_latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}"
+  }
+ },
  "quantity.parse|strict_all|(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples; units: the value preview no longer splits function calls containing unit symbols (sin -> s*in, sqrt -> s*q*r*t); it now matches the parsed value",
   "value": {
    "content": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -3609,7 +4085,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(2 + 23/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}"
   }
@@ -3653,7 +4129,7 @@
    "content": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -3675,7 +4151,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(43/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}"
   }
@@ -3731,6 +4207,23 @@
    "unit_latex": null,
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogrammegametre^2)/(fs^4daA)",
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2} \\cdot \\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
+  }
+ },
+ "quantity.parse|strict_all|(kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "standard_value": null,
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|strict_all|(kilogrammegametre^2)/(fs^4daA)": {
@@ -4138,6 +4631,40 @@
    "unit_latex": null,
    "value": "10 kgm/s^2 + 10 kgm/s^2",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + \\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}}"
+  }
+ },
+ "quantity.parse|strict_all|10 kilogram*metre*second**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram*metre*second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogram*metre*second**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|strict_all|10 kilogram/(metresecond^2)": {
@@ -4995,6 +5522,23 @@
    "value_latex": "A \\cdot a \\cdot d \\cdot f \\cdot s^{4}"
   }
  },
+ "quantity.parse|strict_all|kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
  "quantity.parse|strict_all|kilogram/(metresecond^2)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -5089,6 +5633,23 @@
    "unit_latex": null,
    "value": "kilogrammetersecondAmperes",
    "value_latex": "Amperes \\cdot c \\cdot d \\cdot e \\cdot gram \\cdot kilo \\cdot meters \\cdot n \\cdot o"
+  }
+ },
+ "quantity.parse|strict_all|metre^(3/2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "metre^(3/2)",
+   "dimension": "length**(3/2)",
+   "expanded_unit": "metre**(3/2)",
+   "latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "messages": [],
+   "standard_unit": "metre**(3/2)",
+   "standard_value": null,
+   "unit": "metre^(3/2)",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|strict_all|mmPas": {
@@ -5242,13 +5803,30 @@
    "value_latex": null
   }
  },
+ "quantity.parse|strict_si|(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "gram*metre**2/(ampere*second**4)",
+   "standard_value": "(5*27/11 + 5*7)**(2*3)*100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": "(5*27/11 + 5*7)^(2*3)",
+   "value_latex": "\\left(5 \\cdot 27 \\cdot \\frac{1}{11} + 5 \\cdot 7\\right)^{2 \\cdot 3}"
+  }
+ },
  "quantity.parse|strict_si|(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
    "content": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -5260,7 +5838,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(2 + 23/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(2+2.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{2 + 2.3}"
   }
@@ -5294,7 +5872,7 @@
    "content": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
    "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
    "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
-   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}~\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "messages": [
     {
      "after": "qrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(fs^4 daA)",
@@ -5306,7 +5884,7 @@
    "standard_value": "(527*pi/(100*(sqrt(11))) + 5*7)**(43/10)*100000000000000000000000000000000000000000000000000000000000000000000000000",
    "unit": "(kilogram megametre^2)/(fs^4 daA)",
    "unit_factor": "100000000000000000000000000000000000000000000000000000000000000000000000000",
-   "unit_latex": "\\frac{(\\mathrm{kilogram}~\\mathrm{megametre}^{2})}{(\\mathrm{femtosecond}^{4}~\\mathrm{decaampere})}",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3)",
    "value_latex": "\\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}"
   }
@@ -5352,6 +5930,23 @@
    "unit_latex": null,
    "value": "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogrammegametre^2)/(fs^4daA)",
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2} \\cdot \\left(\\frac{5.27 \\cdot \\pi}{\\sqrt{11}} + 5 \\cdot 7\\right)^{4.3}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
+  }
+ },
+ "quantity.parse|strict_si|(kilogram megametre^2)/(fs^4 daA)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "(kilogram megametre^2)/(femtosecond^4 decaampere)",
+   "dimension": "10**3*mass*(10**6*length)**2/(((time/10**15)**4*10**1*electric_current))",
+   "expanded_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "messages": [],
+   "standard_unit": "10**3*gram*(10**6*metre)**2/(((second/10**15)**4*10**1*ampere))",
+   "standard_value": null,
+   "unit": "(kilogram megametre^2)/(fs^4 daA)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}~\\mathrm{megametre}^{2}}{\\mathrm{femtosecond}^{4}~\\mathrm{decaampere}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|strict_si|(kilogrammegametre^2)/(fs^4daA)": {
@@ -5904,6 +6499,40 @@
    "unit_latex": null,
    "value": "10 kgm/s^2 + 10 kgm/s^2",
    "value_latex": "\\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}} + \\frac{10 \\cdot g \\cdot k \\cdot m}{s^{2}}"
+  }
+ },
+ "quantity.parse|strict_si|10 kilogram*metre*second**(-2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram*metre*second**(-2)",
+   "dimension": "10**3*length*mass/time**2",
+   "expanded_unit": "10**3*gram*metre/second**2",
+   "latex": "10~\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "messages": [],
+   "standard_unit": "gram*metre/second**2",
+   "standard_value": "10*1000",
+   "unit": "kilogram*metre*second**(-2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\mathrm{kilogram}\\cdot\\mathrm{metre}\\cdot\\mathrm{second}^{-2}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_si|10 kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "10 kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "10~\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "gram/(metre*second**2)",
+   "standard_value": "10*1000",
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1000",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|strict_si|10 kilogram/(metresecond^2)": {
@@ -6740,6 +7369,23 @@
    "value_latex": "A \\cdot a \\cdot d \\cdot f \\cdot s^{4}"
   }
  },
+ "quantity.parse|strict_si|kilogram/(metre second^2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "kilogram/(metre second^2)",
+   "dimension": "10**3*mass/((length*time**2))",
+   "expanded_unit": "10**3*gram/((metre*second**2))",
+   "latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "messages": [],
+   "standard_unit": "10**3*gram/((metre*second**2))",
+   "standard_value": null,
+   "unit": "kilogram/(metre second^2)",
+   "unit_factor": "1",
+   "unit_latex": "\\frac{\\mathrm{kilogram}}{\\mathrm{metre}~\\mathrm{second}^{2}}",
+   "value": null,
+   "value_latex": null
+  }
+ },
  "quantity.parse|strict_si|kilogram/(metresecond^2)": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -6819,6 +7465,23 @@
    "unit_latex": null,
    "value": "kilogrammetersecondAmperes",
    "value_latex": "e \\cdot Amperes \\cdot c \\cdot d \\cdot gram \\cdot kilo \\cdot meters \\cdot n \\cdot o"
+  }
+ },
+ "quantity.parse|strict_si|metre^(3/2)": {
+  "reason": "Unit LaTeX drops the brackets around a whole numerator, denominator or exponent: the fraction or superscript already groups it.",
+  "value": {
+   "content": "metre^(3/2)",
+   "dimension": "length**(3/2)",
+   "expanded_unit": "metre**(3/2)",
+   "latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "messages": [],
+   "standard_unit": "metre**(3/2)",
+   "standard_value": null,
+   "unit": "metre^(3/2)",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{metre}^{\\frac{3}{2}}",
+   "value": null,
+   "value_latex": null
   }
  },
  "quantity.parse|strict_si|mmPas": {

@@ -54,16 +54,16 @@ class Node:
 class EvaluationNode(Node):
     """Runs ``evaluate`` on the response; the criteria it reports lead onwards.
 
-    Setting ``replacement`` (e.g. to ``CriteriaGraph.END``) disables the
-    evaluation: feedback generation goes to the replacement instead.
-    ``sufficiencies`` lists criteria whose evaluations can stand in for this
-    one when choosing where to start (``None``: it can't be stood in for;
-    see ``CriteriaGraph.starting_evaluations``).
+    Setting ``replacement`` to another node's label (e.g.
+    ``CriteriaGraph.END_LABEL``) disables the evaluation: feedback generation
+    goes to that node instead. ``sufficiencies`` lists criteria whose
+    evaluations can stand in for this one when choosing where to start (see
+    ``CriteriaGraph.starting_evaluations``).
     """
 
     evaluate: Evaluate | None = None
-    replacement: Node | None = None
-    sufficiencies: list[str] | None = None
+    replacement: str | None = None
+    sufficiencies: tuple[str, ...] = ()
 
 
 @dataclass(eq=False)

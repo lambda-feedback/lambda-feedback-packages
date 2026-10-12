@@ -49,9 +49,7 @@ def graph_to_json(graph: CriteriaGraph) -> str:
             "criteria": {label: entry(node) for label, node in graph.criteria.items()},
             "outputs": {label: entry(node, outgoing=False) for label, node in graph.outputs.items()},
             "sufficiencies": {
-                label: list(node.sufficiencies)
-                for label, node in graph.evaluations.items()
-                if node.sufficiencies is not None
+                label: list(node.sufficiencies) for label, node in graph.evaluations.items() if node.sufficiencies
             },
         }
     )
@@ -75,10 +73,9 @@ def graph_to_mermaid(graph: CriteriaGraph) -> str:
             edges.update(
                 dict.fromkeys((keys[e.source.label], keys[e.target.label]) for e in node.outgoing + node.incoming)
             )
-            node_sufficiencies = node.sufficiencies if isinstance(node, EvaluationNode) else None
-            if node_sufficiencies is not None:
+            if isinstance(node, EvaluationNode):
                 # A sufficiency naming no node has nothing to point at, so it is not drawn.
-                sufficiencies.update(dict.fromkeys((keys[label], keys[s]) for s in node_sufficiencies if s in keys))
+                sufficiencies.update(dict.fromkeys((keys[label], keys[s]) for s in node.sufficiencies if s in keys))
     lines += [" --> ".join(edge) for edge in edges]
     lines += [" -.-> ".join(sufficiency) for sufficiency in sufficiencies]
     return "\n\t".join(lines)

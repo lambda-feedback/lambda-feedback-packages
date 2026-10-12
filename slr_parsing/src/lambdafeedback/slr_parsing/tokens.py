@@ -147,6 +147,16 @@ class ExprNode(Token):
                     stack += [(*item, depth + 1) for item in reversed(elem.traverse_step(elem, action))]
         return output
 
+    def walk(self) -> list[ExprNode]:
+        """Every node of the tree once, each before its children (the order :meth:`traverse` applies its action in)."""
+        order: list[ExprNode] = []
+        stack = [self]
+        while stack:
+            node = stack.pop()
+            order.append(node)
+            stack += reversed(node.children)
+        return order
+
     def original_string(self) -> str:
         """The slice of the original input spanned by this subtree."""
         start, end = self.start, self.end

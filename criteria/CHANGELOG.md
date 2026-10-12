@@ -19,7 +19,7 @@ The first public release, after the extraction refactor. The import path is now 
 | `graph.starting_evaluations(label)` returned a `set` | `graph.starting_evaluations(criterion)` returns an ordered `list` |
 | `graph.generate_feedback(response, main_criteria)` | `graph.generate_feedback(response, main_criterion)` |
 
-`CriteriaGraph.END`, the graph-building methods (`add_evaluation_node`, `add_criterion_node`, `add_output_node`, `add_node`, `attach`, `add_sufficiencies`), `generate_feedback` and `trees` (but see their parameters below), and node attributes (`label`, `summary`, `details`, `incoming`, `outgoing`, `evaluate`, `replacement`, `feedback_string_generator`) keep their names.
+The graph-building methods `add_evaluation_node`, `add_criterion_node`, `add_output_node`, `add_node` and `add_sufficiencies`, and `generate_feedback` and `trees` (but see their parameters below), and node attributes (`label`, `summary`, `details`, `incoming`, `outgoing`, `evaluate`, `replacement`, `feedback_string_generator`) keep their names.
 
 Removed (unused): `CriteriaGraph(identifier, entry_evaluations=)` (never read), `CriteriaGraph.RETURN`, the `Evaluation.results` / `Criterion.consequences` aliases of `outgoing`, and the node `tags` attributes.
 
@@ -62,7 +62,9 @@ Behaviour differences to be aware of when adopting:
 
 ### Changed
 
-- Sufficiencies are stored on the node: `EvaluationNode.sufficiencies` (`None`: none set) replaces `CriteriaGraph.sufficiencies`, and `add_node` copies them.
+- `attach(source, target)` only connects existing nodes. `attach_new_criterion(evaluation, label, summary, details, feedback_string_generator=None)` and `attach_new_evaluation(criterion, label, summary, details, sufficiencies=(), evaluate=None)` create the target and attach it (`attach` used to do both, with keywords valid for one node kind or the other).
+- `CriteriaGraph.END` (one `OutputNode` shared by every graph) is replaced by `graph.add_end_node()` and `CriteriaGraph.END_LABEL`. `EvaluationNode.replacement` is a node label (was a node); `generate_feedback` raises `CriteriaGraphError` if it names neither an evaluation nor an output.
+- Sufficiencies are stored on the node: `EvaluationNode.sufficiencies`, a tuple, replaces `CriteriaGraph.sufficiencies`, and `add_node` copies them. An empty list means no sufficiencies (it used to remove the evaluation from the starting evaluations).
 - Nodes compare by identity (they compared by label, summary and details, all mutable).
 
 ### Fixed

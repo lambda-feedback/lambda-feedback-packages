@@ -23,11 +23,11 @@ class RecordingResult:
 
 def build_graph(graph):
     graph.add_evaluation_node("EQ", "response = answer", "compare")
-    graph.attach("EQ", "EQ_TRUE", summary="true", details="true", feedback_string_generator=lambda inputs: " Correct! ")
-    graph.attach(
-        "EQ", "EQ_FALSE", summary="false", details="false", feedback_string_generator=lambda inputs: inputs["why"]
+    graph.attach_new_criterion("EQ", "EQ_TRUE", "true", "true", feedback_string_generator=lambda inputs: " Correct! ")
+    graph.attach_new_criterion(
+        "EQ", "EQ_FALSE", "false", "false", feedback_string_generator=lambda inputs: inputs["why"]
     )
-    graph.attach("EQ", "EQ_SILENT", summary="silent", details="silent", feedback_string_generator=lambda inputs: None)
+    graph.attach_new_criterion("EQ", "EQ_SILENT", "silent", "silent", feedback_string_generator=lambda inputs: None)
     return graph
 
 

@@ -51,17 +51,17 @@ slr_strict_si_syntax_test_cases = [
         "kilogram/(metre second^2)",
         "kilogram/(metre second^2)",
         None,
-        r"\frac{\mathrm{kilogram}}{(\mathrm{metre}~\mathrm{second}^{2})}",
+        r"\frac{\mathrm{kilogram}}{\mathrm{metre}~\mathrm{second}^{2}}",
         ["NO_VALUE"],
     ),
-    ("metre^(3/2)", None, "metre^(3/2)", "metre^(3/2)", None, r"\mathrm{metre}^{(\frac{3}{2})}", ["NO_VALUE"]),
+    ("metre^(3/2)", None, "metre^(3/2)", "metre^(3/2)", None, r"\mathrm{metre}^{\frac{3}{2}}", ["NO_VALUE"]),
     (
         "10 kilogram/(metre second^2)",
         "10",
         "kilogram/(metre second^2)",
         "10 kilogram/(metre second^2)",
         "10",
-        r"\frac{\mathrm{kilogram}}{(\mathrm{metre}~\mathrm{second}^{2})}",
+        r"\frac{\mathrm{kilogram}}{\mathrm{metre}~\mathrm{second}^{2}}",
         ["FULL_QUANTITY", "NUMBER_VALUE"],
     ),
     (
@@ -88,7 +88,7 @@ slr_strict_si_syntax_test_cases = [
         "kilogram*metre*second**(-2)",
         "10 kilogram*metre*second**(-2)",
         "10",
-        r"\mathrm{kilogram}\cdot\mathrm{metre}\cdot\mathrm{second}^{(-2)}",
+        r"\mathrm{kilogram}\cdot\mathrm{metre}\cdot\mathrm{second}^{-2}",
         ["FULL_QUANTITY", "NUMBER_VALUE"],
     ),
     (
@@ -115,7 +115,7 @@ slr_strict_si_syntax_test_cases = [
         "(kilogram megametre^2)/(fs^4 daA)",
         "(kilogram megametre^2)/(femtosecond^4 decaampere)",
         None,
-        r"\frac{(\mathrm{kilogram}~\mathrm{megametre}^{2})}{(\mathrm{femtosecond}^{4}~\mathrm{decaampere})}",
+        r"\frac{\mathrm{kilogram}~\mathrm{megametre}^{2}}{\mathrm{femtosecond}^{4}~\mathrm{decaampere}}",
         ["NO_VALUE"],
     ),
     (
@@ -124,7 +124,7 @@ slr_strict_si_syntax_test_cases = [
         "(kilogram megametre^2)/(fs^4 daA)",
         "(5.27*pi/sqrt(11) + 5*7)^(4.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
         r"\left(\frac{5.27 \cdot \pi}{\sqrt{11}} + 5 \cdot 7\right)^{4.3}",
-        r"\frac{(\mathrm{kilogram}~\mathrm{megametre}^{2})}{(\mathrm{femtosecond}^{4}~\mathrm{decaampere})}",
+        r"\frac{\mathrm{kilogram}~\mathrm{megametre}^{2}}{\mathrm{femtosecond}^{4}~\mathrm{decaampere}}",
         ["FULL_QUANTITY", "EXPR_VALUE"],
     ),
     (
@@ -133,7 +133,7 @@ slr_strict_si_syntax_test_cases = [
         "(kilogram megametre^2)/(fs^4 daA)",
         "(5.27*pi/sqrt(11) + 5*7)^(2+2.3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
         r"\left(\frac{5.27 \cdot \pi}{\sqrt{11}} + 5 \cdot 7\right)^{2 + 2.3}",
-        r"\frac{(\mathrm{kilogram}~\mathrm{megametre}^{2})}{(\mathrm{femtosecond}^{4}~\mathrm{decaampere})}",
+        r"\frac{\mathrm{kilogram}~\mathrm{megametre}^{2}}{\mathrm{femtosecond}^{4}~\mathrm{decaampere}}",
         ["FULL_QUANTITY", "EXPR_VALUE"],
     ),
     (
@@ -142,7 +142,7 @@ slr_strict_si_syntax_test_cases = [
         "(kilogram megametre^2)/(fs^4 daA)",
         "(5*27/11 + 5*7)^(2*3) (kilogram megametre^2)/(femtosecond^4 decaampere)",
         r"\left(5 \cdot 27 \cdot \frac{1}{11} + 5 \cdot 7\right)^{2 \cdot 3}",
-        r"\frac{(\mathrm{kilogram}~\mathrm{megametre}^{2})}{(\mathrm{femtosecond}^{4}~\mathrm{decaampere})}",
+        r"\frac{\mathrm{kilogram}~\mathrm{megametre}^{2}}{\mathrm{femtosecond}^{4}~\mathrm{decaampere}}",
         ["FULL_QUANTITY", "EXPR_VALUE"],
     ),
     (
@@ -303,7 +303,7 @@ slr_natural_si_syntax_test_cases = [
         "kilogram/(metresecond^2)",
         "kilogram/(metre second^2)",
         None,
-        r"\frac{\mathrm{kilogram}}{(\mathrm{metre}~\mathrm{second}^{2})}",
+        r"\frac{\mathrm{kilogram}}{\mathrm{metre}~\mathrm{second}^{2}}",
         ["NO_VALUE"],
     ),
     (
@@ -312,7 +312,7 @@ slr_natural_si_syntax_test_cases = [
         "kilogram/(metresecond^2)",
         "10 kilogram/(metre second^2)",
         "10",
-        r"\frac{\mathrm{kilogram}}{(\mathrm{metre}~\mathrm{second}^{2})}",
+        r"\frac{\mathrm{kilogram}}{\mathrm{metre}~\mathrm{second}^{2}}",
         ["FULL_QUANTITY", "NUMBER_VALUE"],
     ),
     (
@@ -357,7 +357,7 @@ slr_natural_si_syntax_test_cases = [
         "kilogrammetresecond**(-2)",
         "10 kilogram metre second**(-2)",
         "10",
-        r"\mathrm{kilogram}~\mathrm{metre}~\mathrm{second}^{(-2)}",
+        r"\mathrm{kilogram}~\mathrm{metre}~\mathrm{second}^{-2}",
         ["FULL_QUANTITY", "NUMBER_VALUE"],
     ),
     (

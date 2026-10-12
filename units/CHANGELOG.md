@@ -8,6 +8,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 - `preprocess_quantity(expr, params, *, name=None)`, the same shape as `expression_parsing.preprocess_expression`.
 - `∙` (bullet operator) is a product sign, like `·`, `⋅` and `×` (as in expression parsing).
+- Unit LaTeX drops the brackets around a whole numerator, denominator or exponent, which the fraction or superscript already groups: `kg/(m s)` gives `\frac{\mathrm{kilogram}}{\mathrm{metre}~\mathrm{second}}` (was `\frac{\mathrm{kilogram}}{(\mathrm{metre}~\mathrm{second})}`).
 
 - A unit spelled out from a unit set that isn't selected raises the new `DisallowedUnitError` (a `QuantityParseError`, with `.unit` and `.unit_sets`): with only `SI`, `10 litre`, `3 feet` and `5 °` are rejected, naming the set that has the unit. Before, most were read as letters in the value, so `10 litre` was `10*E*i*l*r*t` with no unit (the `e` read as Euler's number), and a few raised an unrelated error. Names, alternative spellings and plurals are checked, with or without a prefix; symbols (`L`, `h`) are still read as variables.
 - **Angles are in radians.** The radian and the steradian are now 1, and the degree is `pi/180`. Before, the radian was `1/(2*pi)`, the steradian `1/(4*pi)` and the degree `1/360` (fractions of a turn), while the arcminute and the arcsecond were already in radians, so `60 angleminute` didn't equal `1 degree`. This changes `standard_value`, `unit_factor`, `expanded_unit` and `dimension` for every angle unit.

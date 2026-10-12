@@ -18,7 +18,7 @@ from lambdafeedback.criteria import (
 def small_graph():
     graph = CriteriaGraph("g")
     graph.add_evaluation_node("E1", "eval", "evaluate E1")
-    graph.attach("E1", "C1", summary="crit", details="criterion C1")
+    graph.attach_new_criterion("E1", "C1", "crit", "criterion C1")
     graph.add_output_node("OUT", "out", "done")
     graph.attach("C1", "OUT")
     return graph
@@ -70,7 +70,7 @@ class TestGraph:
 
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E1", "eval", "details", evaluate=broken)
-        graph.attach("E1", "E1_TRUE", summary="true", details="true")
+        graph.attach_new_criterion("E1", "E1_TRUE", "true", "true")
         with pytest.raises(CriteriaEvaluationError, match="E1") as info:
             graph.generate_feedback("x", "E1_TRUE")
         assert isinstance(info.value.__cause__, RuntimeError)
@@ -82,9 +82,9 @@ from lambdafeedback.criteria import CriteriaGraph
 g = CriteriaGraph("g")
 g.add_evaluation_node("START", "s", "d", evaluate=lambda r: {"A": None, "B": None, "C": None})
 for c in "ABC":
-    g.attach("START", c, summary=c, details=c)
-    g.attach(c, "E" + c, summary=c, details=c, evaluate=(lambda c: lambda r: {c + "_OK": None})(c))
-    g.attach("E" + c, c + "_OK", summary=c, details=c)
+    g.attach_new_criterion("START", c, c, c)
+    g.attach_new_evaluation(c, "E" + c, c, c, evaluate=(lambda c: lambda r: {c + "_OK": None})(c))
+    g.attach_new_criterion("E" + c, c + "_OK", c, c)
 print(list(g.generate_feedback("r", "A")))
 print(g.to_mermaid())
 """
@@ -108,9 +108,9 @@ class TestDeterminism:
     def test_cyclic_sufficiencies_terminate(self):
         graph = CriteriaGraph("g")
         graph.add_evaluation_node("E1", "e1", "d", sufficiencies=["C2"])
-        graph.attach("E1", "C1", summary="c1", details="d")
-        graph.attach("C1", "E2", summary="e2", details="d", sufficiencies=["C1"])
-        graph.attach("E2", "C2", summary="c2", details="d")
+        graph.attach_new_criterion("E1", "C1", "c1", "d")
+        graph.attach_new_evaluation("C1", "E2", "e2", "d", sufficiencies=["C1"])
+        graph.attach_new_criterion("E2", "C2", "c2", "d")
         assert list(graph.starting_evaluations("C2")) == ["E2"]
 
 

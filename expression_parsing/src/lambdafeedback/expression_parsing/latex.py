@@ -148,14 +148,14 @@ def _e_tokens(latex: str) -> Iterator[tuple[int, int, str]]:
 _PROTECTED = {"E": "E", "e": "e", r"\gamma": "gamma", r"\Gamma": "Gamma"}
 
 
-def preprocess_E(latex_str: str) -> tuple[str, dict[str, str]]:  # noqa: N802
+def _protect_e_symbols(latex_str: str) -> tuple[str, dict[str, str]]:
     """Replace ``E``, ``e``, ``\\gamma`` and ``\\Gamma`` by placeholder letters, so they parse as plain symbols.
 
     latex2sympy2_extended reads them as constants or inconsistently: ``e`` as
     Euler's number, ``E`` after a digit as an exponent (``2E`` gives ``2``),
     and both ``\\gamma`` and ``\\Gamma`` as the Euler-Mascheroni constant (and
     fails on ``\\gamma_1``). As placeholders they are plain symbols, restored
-    by :func:`postprocess_E`, so whether they are constants is left to
+    by :func:`_restore_e_symbols`, so whether they are constants is left to
     :func:`parse_expression` (``elementary_functions``, ``special_functions``),
     as for text input. Scientific notation (``2E5``) and other commands are
     left alone. Returns the modified string and ``{original: placeholder}``.
@@ -179,8 +179,8 @@ def preprocess_E(latex_str: str) -> tuple[str, dict[str, str]]:  # noqa: N802
     return "".join(pieces), replacements
 
 
-def postprocess_E(expr: Any, replacements: Mapping[str, str]) -> Any:  # noqa: N802
-    """Undo :func:`preprocess_E` on the symbols (and undefined functions) of a parsed expression."""
+def _restore_e_symbols(expr: Any, replacements: Mapping[str, str]) -> Any:
+    """Undo :func:`_protect_e_symbols` on the symbols (and undefined functions) of a parsed expression."""
     if not replacements:
         return expr
     restore = str.maketrans({placeholder: _PROTECTED[original] for original, placeholder in replacements.items()})
@@ -227,7 +227,7 @@ _NORMALISATION = NormalizationConfig(
 
 def _latex2sympy(latex: str) -> Any:
     """latex2sympy2_extended with ``E``/``e``/``\\gamma`` as plain symbols and decimals as exact rationals."""
-    protected, replacements = preprocess_E(latex)
+    protected, replacements = _protect_e_symbols(latex)
     parsed = _Converter(config=_CONVERSION).parse(normalize_latex(protected, _NORMALISATION))
     if isinstance(parsed, list):
         parsed = parsed.pop()
@@ -237,7 +237,7 @@ def _latex2sympy(latex: str) -> Any:
         # the rest of the expression stays as written (5 \cdot 7 stays 5*7).
         with evaluate(False):
             parsed = parsed.xreplace({number: Rational(str(number)) for number in parsed.atoms(Float)})
-    return postprocess_E(parsed, replacements)
+    return _restore_e_symbols(parsed, replacements)
 
 
 MAX_LATEX_NESTING = 10

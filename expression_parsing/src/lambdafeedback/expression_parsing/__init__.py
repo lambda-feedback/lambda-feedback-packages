@@ -54,6 +54,7 @@ from .substitution import (
     substitute_input_symbols,
     substitutions_sort_key,
 )
+from .symbol_tables import UNICODE_OPERATORS
 from .sympy_parsing import SympyParsingConfig, parse_expression, sympy_symbols
 
 try:
@@ -66,6 +67,7 @@ __all__ = [
     "MAX_NUMBER_DIGITS",
     "MAX_NUMBER_EXPONENT",
     "MAX_SIMPLIFY_POWER",
+    "UNICODE_OPERATORS",
     "AbsoluteValueNotationError",
     "BracketNotationError",
     "Convention",

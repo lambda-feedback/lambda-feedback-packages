@@ -33,7 +33,9 @@ accepts the input, so their action is never called (``None`` is fine).
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
 from .tokens import Token
@@ -133,15 +135,24 @@ ErrorCondition: TypeAlias = Callable[[list[tuple[list[Token], list[Token]]], Tok
 the state where the error occurred.
 """
 
-ErrorAction: TypeAlias = (
-    "Callable[[SLRParser, list[int], Token, list[Token], list[Token], list[Any]],"
-    " tuple[list[int], Token, list[Token], list[Token], list[Any]]]"
-)
-"""``action(parser, stack, lookahead, input_tokens, remaining, output)``.
 
-Returns the (possibly modified) ``(stack, lookahead, input_tokens, remaining,
-output)`` to continue parsing with, or raises.
-"""
+@dataclass
+class ParseState:
+    """Where a parse is: what error actions see, and may change to recover."""
+
+    stack: list[int]
+    """State numbers; the last is the current state."""
+    lookahead: Token
+    input_tokens: list[Token]
+    """The tokens of the root being parsed."""
+    remaining: deque[Token]
+    """The tokens after ``lookahead``."""
+    output: list[Any]
+    """The output stack of tokens and :class:`~lambdafeedback.slr_parsing.ExprNode` s."""
+
+
+ErrorAction: TypeAlias = "Callable[[SLRParser, ParseState], None]"
+"""``action(parser, state)``: change ``state`` so that parsing can continue, or raise."""
 
 
 class Production(NamedTuple):

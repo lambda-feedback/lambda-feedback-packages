@@ -144,7 +144,7 @@ def _named_substitutions(table: Sequence[tuple[str, Sequence[str]]], expr: str, 
     ]
 
 
-_UNICODE_OPERATOR_TABLE = str.maketrans(UNICODE_OPERATORS)
+_UNICODE_OPERATOR_TABLE = str.maketrans(dict(UNICODE_OPERATORS))
 
 
 def normalise_unicode_operators(expr: str) -> str:

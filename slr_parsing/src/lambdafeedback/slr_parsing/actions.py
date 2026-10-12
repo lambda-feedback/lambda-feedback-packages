@@ -43,7 +43,7 @@ def _body_start(production: TokenProduction, output: list[Any]) -> int:
     return len(output) - len(production[1])
 
 
-def append(production: TokenProduction, output: list[Any], tag_handler: TagHandler | None) -> list[Any]:
+def append(production: TokenProduction, output: list[Any], _tag_handler: TagHandler | None) -> list[Any]:
     """Append the rest of the body's items as children of its first item."""
     first = _body_start(production, output)
     output[first].children += output[first + 1 :]

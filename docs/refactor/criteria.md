@@ -16,7 +16,7 @@ Depends on `slr_parsing`. Version `0.2.0` (unreleased); see [`criteria/CHANGELOG
 **Deviations from the plan:**
 - **lf_toolkit is not a runtime dependency.** lf_toolkit@ae52fa6 declares its dev tools as runtime requirements (80 packages / 237 MB), so `CriteriaGraph.export_feedback` types against a `ResultLike` protocol. lf_toolkit is a dev-only dependency, and `test_feedback.py` checks compatibility with the real `Result`. Upstream fixes are drafted in [upstream-lf-toolkit.md](upstream-lf-toolkit.md).
 - **Blank feedback** (decided in Phase 2): `export_feedback` records every reached tag, adding `""` for `None`/blank feedback, which keeps the tags compareExpressions' tests rely on. The resulting empty `<br>` segments in lf_toolkit's `Result.feedback` are the subject of the upstream fix.
-- **`CriteriaGraph.END` is kept.** The plan listed it as unused, but compareExpressions uses it (`graph.add_node(CriteriaGraph.END)`, `evaluation.replacement = CriteriaGraph.END`). `RETURN` was the unused one.
+- **`CriteriaGraph.END` is kept.** The plan listed it as unused, but compareExpressions uses it (`graph.add_node(CriteriaGraph.END)`, `evaluation.replacement = CriteriaGraph.END`). `RETURN` was the unused one. *(Pre-release review: the shared node is replaced by `graph.add_end_node()` and `replacement = CriteriaGraph.END_LABEL`; compareExpressions needs those two one-line changes.)*
 - **Productions are kept as an explicit list** rather than generated from an `OTHER`/`RESERVED` product: 26 literal lines are clearer than the generator, and they make the precedence order obvious.
 
 ## Checklist

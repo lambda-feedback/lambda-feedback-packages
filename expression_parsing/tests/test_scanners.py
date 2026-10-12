@@ -9,7 +9,7 @@ from lambdafeedback.expression_parsing import (
     is_complex_number_on_exponential_form,
     is_number,
 )
-from lambdafeedback.expression_parsing.latex import _replace_command, extract_latex, parse_latex, preprocess_E
+from lambdafeedback.expression_parsing.latex import _protect_e_symbols, _replace_command, extract_latex, parse_latex
 from lambdafeedback.expression_parsing.substitution import normalise_unicode_operators
 
 
@@ -97,7 +97,7 @@ def test_extract_latex_edge_cases(symbol, expected):
 
 
 def test_preprocess_e_keeps_scientific_notation_and_other_commands():
-    latex, replacements = preprocess_E("2e5 + e + \\exp{x} + 1.e-3 + \\gamma")
+    latex, replacements = _protect_e_symbols("2e5 + e + \\exp{x} + 1.e-3 + \\gamma")
     assert set(replacements) == {"e", "\\gamma"}
     gamma = replacements["\\gamma"]
     assert latex == f"2E5 + {replacements['e']} + \\exp{{x}} + 1.E-3 + {gamma}"

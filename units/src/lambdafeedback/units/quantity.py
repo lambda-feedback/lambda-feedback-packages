@@ -5,11 +5,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import cache
 from string import ascii_letters
-from typing import Any, NamedTuple
+from typing import Any
 
 from sympy import Basic, Integer, simplify
 
 from lambdafeedback.expression_parsing import (
+    UNICODE_OPERATORS,
     AbsoluteValueNotationError,
     BracketNotationError,
     ExpressionParsingError,
@@ -20,7 +21,6 @@ from lambdafeedback.expression_parsing import (
     substitute,
     sympy_to_latex,
 )
-from lambdafeedback.expression_parsing.symbol_tables import UNICODE_OPERATORS
 from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode, SLRError, SLRParser
 
 from .data import ALL_UNITS, CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, UNIT_SETS, AnyUnit, units_in
@@ -294,16 +294,6 @@ def _conversion_tree(parser: SLRParser, unit_name: str) -> ExprNode:
     return tree
 
 
-class _Forms(NamedTuple):
-    """A quantity's SymPy forms (see :class:`PhysicalQuantity`)."""
-
-    standard_value: Basic | set[Basic] | None
-    standard_unit: Basic | None
-    expanded_unit: Basic | None
-    dimension: Basic
-    unit_factor: Basic
-
-
 @dataclass(frozen=True)
 class RevertedUnit:
     """Unit-like text found inside a value, restored to what was typed.
@@ -391,19 +381,12 @@ class PhysicalQuantity:
 
         self._split_value_and_unit()
         if self.value is not None:
-            texts = _subtree_texts(self.value)
-            self.value.traverse(lambda node: self._revert_content(node, texts))
+            self._revert_value_text(self.value)
         self.value_latex = self._value_latex()
         self.unit_latex = "".join(self._unit_latex(self.unit)) if self.unit is not None else None
         separator = "~" if self.value_latex is not None and self.unit_latex is not None else ""
         self.latex = (self.value_latex or "") + separator + (self.unit_latex or "")
-        forms = self._all_forms()
-        self.standard_value = forms.standard_value
-        self.standard_unit = forms.standard_unit
-        self.expanded_unit = forms.expanded_unit
-        self.dimension = forms.dimension
-        self.unit_factor = forms.unit_factor
-        self.base_dimension = _without_factor(self.dimension)
+        self._set_sympy_forms()
 
     def __getstate__(self) -> dict[str, Any]:
         # The parser holds closures, so it can't be pickled; it is rebuilt (from the cache) on unpickling.
@@ -480,25 +463,24 @@ class PhysicalQuantity:
         if self.unit is not None and (problem := _exponent_problem(self.unit)) is not None:
             raise QuantityParseError(problem)
 
-    def _revert_content(self, node: ExprNode, texts: dict[int, str]) -> list[str]:
-        """Traversal action restoring the value's text as written, noting unit-like parts.
+    def _revert_value_text(self, value: ExprNode) -> None:
+        """Restore the value's text as written, noting its unit-like parts in ``reverted_units`` (parents first).
 
-        ``texts`` holds each node's ``content_string()`` from before the traversal
-        (see :func:`_subtree_texts`). The traversal calls this action on a node
-        before visiting its children, so the marked text is the node's restored
-        content around its children's unchanged text: what ``content_string()``
-        gave, without walking the subtree again for every node (quadratic).
+        A unit-like node's marked text is its restored content around its
+        children's text from before restoring (computed once, bottom-up, by
+        :func:`_subtree_texts`, rather than per node, which was quadratic).
         """
-        if node.label != GROUP_LABEL:
-            node.content = node.original[node.start : node.end + 1]
-        if node.label == Label.UNIT or QuantityTag.UNIT in node.tags:
-            marked = "".join(
-                part if is_output else texts[id(part)] for is_output, part in node.traverse_step(node, _content)
-            )
-            self.reverted_units.append(
-                RevertedUnit(before=node.original[: node.start], marked=marked, after=node.original[node.end + 1 :])
-            )
-        return ["", ""]
+        texts = _subtree_texts(value)
+        for node in value.walk():
+            if node.label != GROUP_LABEL:
+                node.content = node.original[node.start : node.end + 1]
+            if node.label == Label.UNIT or QuantityTag.UNIT in node.tags:
+                marked = "".join(
+                    part if is_output else texts[id(part)] for is_output, part in node.traverse_step(node, _content)
+                )
+                self.reverted_units.append(
+                    RevertedUnit(before=node.original[: node.start], marked=marked, after=node.original[node.end + 1 :])
+                )
 
     # ------------------------------------------------------------------
     # LaTeX
@@ -534,7 +516,6 @@ class PhysicalQuantity:
         return sympy_to_latex(parsed, params.symbols, settings=settings)
 
     def _unit_latex(self, node: ExprNode) -> list[str]:
-        # TODO: skip unnecessary parentheses (e.g. groups inside powers and fractions)
         children = node.children
         if node.label == Label.PRODUCT:
             return [*self._unit_latex(children[0]), "\\cdot", *self._unit_latex(children[1])]
@@ -545,10 +526,16 @@ class PhysicalQuantity:
         if node.label == GROUP_LABEL:
             return [node.content[0], *(part for child in children for part in self._unit_latex(child)), node.content[1]]
         if node.label == Label.POWER:
-            return [*self._unit_latex(children[0]), "^{", *self._unit_latex(children[1]), "}"]
+            return [*self._unit_latex(children[0]), "^{", *self._braced_latex(children[1]), "}"]
         if node.label == Label.SOLIDUS:
-            return ["\\frac{", *self._unit_latex(children[0]), "}{", *self._unit_latex(children[1]), "}"]
+            return ["\\frac{", *self._braced_latex(children[0]), "}{", *self._braced_latex(children[1]), "}"]
         return [node.content]  # NUMBER and anything else
+
+    def _braced_latex(self, node: ExprNode) -> list[str]:
+        """LaTeX for a node already grouped by braces (a numerator, denominator or exponent): no brackets of its own."""
+        while node.label == GROUP_LABEL and len(node.children) == 1:  # (x) or ((x)), not juxtaposition
+            node = node.children[0]
+        return self._unit_latex(node)
 
     # ------------------------------------------------------------------
     # Conversion to SI base units
@@ -561,7 +548,8 @@ class PhysicalQuantity:
         node.children = [self._expand_units(child) for child in node.children]
         return node
 
-    def _all_forms(self) -> _Forms:
+    def _set_sympy_forms(self) -> None:
+        """Set the SymPy forms: the standard value and unit, the expanded unit, dimensions and unit factor."""
         config = self.parsing_config
         value: Any = self.value.content_string() if self.value is not None else None
         if value is not None and self.params.is_latex:
@@ -584,7 +572,12 @@ class PhysicalQuantity:
             dimension = parse_expression(substitute(expanded_unit_string, _BASE_UNIT_DIMENSIONS), config)
         if value is not None:
             value = parse_expression(value, config)
-        return _Forms(value, unit, expanded_unit, dimension, unit_factor)
+        self.standard_value = value
+        self.standard_unit = unit
+        self.expanded_unit = expanded_unit
+        self.dimension = dimension
+        self.base_dimension = _without_factor(dimension)
+        self.unit_factor = unit_factor
 
 
 def parse_quantity(expr: str, params: QuantityParams, name: str = "response") -> PhysicalQuantity:

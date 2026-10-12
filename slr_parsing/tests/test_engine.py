@@ -209,8 +209,27 @@ def test_parse_tracing_is_logged(caplog):
 
 
 def test_parse_error_is_public_for_error_actions():
-    def give_up(parser, stack, a, input_tokens, tokens, output):
-        raise parser.parse_error(stack, a, input_tokens, tokens, output)
+    def give_up(parser, state):
+        raise parser.parse_error(state)
 
     with pytest.raises(ParseError, match="end of input"):
         parse("a+", make_parser(error_handlers=[(lambda items, next_symbol: True, give_up)]))
+
+
+def test_parsing_table_string_tells_accept_from_reductions():
+    # The accept entry was printed as "r0", like a reduction by production 0.
+    parser = make_parser()
+    rows = [line.split("\t")[1:] for line in parser.parsing_table_to_string().splitlines()[1:]]
+    for table_row, printed_row in zip(parser.parsing_table, rows, strict=True):
+        for entry, cell in zip(table_row, printed_row, strict=True):
+            assert (cell == "acc") == (entry == len(parser.states))
+
+
+def test_walk_lists_each_node_before_its_children():
+    root = parse("a+b*c")[0]
+    walked = root.walk()
+    assert walked[0] is root
+    assert len(walked) == len({id(node) for node in walked})
+    for node in walked:
+        for child in node.children:
+            assert walked.index(node) < walked.index(child)

@@ -62,7 +62,7 @@ A `CriteriaGraph` alternates between two kinds of node:
 - **evaluation nodes** run a check on the response and report which criteria
   hold, with the inputs for each criterion's feedback text;
 - **criterion nodes** record an outcome and lead to further evaluations or to
-  **output nodes** such as `CriteriaGraph.END`.
+  **output nodes** such as the conventional `END` (`graph.add_end_node()`).
 
 ```python
 from lambdafeedback.criteria import CriteriaGraph
@@ -75,20 +75,16 @@ def compare(response):
 
 
 graph = CriteriaGraph("response = answer")
-graph.add_node(CriteriaGraph.END)
+graph.add_end_node()
 graph.add_evaluation_node("COMPARE", "response = answer", "Compare the response with the answer", evaluate=compare)
-graph.attach(
-    "COMPARE",
-    "EQUAL",
-    summary="equal",
-    details="The response equals the answer",
-    feedback_string_generator=lambda inputs: "Correct.",
+graph.attach_new_criterion(
+    "COMPARE", "EQUAL", "equal", "The response equals the answer", feedback_string_generator=lambda inputs: "Correct."
 )
-graph.attach(
+graph.attach_new_criterion(
     "COMPARE",
     "NOT_EQUAL",
-    summary="not equal",
-    details="The response differs from the answer",
+    "not equal",
+    "The response differs from the answer",
     feedback_string_generator=lambda inputs: f"{inputs['response']} is not the answer.",
 )
 graph.attach("EQUAL", "END")
@@ -100,9 +96,11 @@ graph.resolve_feedback(reached)
 # [('NOT_EQUAL', '2*x is not the answer.')]
 ```
 
-- `attach(source, target, ...)` adds an edge. It creates the target if it
-  doesn't exist yet (`summary` and `details` are then required), so a graph
-  can be built mostly from `attach` calls. Labels are unique across all nodes.
+- `attach_new_criterion(evaluation, label, summary, details, ...)` and
+  `attach_new_evaluation(criterion, label, summary, details, ...)` add a node
+  and the edge to it, so a graph can be built mostly from these calls.
+  `attach(source, target)` adds an edge between existing nodes. Labels are
+  unique across all nodes.
 - `generate_feedback(response, criterion)` starts from the evaluations that
   lead to `criterion`, runs every evaluation it reaches (breadth-first, in
   attachment order) and returns the criteria reached. Whether `criterion` is
@@ -113,9 +111,9 @@ graph.resolve_feedback(reached)
   `custom_feedback` overrides the text for given criteria.
 - **Sufficiencies** (`add_sufficiencies`) let an evaluation be skipped when
   starting, in favour of the evaluations leading to other criteria.
-- Setting an evaluation node's `replacement` (for example to
-  `CriteriaGraph.END`) disables it: feedback generation goes to the
-  replacement instead.
+- Setting an evaluation node's `replacement` to another node's label (for
+  example `CriteriaGraph.END_LABEL`) disables it: feedback generation goes to
+  that node instead.
 
 ## Rendering
 
