@@ -5,7 +5,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "lambdafeedback-expression-parsing"
-version = "0.3.0rc1"
+version = "0.3.0rc2"
 description = "Safe SymPy parsing and preprocessing of learner-written mathematical expressions, for Lambda Feedback evaluation functions."
 readme = "README.md"
 license = "MIT"
@@ -27,7 +27,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "lambdafeedback-slr-parsing (>=0.3.0rc1,<0.4.0)",
+    "lambdafeedback-slr-parsing (>=0.3.0rc2,<0.4.0)",
     "sympy (>=1.14,<2.0)",
     "latex2sympy2-extended[antlr4-13-2] (>=1.11.0,<2.0)",
 ]

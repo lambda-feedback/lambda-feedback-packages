@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "lambdafeedback-criteria"
-version = "0.3.0rc1"
+version = "0.3.0rc2"
 description = "Criteria parser and criteria graphs that turn evaluations into feedback, for Lambda Feedback evaluation functions."
 readme = "README.md"
 license = "MIT"
@@ -25,7 +25,7 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "lambdafeedback-slr-parsing (>=0.3.0rc1,<0.4.0)",
+    "lambdafeedback-slr-parsing (>=0.3.0rc2,<0.4.0)",
 ]
 
 [project.urls]

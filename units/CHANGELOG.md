@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-units
 
-## 0.3.0 (unreleased; pre-release 0.3.0rc1, tag v0.3.0-rc.1)
+## 0.3.0 (unreleased; pre-release 0.3.0rc2, tag v0.3.0-rc.2)
 
 The first public release. This is a further tidy-up after the 0.2.0 extraction: the package now only does unit conversion. Package metadata (MIT licence, README, URLs) is in place for PyPI. Python 3.13 and later is supported, now that `lambdafeedback-expression-parsing` no longer depends on latex2sympy2. SymPy 1.14 or later is required (was 1.12): 1.12 predates Python 3.12, and a configuration with a declared function (`symbol_assumptions` `function`) can only be pickled from 1.14.
 

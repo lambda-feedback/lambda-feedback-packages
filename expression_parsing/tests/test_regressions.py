@@ -7,7 +7,7 @@ import sys
 import warnings
 
 import pytest
-from sympy import Abs, Eq, Function, Integral, Symbol, sqrt
+from sympy import Abs, Eq, Function, Integral, Rational, Symbol, sqrt, srepr
 
 from lambdafeedback.expression_parsing import (
     AbsoluteValueNotationError,
@@ -554,11 +554,45 @@ class TestLatexBackend:
             (r"\gamma", "gamma"),  # not EulerGamma
             (r"\gamma_1 + \Gamma", "Gamma + gamma_1"),  # \gamma_1 failed to parse
             (r"\mathrm{kg}", "kg"),  # was "\mathrm{kg}", which parse_expression can't read
-            (r"2\frac{1}{2}", "5/2"),  # a mixed number (was 2*1/2)
+            (r"2\frac{1}{2}", "2*1/2"),  # a product, as with the fork (0.3.0rc1 read the mixed number 5/2)
         ],
     )
     def test_latex_forms(self, latex, expected):
         assert parse_latex(latex, {}) == expected
+
+    @pytest.mark.parametrize(
+        ("latex", "expected", "value"),
+        [
+            (r"\frac{10}{2}", "10/2", 5),
+            (r"\frac{3}{6}", "3/6", Rational(1, 2)),
+            ("10/2", "10/2", 5),
+            (r"10 \div 2", "10/2", 5),
+            (r"\frac{-3}{6}", "-3/6", Rational(-1, 2)),
+            (r"-\frac{3}{6}", "-1*3/6", Rational(-1, 2)),
+        ],
+    )
+    def test_division_between_numbers_stays_as_written(self, latex, expected, value):
+        # latex2sympy2_extended divided two integers as a Rational (\frac{10}{2} gave 5), unlike
+        # every other operation, which stays as written.
+        text = parse_latex(latex, {})
+        assert text == expected
+        assert parse_expression(text, parsing_params()).doit() == value
+
+    def test_unsimplified_fraction_is_not_written_as_its_simplified_form(self):
+        # A "written as" check compares the unevaluated expressions: \frac{3}{6} must not arrive as 1/2.
+        config = parsing_params()
+        unsimplified = parse_expression(parse_latex(r"\frac{3}{6}", {}), config)
+        simplified = parse_expression(parse_latex(r"\frac{1}{2}", {}), config)
+        assert not unsimplified.is_Rational
+        assert srepr(unsimplified) != srepr(simplified)
+        assert unsimplified.doit() == simplified.doit() == Rational(1, 2)
+
+    @pytest.mark.parametrize(
+        "latex",
+        [r"\frac{d}{dx} x^2", r"\frac{\partial}{\partial x} x^2", r"\frac{dy}{dx}", r"\frac{\mathrm{d}y}{\mathrm{d}x}"],
+    )
+    def test_derivative_fractions_are_still_derivatives(self, latex):
+        assert parse_latex(latex, {}).startswith("Derivative(")
 
     @pytest.mark.parametrize("latex", ["2)", r"\pi\right)", "y}"])
     def test_malformed_latex_is_rejected(self, latex):
