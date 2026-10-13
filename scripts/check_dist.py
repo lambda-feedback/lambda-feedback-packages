@@ -67,7 +67,8 @@ def check_sdist(sdist: Path) -> list[str]:
 def main() -> int:
     arguments = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     arguments.add_argument("--out", type=Path, help="where to build (default: a temporary directory)")
-    out = arguments.parse_args().out or Path(tempfile.mkdtemp(prefix="lambdafeedback-dist-"))
+    # Absolute: poetry builds from inside each package's directory.
+    out = (arguments.parse_args().out or Path(tempfile.mkdtemp(prefix="lambdafeedback-dist-"))).resolve()
     out.mkdir(parents=True, exist_ok=True)
 
     problems: dict[str, list[str]] = {}

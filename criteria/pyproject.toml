@@ -17,14 +17,13 @@ classifiers = [
     "Intended Audience :: Education",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Education :: Computer Aided Instruction (CAI)",
     "Typing :: Typed",
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "lambdafeedback-slr-parsing (>=0.3.0rc1,<0.4.0)",
 ]

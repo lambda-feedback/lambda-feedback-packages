@@ -19,7 +19,7 @@ pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/la
 
 Install the packages it depends on (`slr_parsing`) from the same tag; see the [repository README](../README.md#install).
 
-Requires Python 3.11+. The import root is `lambdafeedback.criteria`. The only
+Requires Python 3.12+. The import root is `lambdafeedback.criteria`. The only
 dependency is
 [`lambdafeedback-slr-parsing`](../slr_parsing/README.md).
 

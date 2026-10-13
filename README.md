@@ -59,7 +59,7 @@ There is deliberately no `lambdafeedback/__init__.py`; the namespace is
 [PEP 420](https://peps.python.org/pep-0420/), so the separately installed
 packages merge under one import root.
 
-Python 3.11 and later is supported.
+Python 3.12 and later is supported.
 
 ## Development
 
@@ -79,7 +79,7 @@ Each package's tests run in their own pytest process, because every package
 has a `tests` package and one process can't import two packages with the same
 name.
 
-CI runs all of these, on Python 3.11 to 3.14.
+CI runs all of these, on Python 3.12 to 3.14.
 
 ### Parity check
 

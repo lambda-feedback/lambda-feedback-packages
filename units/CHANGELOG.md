@@ -6,6 +6,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Breaking
 
+- Requires Python 3.12 or later (3.11 is not supported).
 - `PhysicalQuantity.standard_values` is a tuple of expressions (several for a value such as `{1, 2}`), replacing `standard_value`, which was one expression or a set.
 
 - `preprocess_quantity(expr, params, *, name=None)`, the same shape as `expression_parsing.preprocess_expression`.

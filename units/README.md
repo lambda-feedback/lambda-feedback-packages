@@ -22,7 +22,7 @@ pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambd
 
 Install the packages it depends on (`slr_parsing`, `expression_parsing`) from the same tag; see the [repository README](../README.md#install).
 
-Requires Python 3.11 or later. The import root is `lambdafeedback.units`.
+Requires Python 3.12 or later. The import root is `lambdafeedback.units`.
 
 ## Quick start
 

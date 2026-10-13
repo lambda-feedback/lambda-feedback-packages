@@ -125,23 +125,6 @@ files = [
 ]
 
 [[package]]
-name = "backports-tarfile"
-version = "1.2.0"
-description = "Backport of CPython tarfile module"
-optional = false
-python-versions = ">=3.8"
-groups = ["dev"]
-markers = "python_version == \"3.11\""
-files = [
-    {file = "backports.tarfile-1.2.0-py3-none-any.whl", hash = "sha256:77e284d754527b01fb1e6fa8a1afe577858ebe4e9dad8919e34c862cb399bc34"},
-    {file = "backports_tarfile-1.2.0.tar.gz", hash = "sha256:d75e02c268746e1b8144c278978b6e98e85de6ad16f8e4b0844a154557eca991"},
-]
-
-[package.extras]
-docs = ["furo", "jaraco.packaging (>=9.3)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-testing = ["jaraco.test", "pytest (!=8.0.*)", "pytest (>=6,!=8.1.*)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)"]
-
-[[package]]
 name = "backports-zstd"
 version = "1.7.0"
 description = "Backport of compression.zstd"
@@ -961,7 +944,6 @@ files = [
 ]
 
 [package.dependencies]
-typing_extensions = {version = ">=4.6.0", markers = "python_version < \"3.12\""}
 urllib3 = ">=2.2.2"
 
 [package.extras]
@@ -1096,31 +1078,6 @@ files = [
 all = ["coverage (>=7.10.0)", "hypothesis (>=6.141.1)", "mypy (>=1.11.2)", "pytest (>=8.3.2)", "ruff (>=0.16.0)", "ty (>=0.0.37)"]
 
 [[package]]
-name = "importlib-metadata"
-version = "9.0.1"
-description = "Read metadata from Python packages"
-optional = false
-python-versions = ">=3.10"
-groups = ["dev"]
-markers = "python_version == \"3.11\""
-files = [
-    {file = "importlib_metadata-9.0.1-py3-none-any.whl", hash = "sha256:bba5600596a7e21f3eef53281cf28d6a5195634d2f2b78ff9501a3272c6eaab0"},
-    {file = "importlib_metadata-9.0.1.tar.gz", hash = "sha256:ab830580bc0ef3db61ce8fae716389e5462b67e033018bab6d8f80ef17172f99"},
-]
-
-[package.dependencies]
-zipp = ">=3.20"
-
-[package.extras]
-check = ["pytest-checkdocs (>=2.14)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\""]
-cover = ["pytest-cov"]
-doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-enabler = ["pytest-enabler (>=3.4)"]
-perf = ["ipython"]
-test = ["packaging", "pyfakefs", "pytest (>=6,!=8.1.*)", "pytest-perf (>=0.17)"]
-type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
-
-[[package]]
 name = "iniconfig"
 version = "2.3.0"
 description = "brain-dead simple config-ini parsing"
@@ -1174,9 +1131,6 @@ files = [
     {file = "jaraco_context-6.1.2-py3-none-any.whl", hash = "sha256:bf8150b79a2d5d91ae48629d8b427a8f7ba0e1097dd6202a9059f29a36379535"},
     {file = "jaraco_context-6.1.2.tar.gz", hash = "sha256:f1a6c9d391e661cc5b8d39861ff077a7dc24dc23833ccee564b234b81c82dfe3"},
 ]
-
-[package.dependencies]
-"backports.tarfile" = {version = "*", markers = "python_version < \"3.12\""}
 
 [package.extras]
 check = ["pytest-checkdocs (>=2.14)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\""]
@@ -1306,7 +1260,6 @@ files = [
 ]
 
 [package.dependencies]
-importlib_metadata = {version = ">=4.11.4", markers = "python_version < \"3.12\""}
 "jaraco.classes" = "*"
 "jaraco.context" = "*"
 "jaraco.functools" = "*"
@@ -1328,7 +1281,7 @@ name = "lambdafeedback-criteria"
 version = "0.3.0rc1"
 description = "Criteria parser and criteria graphs that turn evaluations into feedback, for Lambda Feedback evaluation functions."
 optional = false
-python-versions = ">=3.11"
+python-versions = ">=3.12"
 groups = ["dev"]
 files = []
 develop = true
@@ -1345,7 +1298,7 @@ name = "lambdafeedback-expression-parsing"
 version = "0.3.0rc1"
 description = "Safe SymPy parsing and preprocessing of learner-written mathematical expressions, for Lambda Feedback evaluation functions."
 optional = false
-python-versions = ">=3.11"
+python-versions = ">=3.12"
 groups = ["dev"]
 files = []
 develop = true
@@ -1364,7 +1317,7 @@ name = "lambdafeedback-slr-parsing"
 version = "0.3.0rc1"
 description = "Dependency-free SLR(1) parser generator for Lambda Feedback evaluation functions."
 optional = false
-python-versions = ">=3.11"
+python-versions = ">=3.12"
 groups = ["dev"]
 files = []
 develop = true
@@ -1378,7 +1331,7 @@ name = "lambdafeedback-units"
 version = "0.3.0rc1"
 description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
 optional = false
-python-versions = ">=3.11"
+python-versions = ">=3.12"
 groups = ["dev"]
 files = []
 develop = true
@@ -3066,28 +3019,7 @@ cffi = ">=1.16.0"
 [package.extras]
 test = ["pytest"]
 
-[[package]]
-name = "zipp"
-version = "4.1.0"
-description = "Backport of pathlib-compatible object wrapper for zip files"
-optional = false
-python-versions = ">=3.10"
-groups = ["dev"]
-markers = "python_version == \"3.11\""
-files = [
-    {file = "zipp-4.1.0-py3-none-any.whl", hash = "sha256:25ad4e16390cd314347dd8f1de67a2ac538ae658ed4ab9db16029c07c188e97f"},
-    {file = "zipp-4.1.0.tar.gz", hash = "sha256:4cb57381f544315db7688e976e922a2b18cdb513d21cc194eb42232ba2a3e602"},
-]
-
-[package.extras]
-check = ["pytest-checkdocs (>=2.14)", "pytest-ruff (>=0.2.1) ; sys_platform != \"cygwin\""]
-cover = ["pytest-cov"]
-doc = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-lint"]
-enabler = ["pytest-enabler (>=3.4)"]
-test = ["big-O", "jaraco.functools", "jaraco.itertools", "jaraco.test", "more_itertools", "pytest (>=6,!=8.1.*)", "pytest-ignore-flaky"]
-type = ["pytest-mypy (>=1.0.1) ; platform_python_implementation != \"PyPy\""]
-
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.11,<4.0"
-content-hash = "96024482b67d767021a1d15053de435ae90fe0ce0b6e207b628dad05975056f6"
+python-versions = ">=3.12,<4.0"
+content-hash = "460ca14f1e861782181fed3d0d60a56c1187a6f763f03ae02fc0509c5b75d856"

@@ -20,7 +20,7 @@ From git (not on PyPI yet):
 pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.1#subdirectory=slr_parsing"
 ```
 
-Requires Python 3.11+. The import root is `lambdafeedback.slr_parsing`.
+Requires Python 3.12+. The import root is `lambdafeedback.slr_parsing`.
 
 ## Quick start: operator expressions
 
