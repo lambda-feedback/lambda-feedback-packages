@@ -41,6 +41,7 @@ The first public release. Further tidy-up after the 0.2.0 extraction: previewing
 
 ### Added
 
+- `SympyParsingConfig.replace` also takes `extra_unsplittable_symbols` and `extra_symbol_assumptions`, alongside parameter changes (`config.replace(simplify=False, extra_unsplittable_symbols=(...))`); they needed `dataclasses.replace` before.
 - DEBUG logging through module loggers (`lambdafeedback.expression_parsing.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. Preprocessing, parsing and `parse_latex` log each step's result.
 
 ### Security

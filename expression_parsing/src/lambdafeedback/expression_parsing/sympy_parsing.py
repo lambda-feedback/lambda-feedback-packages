@@ -111,6 +111,10 @@ def _base_symbol_dict(params: ExpressionParams) -> dict[str, Any]:
     }
 
 
+# SympyParsingConfig fields that SympyParsingConfig.replace sets itself, not on its params.
+_OWN_FIELDS = ("extra_unsplittable_symbols", "extra_symbol_assumptions")
+
+
 @dataclass(frozen=True)
 class SympyParsingConfig:
     """Everything :func:`parse_expression` needs: the task's parameters and what is derived from them.
@@ -172,8 +176,14 @@ class SympyParsingConfig:
         return cls(params, tuple(unsplittable_symbols), tuple(symbol_assumptions))
 
     def replace(self, **changes: Any) -> SympyParsingConfig:
-        """A copy with some parameters changed (``config.replace(strict_syntax=True)``)."""
-        return replace(self, params=self.params.replace(**changes))
+        """A copy with some parameters changed (``config.replace(strict_syntax=True)``).
+
+        ``extra_unsplittable_symbols`` and ``extra_symbol_assumptions`` change the
+        configuration's own fields; any other name changes its ``params``.
+        """
+        own = {name: changes.pop(name) for name in _OWN_FIELDS if name in changes}
+        params = self.params.replace(**changes) if changes else self.params
+        return replace(self, params=params, **own)
 
     @cached_property
     def substitution_params(self) -> ExpressionParams:

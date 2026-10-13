@@ -129,6 +129,14 @@ class TestSympyParsingConfig:
         assert config.replace(strict_syntax=True).params.strict_syntax is True
         assert config.params.strict_syntax is False
 
+    def test_replace_changes_own_fields_and_params_together(self):
+        config = SympyParsingConfig.from_params(ExpressionParams())
+        changed = config.replace(simplify=False, extra_unsplittable_symbols=("ab",))
+        assert changed.params.simplify is False
+        assert changed.extra_unsplittable_symbols == ("ab",)
+        assert "ab" in changed.unsplittable_symbols and changed.symbol_dict["ab"] == Symbol("ab")
+        assert config.extra_unsplittable_symbols == ()
+
     def test_plus_minus_parses_to_both_expressions_in_order(self):
         config = SympyParsingConfig.from_params(ExpressionParams())
         x = Symbol("x")
