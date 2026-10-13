@@ -8,8 +8,9 @@ from string import ascii_letters
 from typing import Any, Literal, TypeAlias
 
 from latex2sympy2_extended import NormalizationConfig, normalize_latex
+from latex2sympy2_extended.antlr_parser import PSLexer
 from latex2sympy2_extended.latex2sympy2 import ConversionConfig, _Latex2Sympy
-from sympy import Basic, FiniteSet, Float, Function, Rational, Symbol, binomial
+from sympy import Basic, FiniteSet, Float, Function, MatMul, Mul, Pow, Rational, Symbol, binomial
 from sympy.core.function import AppliedUndef
 from sympy.core.parameters import evaluate
 from sympy.parsing.sympy_parser import implicit_multiplication_application, standard_transformations
@@ -202,24 +203,59 @@ def _restore_e_symbols(expr: Any, replacements: Mapping[str, str]) -> Any:
     return expr.xreplace(subs)
 
 
+def _divide(top: Any, bottom: Any) -> Any:
+    """``top / bottom``, unevaluated (``10/2`` stays ``10/2``)."""
+    if getattr(top, "is_Matrix", False) or getattr(bottom, "is_Matrix", False):
+        return MatMul(top, Pow(bottom, -1, evaluate=False), evaluate=False)
+    return Mul(top, Pow(bottom, -1, evaluate=False), evaluate=False)
+
+
 class _Converter(_Latex2Sympy):
-    """latex2sympy2_extended's converter, building ``\\binom`` unevaluated.
+    """latex2sympy2_extended's converter, building ``\\binom`` and division between numbers unevaluated.
 
     It built ``sympy.binomial`` evaluated, so ``\\binom{100000000}{50000000}``
-    computed a 30-million-digit number. (Its other functions, ``factorial``
+    computed a 30-million-digit number, and divided two integers as a
+    ``Rational`` (``\\frac{3}{6}`` gave ``1/2``, which a "written as" check
+    can't tell from ``\\frac{1}{2}``). (Its other functions, ``factorial``
     included, are already unevaluated; a global ``evaluate(False)`` would
-    change too much else, e.g. mixed numbers.) This is the private class its
-    ``latex2sympy()`` wraps, so the dependency is pinned below 2.0.
+    change too much else.) This is the private class its ``latex2sympy()``
+    wraps, so the dependency is pinned below 2.0.
     """
 
     def convert_binom(self, binom: Any) -> Any:
         return binomial(self.convert_expr(binom.upper), self.convert_expr(binom.lower), evaluate=False)
 
+    def convert_mp(self, mp: Any) -> Any:
+        if not (mp.DIV() or mp.CMD_DIV() or mp.COLON()):
+            return super().convert_mp(mp)
+        left, right = (mp.mp(0), mp.mp(1)) if hasattr(mp, "mp") else (mp.mp_nofunc(0), mp.mp_nofunc(1))
+        return _divide(self.convert_mp(left), self.convert_mp(right))
+
+    def convert_frac(self, frac: Any) -> Any:
+        if _is_derivative_denominator(frac.lower):
+            return super().convert_frac(frac)
+        return _divide(self.convert_expr(frac.upper), self.convert_expr(frac.lower))
+
+
+def _is_derivative_denominator(lower: Any) -> bool:
+    """Whether a ``\\frac`` denominator is ``dx`` or ``\\partial x`` (latex2sympy2_extended's ``convert_frac`` test)."""
+    if lower.start == lower.stop and lower.start.type == PSLexer.DIFFERENTIAL:
+        return True
+    start, stop = lower.getSourceInterval()
+    return (
+        stop - start == 1
+        and lower.start.type == PSLexer.SYMBOL
+        and lower.start.text == "\\partial"
+        and lower.stop.type in (PSLexer.LETTER_NO_E, PSLexer.SYMBOL)
+    )
+
 
 # latex2sympy2_extended is tuned for grading free-form answers; keep it literal:
-# case-sensitive symbols, 2\frac{1}{2} read as a mixed number, "=" and "\in"
-# as relations (never assignments), and only the basic LaTeX normalisation
-# (\left/\right, \mathrm{d}, \dfrac, ...), not its answer extraction or units.
+# case-sensitive symbols, "=" and "\in" as relations (never assignments), and
+# only the basic LaTeX normalisation (\left/\right, \mathrm{d}, \dfrac, ...), not
+# its answer extraction or units. (1.11 ignores interpret_as_mixed_fractions: it
+# read 2\frac{1}{2} as a mixed number only because \frac{1}{2} was a Rational.
+# With _Converter's unevaluated fractions, it is the product 2*1/2.)
 _CONVERSION = ConversionConfig(
     lowercase_symbols=False,
     interpret_as_mixed_fractions=False,
