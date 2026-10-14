@@ -10,6 +10,7 @@ import pytest
 from sympy import Abs, Eq, Function, Integral, Rational, Symbol, sqrt, srepr
 
 from lambdafeedback.expression_parsing import (
+    UNEVALUATED_SUM,
     AbsoluteValueNotationError,
     BracketNotationError,
     ExpressionParams,
@@ -741,6 +742,62 @@ class TestInputSize:
 
     def test_shorter_input_still_parses(self):
         assert len(parse_expression("+".join(["x"] * 300), parsing_params()).args) == 300  # left unevaluated
+
+
+class TestSumWithoutLimits:
+    """With elementary_functions, ``sum(x^n)`` became ``summation(x^n)``, which SymPy rejects without limits."""
+
+    @staticmethod
+    def parse(expr, **params):
+        params = ExpressionParams.from_dict({"elementary_functions": True, **params})
+        return parse_expression(preprocess_expression(expr, params), SympyParsingConfig.from_params(params))
+
+    @pytest.mark.parametrize(
+        "params",
+        [
+            {},
+            {"symbols": {"sum": {"latex": r"\sum", "aliases": []}}},
+            {"symbols": {"S": {"latex": r"\sum", "aliases": ["sum"]}}},
+            {"input_symbols": [["sum", []]]},
+        ],
+    )
+    @pytest.mark.parametrize("simplify", [False, True])
+    def test_is_an_unevaluated_sum(self, params, simplify):
+        x, n = Symbol("x"), Symbol("n")
+        assert self.parse("sum(x^n)", simplify=simplify, **params) == UNEVALUATED_SUM(x**n)
+
+    def test_a_task_alias_still_names_the_symbol_where_not_applied(self):
+        params = {"symbols": {"S": {"latex": r"\sum", "aliases": ["sum"]}}}
+        x, n = Symbol("x"), Symbol("n")
+        assert self.parse("sum(x^n) + sum*n", simplify=True, **params) == UNEVALUATED_SUM(x**n) + Symbol("S") * n
+
+    def test_equal_when_the_summands_are(self):
+        assert self.parse("sum(x+x)", simplify=True) == self.parse("sum(2*x)", simplify=True)
+        assert self.parse("2*sum(x)", simplify=True) != self.parse("sum(2*x)", simplify=True)
+
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [("sum(2*k - 1, (k, 1, n))", Symbol("n") ** 2), ("summation(x, (x, 1, 3))", 6)],
+    )
+    def test_with_limits_is_still_summed(self, expr, expected):
+        assert self.parse(expr) == expected
+
+    @pytest.mark.parametrize(
+        ("expr", "latex"),
+        [
+            ("sum(x^n)", r"\sum{\left(x^{n} \right)}"),
+            ("2*y*sum(x+1)", r"2 y \sum{\left(x + 1 \right)}"),
+            ("sum(x)^2", r"\left(\sum{\left(x \right)}\right)^{2}"),
+            ("sin(x)^2", r"\sin^{2}{\left(x \right)}"),
+        ],
+    )
+    def test_latex_is_a_sum(self, expr, latex):
+        assert sympy_to_latex(self.parse(expr, simplify=True), {}) == latex
+
+    def test_reported_answer_parses(self):
+        params = {"symbols": {"sum": {"latex": r"\sum_{k=0}^{\infty}", "aliases": []}}}
+        for expr in ("1/2 + (2/π) * sum (1/(2k+1)) * sin((2k+1) * x)", "1/2 + (2/ pi)sum( sin((2k+1)x)/(2k+1))"):
+            assert self.parse(expr, simplify=True, **params).has(UNEVALUATED_SUM)
 
 
 def test_parsing_logs_its_decisions_at_debug_only(caplog):

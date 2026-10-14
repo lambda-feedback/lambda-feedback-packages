@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterator, Mapping
 from string import ascii_letters
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal, TypeAlias, override
 
 from latex2sympy2_extended import NormalizationConfig, normalize_latex
 from latex2sympy2_extended.antlr_parser import PSLexer
@@ -22,6 +22,7 @@ from .errors import LatexParseError
 from .params import SymbolSpec
 from .preprocessing import expand_plus_minus, split_equation
 from .symbol_tables import MINUS_PLUS, PLUS_MINUS
+from .sympy_parsing import UNEVALUATED_SUM
 
 # Symbol aliases are parsed with ``Symbol`` as the only name: an alias that
 # needs anything more (a number, a function call) falls back to a plain name.
@@ -52,7 +53,15 @@ def _replace_command(latex: str, command: str, replacement: str) -> str:
 
 
 class _LatexPrinter(LatexPrinter):
-    """SymPy's LaTeX printer, but printing logarithms with a base as ``\\log_{b}``."""
+    """SymPy's LaTeX printer, but printing logarithms with a base as ``\\log_{b}``, and limitless sums as ``\\sum``."""
+
+    @override
+    def _print_Function(self, expr: Any, exp: Any = None) -> str:
+        if expr.func is not UNEVALUATED_SUM:
+            return str(super()._print_Function(expr, exp))
+        # The summand stays bracketed: in 2 y \sum x, the y could be read as summed too.
+        tex = rf"\sum{{\left({self._print(expr.args[0])} \right)}}"
+        return rf"\left({tex}\right)^{{{exp}}}" if exp is not None else tex
 
     def _print_log(self, expr: Any, exp: Any = None) -> str:
         if len(expr.args) > 1:
