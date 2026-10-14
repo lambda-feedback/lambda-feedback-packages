@@ -19,9 +19,11 @@ from importlib.metadata import PackageNotFoundError, version
 from ._split import MAX_UNIT_EXPONENT
 from .data import (
     ALL_UNITS,
+    BASE_UNITS,
     COMMON_UNITS,
     CONVERSION_TO_BASE_SI,
     IMPERIAL_UNITS,
+    RADIAN,
     SI_BASE_UNITS,
     SI_DERIVED_UNITS,
     SI_PREFIXES,
@@ -55,12 +57,14 @@ except PackageNotFoundError:  # running from a source checkout that isn't instal
 
 __all__ = [
     "ALL_UNITS",
+    "BASE_UNITS",
     "COMMON_UNITS",
     "CONVERSION_TO_BASE_SI",
     "IMPERIAL_UNITS",
     "MAX_INPUT_LENGTH",
     "MAX_LEGACY_LENGTH",
     "MAX_UNIT_EXPONENT",
+    "RADIAN",
     "SI_BASE_UNITS",
     "SI_DERIVED_UNITS",
     "SI_PREFIXES",

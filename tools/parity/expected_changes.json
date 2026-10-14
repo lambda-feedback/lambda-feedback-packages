@@ -631,6 +631,57 @@
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
   }
  },
+ "quantity.parse|legacy|10 \"": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 anglesecond",
+   "dimension": "pi*angle/648000",
+   "expanded_unit": "pi*radian/648000",
+   "latex": "10~\\mathrm{anglesecond}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/648000",
+   "unit": "\"",
+   "unit_factor": "pi/648000",
+   "unit_latex": "\\mathrm{anglesecond}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 '": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "pi*angle/10800",
+   "expanded_unit": "pi*radian/10800",
+   "latex": "10~\\mathrm{angleminute}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/10800",
+   "unit": "'",
+   "unit_factor": "pi/10800",
+   "unit_latex": "\\mathrm{angleminute}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 Hz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "Hz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|legacy|10 R": {
   "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
   "value": {
@@ -648,15 +699,49 @@
    "value_latex": "10"
   }
  },
+ "quantity.parse|legacy|10 angleminute": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "pi*angle/10800",
+   "expanded_unit": "pi*radian/10800",
+   "latex": "10~\\mathrm{angleminute}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/10800",
+   "unit": "angleminute",
+   "unit_factor": "pi/10800",
+   "unit_latex": "\\mathrm{angleminute}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 anglesecond": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 anglesecond",
+   "dimension": "pi*angle/648000",
+   "expanded_unit": "pi*radian/648000",
+   "latex": "10~\\mathrm{anglesecond}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/648000",
+   "unit": "anglesecond",
+   "unit_factor": "pi/648000",
+   "unit_latex": "\\mathrm{anglesecond}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|legacy|10 deg": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "10~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*pi/180",
    "unit": "deg",
    "unit_factor": "pi/180",
@@ -666,18 +751,35 @@
   }
  },
  "quantity.parse|legacy|10 degree": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "10~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*pi/180",
    "unit": "degree",
    "unit_factor": "pi/180",
    "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 hertz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "hertz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
    "value": "10",
    "value_latex": "10"
   }
@@ -856,6 +958,74 @@
    "value_latex": "10"
   }
  },
+ "quantity.parse|legacy|10 lm": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lm",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 lumen": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lumen",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 lux": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lux",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|legacy|10 lx": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lx",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|legacy|10 pint": {
   "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
   "value": {
@@ -891,14 +1061,14 @@
   }
  },
  "quantity.parse|legacy|10 r": {
-  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 radian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle",
+   "expanded_unit": "radian",
    "latex": "10~\\mathrm{radian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*1",
    "unit": "r",
    "unit_factor": "1",
@@ -908,14 +1078,14 @@
   }
  },
  "quantity.parse|legacy|10 radian": {
-  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 radian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle",
+   "expanded_unit": "radian",
    "latex": "10~\\mathrm{radian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*1",
    "unit": "radian",
    "unit_factor": "1",
@@ -1126,14 +1296,14 @@
   }
  },
  "quantity.parse|legacy|10 sr": {
-  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "reason": "units: steradian is 1 (was 1/(4*pi)); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle**2",
+   "expanded_unit": "radian**2",
    "latex": "10~\\mathrm{steradian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian**2",
    "standard_value": "10*1",
    "unit": "sr",
    "unit_factor": "1",
@@ -1143,14 +1313,14 @@
   }
  },
  "quantity.parse|legacy|10 steradian": {
-  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "reason": "units: steradian is 1 (was 1/(4*pi)); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle**2",
+   "expanded_unit": "radian**2",
    "latex": "10~\\mathrm{steradian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian**2",
    "standard_value": "10*1",
    "unit": "steradian",
    "unit_factor": "1",
@@ -1352,14 +1522,14 @@
   }
  },
  "quantity.parse|legacy|5 °": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "5 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "5~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "5*pi/180",
    "unit": "°",
    "unit_factor": "pi/180",
@@ -1784,6 +1954,23 @@
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
   }
  },
+ "quantity.parse|natural_si|10 Hz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "Hz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|natural_si|10 Np": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -1954,6 +2141,23 @@
  "quantity.parse|natural_si|10 gill": {
   "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
   "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 hertz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "hertz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
+  }
  },
  "quantity.parse|natural_si|10 hour": {
   "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
@@ -2157,6 +2361,74 @@
  "quantity.parse|natural_si|10 knot": {
   "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
   "value": "ERROR"
+ },
+ "quantity.parse|natural_si|10 lm": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lm",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural_si|10 lumen": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lumen",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural_si|10 lux": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lux",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural_si|10 lx": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lx",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
  },
  "quantity.parse|natural_si|10 metricton": {
   "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
@@ -3106,6 +3378,57 @@
    "value_latex": "\\frac{gram \\cdot kilo \\cdot mega \\cdot metre^{2}}{A \\cdot a \\cdot d \\cdot f \\cdot s^{4}}"
   }
  },
+ "quantity.parse|natural|10 \"": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 anglesecond",
+   "dimension": "pi*angle/648000",
+   "expanded_unit": "pi*radian/648000",
+   "latex": "10~\\mathrm{anglesecond}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/648000",
+   "unit": "\"",
+   "unit_factor": "pi/648000",
+   "unit_latex": "\\mathrm{anglesecond}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 '": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "pi*angle/10800",
+   "expanded_unit": "pi*radian/10800",
+   "latex": "10~\\mathrm{angleminute}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/10800",
+   "unit": "'",
+   "unit_factor": "pi/10800",
+   "unit_latex": "\\mathrm{angleminute}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 Hz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "Hz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|natural|10 R": {
   "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
   "value": {
@@ -3123,15 +3446,49 @@
    "value_latex": "10"
   }
  },
+ "quantity.parse|natural|10 angleminute": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "pi*angle/10800",
+   "expanded_unit": "pi*radian/10800",
+   "latex": "10~\\mathrm{angleminute}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/10800",
+   "unit": "angleminute",
+   "unit_factor": "pi/10800",
+   "unit_latex": "\\mathrm{angleminute}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 anglesecond": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 anglesecond",
+   "dimension": "pi*angle/648000",
+   "expanded_unit": "pi*radian/648000",
+   "latex": "10~\\mathrm{anglesecond}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/648000",
+   "unit": "anglesecond",
+   "unit_factor": "pi/648000",
+   "unit_latex": "\\mathrm{anglesecond}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|natural|10 deg": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "10~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*pi/180",
    "unit": "deg",
    "unit_factor": "pi/180",
@@ -3141,18 +3498,35 @@
   }
  },
  "quantity.parse|natural|10 degree": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "10~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*pi/180",
    "unit": "degree",
    "unit_factor": "pi/180",
    "unit_latex": "\\mathrm{degree}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 hertz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "hertz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
    "value": "10",
    "value_latex": "10"
   }
@@ -3331,6 +3705,74 @@
    "value_latex": "10"
   }
  },
+ "quantity.parse|natural|10 lm": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lm",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 lumen": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lumen",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 lux": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lux",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|natural|10 lx": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lx",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|natural|10 pint": {
   "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
   "value": {
@@ -3366,14 +3808,14 @@
   }
  },
  "quantity.parse|natural|10 r": {
-  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 radian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle",
+   "expanded_unit": "radian",
    "latex": "10~\\mathrm{radian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*1",
    "unit": "r",
    "unit_factor": "1",
@@ -3383,14 +3825,14 @@
   }
  },
  "quantity.parse|natural|10 radian": {
-  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 radian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle",
+   "expanded_unit": "radian",
    "latex": "10~\\mathrm{radian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*1",
    "unit": "radian",
    "unit_factor": "1",
@@ -3601,14 +4043,14 @@
   }
  },
  "quantity.parse|natural|10 sr": {
-  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "reason": "units: steradian is 1 (was 1/(4*pi)); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle**2",
+   "expanded_unit": "radian**2",
    "latex": "10~\\mathrm{steradian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian**2",
    "standard_value": "10*1",
    "unit": "sr",
    "unit_factor": "1",
@@ -3618,14 +4060,14 @@
   }
  },
  "quantity.parse|natural|10 steradian": {
-  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "reason": "units: steradian is 1 (was 1/(4*pi)); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle**2",
+   "expanded_unit": "radian**2",
    "latex": "10~\\mathrm{steradian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian**2",
    "standard_value": "10*1",
    "unit": "steradian",
    "unit_factor": "1",
@@ -3827,14 +4269,14 @@
   }
  },
  "quantity.parse|natural|5 °": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "5 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "5~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "5*pi/180",
    "unit": "°",
    "unit_factor": "pi/180",
@@ -4357,6 +4799,57 @@
    "value_latex": "1"
   }
  },
+ "quantity.parse|strict_all|10 \"": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 anglesecond",
+   "dimension": "pi*angle/648000",
+   "expanded_unit": "pi*radian/648000",
+   "latex": "10~\\mathrm{anglesecond}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/648000",
+   "unit": "\"",
+   "unit_factor": "pi/648000",
+   "unit_latex": "\\mathrm{anglesecond}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 '": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "pi*angle/10800",
+   "expanded_unit": "pi*radian/10800",
+   "latex": "10~\\mathrm{angleminute}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/10800",
+   "unit": "'",
+   "unit_factor": "pi/10800",
+   "unit_latex": "\\mathrm{angleminute}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 Hz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "Hz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|strict_all|10 R": {
   "reason": "units: roentgen is 2.58e-4 C/kg (was kelvin/kg)",
   "value": {
@@ -4374,15 +4867,49 @@
    "value_latex": "10"
   }
  },
+ "quantity.parse|strict_all|10 angleminute": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 angleminute",
+   "dimension": "pi*angle/10800",
+   "expanded_unit": "pi*radian/10800",
+   "latex": "10~\\mathrm{angleminute}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/10800",
+   "unit": "angleminute",
+   "unit_factor": "pi/10800",
+   "unit_latex": "\\mathrm{angleminute}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 anglesecond": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 anglesecond",
+   "dimension": "pi*angle/648000",
+   "expanded_unit": "pi*radian/648000",
+   "latex": "10~\\mathrm{anglesecond}",
+   "messages": [],
+   "standard_unit": "radian",
+   "standard_value": "10*pi/648000",
+   "unit": "anglesecond",
+   "unit_factor": "pi/648000",
+   "unit_latex": "\\mathrm{anglesecond}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|strict_all|10 deg": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "10~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*pi/180",
    "unit": "deg",
    "unit_factor": "pi/180",
@@ -4392,14 +4919,14 @@
   }
  },
  "quantity.parse|strict_all|10 degree": {
-  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute)",
+  "reason": "units: angles in radians (radian = 1); degree is pi/180 (was 1/360 of a turn, inconsistent with angleminute); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 degree",
-   "dimension": "pi/180",
-   "expanded_unit": "pi/180",
+   "dimension": "pi*angle/180",
+   "expanded_unit": "pi*radian/180",
    "latex": "10~\\mathrm{degree}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*pi/180",
    "unit": "degree",
    "unit_factor": "pi/180",
@@ -4482,6 +5009,23 @@
    "unit_latex": null,
    "value": "10 gram/metresecond",
    "value_latex": "\\frac{10 \\cdot c \\cdot d \\cdot e \\cdot gram \\cdot n \\cdot o}{metres}"
+  }
+ },
+ "quantity.parse|strict_all|10 hertz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "hertz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|strict_all|10 kg m/s^2 + 10 kg m/s^2": {
@@ -4814,6 +5358,74 @@
    "value_latex": "\\frac{10 \\cdot c \\cdot e \\cdot gram \\cdot kilo \\cdot metres \\cdot n \\cdot o}{d^{2}}"
   }
  },
+ "quantity.parse|strict_all|10 lm": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lm",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 lumen": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lumen",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 lux": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lux",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_all|10 lx": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lx",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|strict_all|10 pint": {
   "reason": "units: imperial pint is 0.00056826125 m^3 (was truncated to 0.00056826)",
   "value": {
@@ -4849,14 +5461,14 @@
   }
  },
  "quantity.parse|strict_all|10 r": {
-  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 radian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle",
+   "expanded_unit": "radian",
    "latex": "10~\\mathrm{radian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*1",
    "unit": "r",
    "unit_factor": "1",
@@ -4866,14 +5478,14 @@
   }
  },
  "quantity.parse|strict_all|10 radian": {
-  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn)",
+  "reason": "units: angles in radians; radian is 1 (was 1/(2*pi), a turn); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 radian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle",
+   "expanded_unit": "radian",
    "latex": "10~\\mathrm{radian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian",
    "standard_value": "10*1",
    "unit": "radian",
    "unit_factor": "1",
@@ -5069,14 +5681,14 @@
   }
  },
  "quantity.parse|strict_all|10 sr": {
-  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "reason": "units: steradian is 1 (was 1/(4*pi)); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle**2",
+   "expanded_unit": "radian**2",
    "latex": "10~\\mathrm{steradian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian**2",
    "standard_value": "10*1",
    "unit": "sr",
    "unit_factor": "1",
@@ -5086,14 +5698,14 @@
   }
  },
  "quantity.parse|strict_all|10 steradian": {
-  "reason": "units: steradian is 1 (was 1/(4*pi))",
+  "reason": "units: steradian is 1 (was 1/(4*pi)); units: the angle is a dimension (radian base unit, sr = rad^2)",
   "value": {
    "content": "10 steradian",
-   "dimension": "1",
-   "expanded_unit": "1",
+   "dimension": "angle**2",
+   "expanded_unit": "radian**2",
    "latex": "10~\\mathrm{steradian}",
    "messages": [],
-   "standard_unit": "1",
+   "standard_unit": "radian**2",
    "standard_value": "10*1",
    "unit": "steradian",
    "unit_factor": "1",
@@ -6080,6 +6692,23 @@
    "value_latex": "1"
   }
  },
+ "quantity.parse|strict_si|10 Hz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "Hz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
  "quantity.parse|strict_si|10 Np": {
   "reason": "units: FeedbackTag removed; reverted-unit facts now exposed as plain RevertedUnit(before, marked, after) records, not (id, tag, inputs) triples",
   "value": {
@@ -6325,6 +6954,23 @@
    "unit_latex": null,
    "value": "10 gram/metresecond",
    "value_latex": "\\frac{10 \\cdot e \\cdot c \\cdot d \\cdot gram \\cdot n \\cdot o}{metres}"
+  }
+ },
+ "quantity.parse|strict_si|10 hertz": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 hertz",
+   "dimension": "2*pi*angle/time",
+   "expanded_unit": "2*pi*radian/second",
+   "latex": "10~\\mathrm{hertz}",
+   "messages": [],
+   "standard_unit": "radian/second",
+   "standard_value": "10*2*pi",
+   "unit": "hertz",
+   "unit_factor": "2*pi",
+   "unit_latex": "\\mathrm{hertz}",
+   "value": "10",
+   "value_latex": "10"
   }
  },
  "quantity.parse|strict_si|10 hour": {
@@ -6685,6 +7331,74 @@
  "quantity.parse|strict_si|10 knot": {
   "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",
   "value": "ERROR"
+ },
+ "quantity.parse|strict_si|10 lm": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lm",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_si|10 lumen": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lumen",
+   "dimension": "angle**2*luminous_intensity",
+   "expanded_unit": "candela*radian**2",
+   "latex": "10~\\mathrm{lumen}",
+   "messages": [],
+   "standard_unit": "candela*radian**2",
+   "standard_value": "10*1",
+   "unit": "lumen",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lumen}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_si|10 lux": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lux",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
+ },
+ "quantity.parse|strict_si|10 lx": {
+  "reason": "units: the angle is a dimension (radian base unit, sr = rad^2, lm = cd sr); Hz is a cycle per second, 2*pi rad/s",
+  "value": {
+   "content": "10 lux",
+   "dimension": "angle**2*luminous_intensity/length**2",
+   "expanded_unit": "candela*radian**2/metre**2",
+   "latex": "10~\\mathrm{lux}",
+   "messages": [],
+   "standard_unit": "candela*radian**2/metre**2",
+   "standard_value": "10*1",
+   "unit": "lx",
+   "unit_factor": "1",
+   "unit_latex": "\\mathrm{lux}",
+   "value": "10",
+   "value_latex": "10"
+  }
  },
  "quantity.parse|strict_si|10 metricton": {
   "reason": "units: a unit spelled out from a unit set that isn't selected (10 hour, 2 litres with only SI) raises DisallowedUnitError; v0.1 read most as letters (10*h*o*u*r) and raised for a few by accident",

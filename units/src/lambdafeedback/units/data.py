@@ -1,9 +1,11 @@
 """Units and prefixes, and their conversion to SI base units.
 
-Remarks: kelvin is the only temperature scale; angle measures, the bel and
-the neper are all treated as dimensionless, with the radian and the
-steradian equal to 1 (so ``degree`` is ``pi/180``). The gram (not the
-kilogram) is the base unit of mass, so that SI prefixes apply uniformly.
+Remarks: kelvin is the only temperature scale. The angle is a dimension, with
+the radian as its base unit (:data:`RADIAN`): ``degree`` is ``pi/180*radian``,
+the steradian is ``radian**2``, and the hertz is a cycle per second,
+``2*pi*radian/second`` (so ``1 Hz`` is not ``1/s``, unlike the becquerel). The
+bel and the neper are dimensionless. The gram (not the kilogram) is the base
+unit of mass, so that SI prefixes apply uniformly.
 
 Every unit set's symbols are recognised, and any SI prefix can be attached to
 any unit (``kft`` is a kilofoot). Where a prefixed form is also the symbol of
@@ -86,10 +88,16 @@ SI_BASE_UNITS: tuple[BaseUnit, ...] = (
     BaseUnit("candela", "cd", "luminous_intensity", ("Candela",), ("candelas", "Candelas")),
 )
 
+# 'r', not 'rad', to avoid a collision with the rad. In the common set, not SI.
+RADIAN = BaseUnit("radian", "r", "angle", (), ("radians",))
+
+BASE_UNITS: tuple[BaseUnit, ...] = (*SI_BASE_UNITS, RADIAN)
+"""Every base unit: the SI ones and the radian. Unit expansions are in these units."""
+
 # Table 3 of https://physics.nist.gov/cuu/Units/units.html. Radian and steradian are in
 # VERY_COMMON_UNITS (fewer collisions when substituting); degree Celsius is omitted.
 SI_DERIVED_UNITS: tuple[Unit, ...] = (
-    Unit("hertz", "Hz", "(second**(-1))", ("Hertz",)),
+    Unit("hertz", "Hz", "(2*pi*radian*second**(-1))", ("Hertz",)),
     Unit("newton", "N", "(metre*kilogram*second**(-2))", ("Newton",), ("newtons", "Newtons")),
     Unit("pascal", "Pa", "(metre**(-1)*kilogram*second**(-2))", ("Pascal",), ("pascals", "Pascals")),
     Unit("joule", "J", "(metre**2*kilogram*second**(-2))", ("Joule",), ("joules", "Joules")),
@@ -108,8 +116,8 @@ SI_DERIVED_UNITS: tuple[Unit, ...] = (
     Unit("weber", "Wb", "(metre**2*kilogram*second**(-2)*ampere**(-1))", ("Weber",), ("webers", "Webers")),
     Unit("tesla", "T", "(kilogram*second**(-2)*ampere**(-1))", ("Tesla",), ("teslas", "Teslas")),
     Unit("henry", "H", "(metre**2*kilogram*second**(-2)*ampere**(-2))", ("Henry",), ("henrys", "Henrys")),
-    Unit("lumen", "lm", "(candela)", (), ("lumens",)),
-    Unit("lux", "lx", "(metre**(-2)*candela)"),
+    Unit("lumen", "lm", "(candela*radian**2)", (), ("lumens",)),
+    Unit("lux", "lx", "(metre**(-2)*candela*radian**2)"),
     Unit("becquerel", "Bq", "(second**(-1))", ("Becquerel",), ("becquerels", "Becquerels")),
     Unit("gray", "Gy", "(metre**2*second**(-2))", ("Gray",), ("grays", "Grays")),
     Unit("sievert", "Sv", "(metre**2*second**(-2))", ("Sievert",), ("sieverts", "Sieverts")),
@@ -118,12 +126,12 @@ SI_DERIVED_UNITS: tuple[Unit, ...] = (
 
 # Tables 6 and 7 of https://physics.nist.gov/cuu/Units/outside.html: the subset whose
 # symbols are accepted.
-VERY_COMMON_UNITS: tuple[Unit, ...] = (
-    Unit("radian", "r", "(1)", (), ("radians",)),  # 'r', not 'rad', to avoid a collision with the rad
-    Unit("steradian", "sr", "(1)", (), ("steradians",)),
+VERY_COMMON_UNITS: tuple[BaseUnit | Unit, ...] = (
+    RADIAN,
+    Unit("steradian", "sr", "(radian**2)", (), ("steradians",)),
     Unit("minute", "min", "(60*second)", (), ("minutes",)),
     Unit("hour", "h", "(3600*second)", (), ("hours",)),
-    Unit("degree", "deg", "(pi/180)", ("°",), ("degrees",)),
+    Unit("degree", "deg", "(pi/180*radian)", ("°",), ("degrees",)),
     Unit("litre", "L", "(10**(-3)*metre**3)", ("liter",), ("litres", "liters")),
     Unit("metricton", "t", "(10**3*kilogram)", ("tonne",), ("tonnes",)),
     Unit("neper", "Np", "(1)", ("Neper",), ("nepers", "Nepers")),
@@ -138,8 +146,8 @@ VERY_COMMON_UNITS: tuple[Unit, ...] = (
 # day, 'a' an are).
 COMMON_UNITS: tuple[Unit, ...] = (
     Unit("day", "d", "(86400*second)", (), ("days",)),
-    Unit("angleminute", "'", "(pi/10800)"),
-    Unit("anglesecond", '"', "(pi/648000)"),
+    Unit("angleminute", "'", "(pi/10800*radian)"),
+    Unit("anglesecond", '"', "(pi/648000*radian)"),
     Unit("astronomical_unit", "au", "(149597870700*metre)", (), ("astronomical_units",)),
     Unit("nautical_mile", "nmi", "(1852*metre)", (), ("nautical_miles", "nauticalmiles")),  # symbol from Wikipedia
     Unit("knot", "kn", "((1852/3600)*metre/second)", (), ("knots",)),  # symbol from Wikipedia
@@ -197,8 +205,8 @@ def unsplittable_names(unit_sets: frozenset[str] | set[str], all_forms: bool) ->
     alternative spellings and plurals (used for the value's preview) to the
     unit names (used for parsing).
     """
-    names = {prefix.name for prefix in SI_PREFIXES} | {unit.name for unit in SI_BASE_UNITS}
-    names |= {unit.dimension for unit in SI_BASE_UNITS}
+    names = {prefix.name for prefix in SI_PREFIXES} | {unit.name for unit in BASE_UNITS}
+    names |= {unit.dimension for unit in BASE_UNITS}
     for unit in units_in(unit_sets):
         names |= {unit.name, unit.symbol, *unit.alternatives, *unit.plurals} if all_forms else {unit.name}
     return sorted(names)
@@ -206,7 +214,7 @@ def unsplittable_names(unit_sets: frozenset[str] | set[str], all_forms: bool) ->
 
 def _conversion_to_base_si() -> dict[str, str]:
     unprefixed = {unit.name: unit.si_expansion for unit in ALL_UNITS if isinstance(unit, Unit)}
-    unprefixed.update({unit.name: unit.name for unit in SI_BASE_UNITS})
+    unprefixed.update({unit.name: unit.name for unit in BASE_UNITS})
     prefixed = {
         prefix.name + name: f"({prefix.factor}*{expansion})"
         for prefix in SI_PREFIXES

@@ -7,6 +7,7 @@ import lambdafeedback.units
 from lambdafeedback.expression_parsing import ExpressionParsingError
 from lambdafeedback.units import (
     ALL_UNITS,
+    BASE_UNITS,
     CONVERSION_TO_BASE_SI,
     SI_BASE_UNITS,
     SI_PREFIXES,
@@ -120,10 +121,10 @@ class TestData:
         assert len(names) == len(set(names))
 
     @pytest.mark.parametrize("unit", ALL_UNITS, ids=lambda unit: unit.name)
-    def test_every_unit_converts_to_si_base_units(self, unit):
+    def test_every_unit_converts_to_base_units(self, unit):
         quantity = parse_quantity(f"1 {unit.name}", QuantityParams())
         assert quantity.unit is not None
-        base_names = {base.name for base in SI_BASE_UNITS}
+        base_names = {base.name for base in BASE_UNITS}
         assert {str(symbol) for symbol in quantity.expanded_unit.free_symbols} <= base_names
 
 
@@ -142,7 +143,9 @@ class TestDimensions:
             ("1 L", "length**3"),
             ("2 m^(1/2)", "sqrt(length)"),
             ("2 kΩ", "length**2*mass/(electric_current**2*time**3)"),
-            ("10 deg", "1"),
+            ("10 deg", "angle"),
+            ("1 sr", "angle**2"),
+            ("3 Hz", "angle/time"),
             ("2 x", "1"),
         ],
     )
@@ -163,9 +166,9 @@ class TestDimensions:
             ("1 dm^3", "2 gal"),
             ("1 N", "1 kg m/s^2"),
             ("1 J", "1 eV"),
-            ("1 Hz", "1/s"),
+            ("1 Hz", "1 r/s"),
             ("2 m^0.5", "3 m^(1/2)"),
-            ("10 deg", "2"),
+            ("10 deg", "2 r"),
             ("kg", "3 lb"),
         ],
     )
@@ -173,7 +176,18 @@ class TestDimensions:
         params = QuantityParams()
         assert same_dimension(parse_quantity(left, params), parse_quantity(right, params))
 
-    @pytest.mark.parametrize("left, right", [("1 m", "1 s"), ("1 J", "1 N"), ("1 m^2", "1 m"), ("1 kg", "2")])
+    @pytest.mark.parametrize(
+        "left, right",
+        [
+            ("1 m", "1 s"),
+            ("1 J", "1 N"),
+            ("1 m^2", "1 m"),
+            ("1 kg", "2"),
+            ("1 radian", "1"),
+            ("1 Hz", "1/s"),
+            ("1 Hz", "1 Bq"),
+        ],
+    )
     def test_different_dimension(self, left, right):
         params = QuantityParams()
         assert not same_dimension(parse_quantity(left, params), parse_quantity(right, params))
@@ -186,7 +200,8 @@ class TestConversions:
             ("60 angleminute", "1 degree"),
             ("60 anglesecond", "1 angleminute"),
             ("180 degree", "pi radian"),
-            ("1 radian", "1"),
+            ("1 sr", "1 radian^2"),
+            ("1 Hz", "2 pi radian/s"),
             ("1 h", "60 min"),
             ("1 day", "24 hour"),
             ("1 L", "1 dm^3"),

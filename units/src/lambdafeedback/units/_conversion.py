@@ -16,16 +16,16 @@ from lambdafeedback.expression_parsing import (
 )
 from lambdafeedback.slr_parsing import ExprNode, SLRParser
 
-from .data import CONVERSION_TO_BASE_SI, SI_BASE_UNITS, unsplittable_names
+from .data import BASE_UNITS, CONVERSION_TO_BASE_SI, unsplittable_names
 from .errors import UnitConversionError
 from .params import QuantityParams
 from .parser import Label
 
-_BASE_UNIT_NAMES = frozenset(unit.name for unit in SI_BASE_UNITS)
+_BASE_UNIT_NAMES = frozenset(unit.name for unit in BASE_UNITS)
 
-_BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in SI_BASE_UNITS]
+_BASE_UNIT_DIMENSIONS = [(unit.name, unit.dimension) for unit in BASE_UNITS]
 
-_DIMENSION_NAMES = frozenset(unit.dimension for unit in SI_BASE_UNITS)
+_DIMENSION_NAMES = frozenset(unit.dimension for unit in BASE_UNITS)
 
 
 def _without_factor(dimension: Basic) -> Basic:
