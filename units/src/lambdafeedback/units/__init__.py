@@ -16,6 +16,7 @@ lives in compareExpressions, not here.
 import logging
 from importlib.metadata import PackageNotFoundError, version
 
+from ._split import MAX_UNIT_EXPONENT
 from .data import (
     ALL_UNITS,
     COMMON_UNITS,
@@ -37,7 +38,6 @@ from .params import MAX_INPUT_LENGTH, QuantityParams, Strictness
 from .parser import build_quantity_parser
 from .preprocessing import MAX_LEGACY_LENGTH, preprocess_legacy, preprocess_quantity, transform_prefixes_to_standard
 from .quantity import (
-    MAX_UNIT_EXPONENT,
     PhysicalQuantity,
     RevertedUnit,
     parse_quantity,

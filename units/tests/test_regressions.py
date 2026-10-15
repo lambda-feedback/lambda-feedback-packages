@@ -13,7 +13,8 @@ from lambdafeedback.units import (
     build_quantity_parser,
     parse_quantity,
 )
-from lambdafeedback.units.quantity import _revert_value_text, _split_value_and_unit
+from lambdafeedback.units._split import split_value_and_unit
+from lambdafeedback.units.quantity import _revert_value_text
 
 NATURAL = QuantityParams(strictness="natural")
 
@@ -194,19 +195,19 @@ class TestReadingSteps:
     def test_split_raises_when_a_unit_is_between_value_parts(self):
         # The rotations change direction: there is no split.
         with pytest.raises(QuantityParseError, match="Cannot separate the value from the unit"):
-            _split_value_and_unit(*self.tree("5 m/s x"))
+            split_value_and_unit(*self.tree("5 m/s x"))
 
     def test_split_keeps_a_group_whole(self):
-        root, value, unit = _split_value_and_unit(*self.tree("(2 m)"))
+        root, value, unit = split_value_and_unit(*self.tree("(2 m)"))
         assert root.label == GROUP_LABEL and unit is root and value is None
 
     def test_split_returns_the_rotated_root(self):
-        root, value, unit = _split_value_and_unit(*self.tree("2 x m"))
+        root, value, unit = split_value_and_unit(*self.tree("2 x m"))
         assert (value.content_string(), unit.content_string()) == ("2 x", "metre")
         assert root.children == [value, unit]
 
     def test_revert_value_text_reports_unit_like_parts(self):
-        _, value, unit = _split_value_and_unit(*self.tree("2 kg + 3"))
+        _, value, unit = split_value_and_unit(*self.tree("2 kg + 3"))
         assert unit is None
         # The first entry is the group enclosing the unit, with garbled text (a known issue, see the README).
         assert _revert_value_text(value) == (

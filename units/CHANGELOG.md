@@ -62,6 +62,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Changed
 
+- `quantity` keeps the public `PhysicalQuantity`, `RevertedUnit`, `parse_quantity` and `same_dimension`; the steps of reading a quantity are in private modules (`_split`, `_latex`, `_conversion`). Import public names from `lambdafeedback.units`: `MAX_UNIT_EXPONENT` is no longer in `lambdafeedback.units.quantity`.
 - The regular expressions in preprocessing and parsing are replaced by string scanners, with the same results. The quantity grammar's tokens are `slr_parsing.Lexeme`s (requires `lambdafeedback-slr-parsing` with literal token patterns).
 
 ### Deprecated
