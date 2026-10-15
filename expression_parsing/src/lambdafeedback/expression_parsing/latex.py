@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from string import ascii_letters
 from typing import Any, Literal, TypeAlias
 
@@ -17,7 +17,7 @@ from sympy.parsing.sympy_parser import implicit_multiplication_application, stan
 from sympy.printing.latex import LatexPrinter
 
 from ._safe_parse import TOO_DEEP_MESSAGE, check_input_length, safe_parse_expr
-from ._scanning import CLOSING_BRACKETS, OPENING_BRACKETS, find_matching_parenthesis
+from ._scanning import CLOSING_BRACKETS, OPENING_BRACKETS, Match, find_matching_parenthesis, replace_matches
 from .errors import LatexParseError
 from .params import SymbolSpec
 from .preprocessing import expand_plus_minus, split_equation
@@ -36,19 +36,17 @@ _LETTERS = frozenset(ascii_letters)
 
 def _replace_command(latex: str, command: str, replacement: str) -> str:
     """``command`` (e.g. ``\\pm``, but not the start of ``\\pmod``) and any whitespace after it as ``replacement``."""
-    pieces = []
-    done = 0
-    index = latex.find(command)
-    while index != -1:
-        after = index + len(command)
-        if latex[after : after + 1] in _LETTERS:
-            index = latex.find(command, index + 1)
-            continue
-        pieces += [latex[done:index], replacement]
-        done = len(latex) - len(latex[after:].lstrip())
-        index = latex.find(command, done)
-    pieces.append(latex[done:])
-    return "".join(pieces)
+
+    def find(text: str, index: int) -> Match | None:
+        start = text.find(command, index)
+        while start != -1 and text[start + len(command) : start + len(command) + 1] in _LETTERS:
+            start = text.find(command, start + 1)
+        if start == -1:
+            return None
+        after = start + len(command)
+        return start, len(text) - len(text[after:].lstrip()), replacement
+
+    return replace_matches(latex, find)
 
 
 class _LatexPrinter(LatexPrinter):
@@ -382,18 +380,20 @@ def sanitise_latex(response: str) -> str:
     """
     response = "".join(response.split()).replace("~", " ")
     for wrapper in (r"\mathrm", r"\text"):
-        processed = []
-        index = 0
-        while index < len(response):
-            wrapper_start = response.find(wrapper + "{", index)
-            if wrapper_start < 0:
-                processed.append(response[index:])
-                break
-            processed.append(response[index:wrapper_start])
-            wrapper_end = find_matching_parenthesis(response, wrapper_start + 1, delimiters=("{", "}"))
-            if wrapper_end < 0:
-                raise LatexParseError(f"Unclosed {wrapper}{{...}} in {response!r}.", expression=response)
-            processed.append(response[wrapper_start + len(wrapper) + 1 : wrapper_end])
-            index = wrapper_end + 1
-        response = "".join(processed)
+        response = replace_matches(response, _wrapped_content(wrapper))
     return response
+
+
+def _wrapped_content(wrapper: str) -> Callable[[str, int], Match | None]:
+    """Finder for :func:`replace_matches`: ``wrapper{...}`` as its content; raises if the brace is unclosed."""
+
+    def find(text: str, index: int) -> Match | None:
+        start = text.find(wrapper + "{", index)
+        if start < 0:
+            return None
+        end = find_matching_parenthesis(text, start + 1, delimiters=("{", "}"))
+        if end < 0:
+            raise LatexParseError(f"Unclosed {wrapper}{{...}} in {text!r}.", expression=text)
+        return start, end + 1, text[start + len(wrapper) + 1 : end]
+
+    return find

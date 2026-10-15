@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from ._scanning import Match, replace_matches
 from .symbol_tables import (
     ELEMENTARY_FUNCTIONS,
     EMBEDDABLE_FUNCTION_NAMES,
@@ -154,23 +155,21 @@ def normalise_unicode_operators(expr: str) -> str:
     :data:`UNICODE_OPERATORS` and :data:`SUPERSCRIPTS`); others, such as
     ``√`` or ``½``, are left for parsing to report.
     """
-    expr = expr.translate(_UNICODE_OPERATOR_TABLE)
-    pieces = []
-    done = index = 0
-    while index < len(expr):
-        if expr[index] not in SUPERSCRIPTS:
-            index += 1
-            continue
-        end = index
-        while end < len(expr) and expr[end] in SUPERSCRIPTS:
-            end += 1
-        # The power replaces any spaces before the run, and a redundant ^ or ** before those (x^²).
-        before = expr[done:index].rstrip(" ")
-        before = before.removesuffix("^") if before.endswith("^") else before.removesuffix("**")
-        pieces += [before, "**(" + "".join(SUPERSCRIPTS[char] for char in expr[index:end]) + ")"]
-        done = index = end
-    pieces.append(expr[done:])
-    return "".join(pieces)
+    return replace_matches(expr.translate(_UNICODE_OPERATOR_TABLE), _superscript_run)
+
+
+def _superscript_run(expr: str, index: int) -> Match | None:
+    """Finder for :func:`replace_matches`: the first run of superscripts at or after ``index``, as a power."""
+    start = next((k for k in range(index, len(expr)) if expr[k] in SUPERSCRIPTS), None)
+    if start is None:
+        return None
+    end = start
+    while end < len(expr) and expr[end] in SUPERSCRIPTS:
+        end += 1
+    # The power replaces any spaces before the run, and a redundant ^ or ** before those (x^²).
+    before = expr[index:start].rstrip(" ")
+    before = before.removesuffix("^") if before.endswith("^") else before.removesuffix("**")
+    return index + len(before), end, "**(" + "".join(SUPERSCRIPTS[char] for char in expr[start:end]) + ")"
 
 
 def substitute_input_symbols(expr: str, params: ExpressionParams) -> str:
