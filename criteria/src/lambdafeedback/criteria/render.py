@@ -6,17 +6,14 @@ import json
 from collections.abc import Collection, Mapping
 from typing import TYPE_CHECKING, Any
 
-from .nodes import EvaluationNode, Node
+from .nodes import CRITERION_STYLE, EVALUATION_STYLE, OUTPUT_STYLE, EvaluationNode, Node
 
 if TYPE_CHECKING:
     from .graph import CriteriaGraph
     from .tree import CriteriaTree
 
-# Mermaid node shapes (opening, closing).
-EVALUATION_STYLE = ("([", "])")
+# Mermaid node shapes (opening, closing); each kind of node's own is its STYLE (see nodes).
 STARTING_EVALUATION_STYLE = (">", "]")
-CRITERION_STYLE = ("[", "]")
-OUTPUT_STYLE = ("{{", "}}")
 SPECIAL_STYLE = ("[[", "]]")
 
 

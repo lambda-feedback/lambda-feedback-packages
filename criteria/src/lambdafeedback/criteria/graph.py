@@ -115,15 +115,7 @@ class CriteriaGraph:
 
     def add_node(self, node: Node) -> None:
         """Add a copy of ``node`` (e.g. from another graph) to this graph, without its edges."""
-        if isinstance(node, EvaluationNode):
-            copy = self.add_evaluation_node(node.label, node.summary, node.details, node.sufficiencies, node.evaluate)
-            copy.replacement = node.replacement
-        elif isinstance(node, CriterionNode):
-            self.add_criterion_node(node.label, node.summary, node.details, node.feedback_string_generator)
-        elif isinstance(node, OutputNode):
-            self.add_output_node(node.label, node.summary, node.details)
-        else:
-            raise CriteriaGraphError("Can only add evaluation, criterion or output nodes to criteria graph.")
+        node.copy_into(self)
 
     def attach(self, source_label: str, target_label: str) -> None:
         """Add an edge between existing nodes: evaluation to criterion, or criterion to evaluation or output.
@@ -133,26 +125,12 @@ class CriteriaGraph:
         node is unknown, the target is of the wrong kind, or the edge exists.
         """
         source = self._source(source_label)
-        if isinstance(source, EvaluationNode):
-            target: Node | None = self.criteria.get(target_label)
-            if target is None and target_label in self.outputs:
-                raise CriteriaGraphError(
-                    f"{target_label} is an output node. Only criterion nodes can be attached to evaluation nodes."
-                )
-            if target is None and target_label in self.evaluations:
-                raise CriteriaGraphError(
-                    f"Both {source_label} and {target_label} are evaluation nodes. "
-                    "Only criterion nodes can be attached to evaluation nodes."
-                )
-        else:
-            target = self.evaluations.get(target_label) or self.outputs.get(target_label)
-            if target is None and target_label in self.criteria:
-                raise CriteriaGraphError(
-                    f"Both {source_label} and {target_label} are criterion nodes. "
-                    "Only evaluation nodes can be attached to criterion nodes."
-                )
+        target: Node | None = (
+            self.evaluations.get(target_label) or self.criteria.get(target_label) or self.outputs.get(target_label)
+        )
         if target is None:
             raise CriteriaGraphError(f"Unknown node {target_label}.")
+        source.check_target(target)
         edge = Edge(source, target)
         if edge in source.outgoing:
             raise CriteriaGraphError(f"{target_label} is already attached to {source_label}.")

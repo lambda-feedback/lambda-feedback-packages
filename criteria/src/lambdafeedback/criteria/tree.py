@@ -8,8 +8,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Literal
 
 from .errors import CriteriaGraphError
-from .nodes import CriterionNode, EvaluationNode, Node, OutputNode
-from .render import CRITERION_STYLE, EVALUATION_STYLE, OUTPUT_STYLE, tree_to_mermaid
+from .nodes import Node, NodeKind, OutputNode
+from .render import tree_to_mermaid
 
 if TYPE_CHECKING:
     from .graph import CriteriaGraph
@@ -56,16 +56,18 @@ class CriteriaTree:
 def _tree_node(
     node: Node, identifier: int, main_criteria: Collection[str], parent: CriteriaTree | None = None
 ) -> CriteriaTree:
-    type_label: NodeType
-    if isinstance(node, EvaluationNode):
-        style, type_label = EVALUATION_STYLE, "evaluation"
-    elif isinstance(node, CriterionNode):
-        style, type_label = CRITERION_STYLE, "main_criterion" if node.label in main_criteria else "criterion"
-    elif isinstance(node, OutputNode):
-        style, type_label = OUTPUT_STYLE, "output"
-    else:
+    kind, style = node.KIND, node.STYLE
+    if kind is None or style is None:
         raise CriteriaGraphError(f"Cannot display node {node.label} of type {type(node).__name__}.")
+    type_label = _type_label(kind, node.label, main_criteria)
     return CriteriaTree(node.label, node.summary, node.details, f"_{identifier}", style, type_label, parent)
+
+
+def _type_label(kind: NodeKind, label: str, main_criteria: Collection[str]) -> NodeType:
+    """The node's kind, with criteria in ``main_criteria`` marked as main criteria."""
+    if kind == "criterion" and label in main_criteria:
+        return "main_criterion"
+    return kind
 
 
 def build_tree(graph: CriteriaGraph, starting_evaluation: str, main_criteria: Collection[str] = ()) -> CriteriaTree:
