@@ -110,44 +110,66 @@ def unit_dictionaries(unit_sets: frozenset[str], strictness: Strictness) -> Unit
     )
 
 
+_LEAF_TAGS: dict[str, QuantityTag] = {
+    Label.UNIT: QuantityTag.UNIT,
+    Label.NUMBER: QuantityTag.NUMBER,
+    Label.NON_UNIT: QuantityTag.NON_UNIT,
+}
+"""The tag each kind of leaf (a scanned token) carries."""
+
+_NOT_A_UNIT = frozenset({QuantityTag.NUMBER, QuantityTag.NON_UNIT, QuantityTag.REJECTED_UNIT})
+"""Tags that stop an operator's result from being a unit."""
+
+
+def _is_unit_power(node: ExprNode) -> bool:
+    """``m^2``: a unit to a numeric power, which is a unit."""
+    base, exponent = node.children
+    return QuantityTag.UNIT in base.tags and exponent.tags == {QuantityTag.NUMBER}
+
+
+def _is_reciprocal_unit(node: ExprNode) -> bool:
+    """``1/s``: one over a unit, which is a unit."""
+    numerator, denominator = node.children
+    return numerator.content == "1" and denominator.tags == {QuantityTag.UNIT}
+
+
+def _is_number_ratio(node: ExprNode) -> bool:
+    """``3/4``: a number over a number, which stays a number."""
+    numerator, denominator = node.children
+    return numerator.tags == {QuantityTag.NUMBER} == denominator.tags
+
+
 def quantity_tag_handler(strictness: Strictness) -> Callable[[ExprNode], set[Any]]:
     """Tag handler deciding which subtrees are units, numbers or other (value) text."""
 
     def tag_handler(node: ExprNode) -> set[Any]:
         tags: set[Any] = set().union(*(child.tags for child in node.children))
-        children = node.children
-        if node.label == Label.UNIT:
-            tags.add(QuantityTag.UNIT)
-        elif node.label == Label.NUMBER:
-            tags.add(QuantityTag.NUMBER)
-        elif node.label == Label.NON_UNIT:
-            tags.add(QuantityTag.NON_UNIT)
-        elif (
-            node.label == Label.POWER
-            and QuantityTag.UNIT in children[0].tags
-            and children[1].tags == {QuantityTag.NUMBER}
-        ):
-            tags.remove(QuantityTag.NUMBER)  # a unit to a numeric power is a unit
-        elif node.label == Label.SOLIDUS and children[0].content == "1" and children[1].tags == {QuantityTag.UNIT}:
-            tags.remove(QuantityTag.NUMBER)  # 1/unit is a unit
-        elif node.label == Label.SOLIDUS and children[0].tags == {QuantityTag.NUMBER} == children[1].tags:
-            pass  # number/number stays a number
-        elif node.label in (Label.PRODUCT, Label.SOLIDUS, Label.POWER):
-            if tags & {QuantityTag.NUMBER, QuantityTag.NON_UNIT, QuantityTag.REJECTED_UNIT}:
+        # The cases are tried in order: a case whose guard fails falls through to the next.
+        match node.label:
+            case Label.UNIT | Label.NUMBER | Label.NON_UNIT:
+                tags.add(_LEAF_TAGS[node.label])
+            case Label.POWER if _is_unit_power(node):
+                tags.remove(QuantityTag.NUMBER)
+            case Label.SOLIDUS if _is_reciprocal_unit(node):
+                tags.remove(QuantityTag.NUMBER)
+            case Label.SOLIDUS if _is_number_ratio(node):
+                pass
+            case Label.PRODUCT | Label.SOLIDUS | Label.POWER if tags & _NOT_A_UNIT:
                 tags.discard(QuantityTag.UNIT)
                 if QuantityTag.NUMBER in tags:
                     tags.add(QuantityTag.NON_UNIT)
-        elif node.label == Label.SPACE and QuantityTag.NON_UNIT in children[1].tags:
-            tags.discard(QuantityTag.UNIT)
-        elif node.label == GROUP_LABEL and not node.content:
-            # Juxtaposition (a group without delimiters)
-            if strictness == "strict":
-                node.children = [remove_tag(child, QuantityTag.UNIT) for child in children]
-                if QuantityTag.UNIT in tags:
-                    tags.remove(QuantityTag.UNIT)
-                    tags.add(QuantityTag.REJECTED_UNIT)
-            elif any(QuantityTag.NON_UNIT in child.tags for child in children):
+            case Label.SPACE if QuantityTag.NON_UNIT in node.children[1].tags:
                 tags.discard(QuantityTag.UNIT)
+            # GROUP_LABEL is a bare name, so "case GROUP_LABEL:" would capture (match anything), not compare.
+            case label if label == GROUP_LABEL and not node.content:
+                # Juxtaposition (a group without delimiters)
+                if strictness == "strict":
+                    node.children = [remove_tag(child, QuantityTag.UNIT) for child in node.children]
+                    if QuantityTag.UNIT in tags:
+                        tags.remove(QuantityTag.UNIT)
+                        tags.add(QuantityTag.REJECTED_UNIT)
+                elif any(QuantityTag.NON_UNIT in child.tags for child in node.children):
+                    tags.discard(QuantityTag.UNIT)
         return tags
 
     return tag_handler
