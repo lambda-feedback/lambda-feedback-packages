@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import logging
+import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
+from typing import Any, NamedTuple
 
 from sympy import Basic, Integer, simplify
 
@@ -22,7 +23,7 @@ from lambdafeedback.expression_parsing import (
     substitute,
     sympy_to_latex,
 )
-from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode, SLRError, SLRParser
+from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode, SLRError, SLRParser, TagHandler
 
 from .data import CONVERSION_TO_BASE_SI, SI_BASE_UNITS, SI_PREFIXES, UNIT_SETS, units_in
 from .errors import DisallowedUnitError, QuantityError, QuantityParseError, UnitConversionError
@@ -74,7 +75,7 @@ def _has_stray_number(node: ExprNode) -> bool:
     """Whether a unit subtree contains a number outside an exponent or the ``1`` of ``1/unit``.
 
     Groups are not looked into: a bracketed group is kept whole (see
-    :meth:`PhysicalQuantity._rotate_until_root_is_split`).
+    :func:`_rotate_until_root_is_split`).
     """
     stack = [node]  # iterative: a long unit such as m*m*...*m is a deep tree
     while stack:
@@ -216,12 +217,224 @@ _UNIT_LATEX: dict[str, Callable[[ExprNode], list[str]]] = {
 }
 
 
+# ----------------------------------------------------------------------
+# Reading a quantity: the steps of PhysicalQuantity.from_tree, in order
+# ----------------------------------------------------------------------
+
+
+def _parsing_config(params: QuantityParams) -> SympyParsingConfig:
+    """The SymPy configuration for a quantity: unit, prefix and dimension names are positive and never split."""
+    unsplittable = _unsplittable_names(params, all_forms=False)
+    return SympyParsingConfig.from_params(
+        params,
+        unsplittable_symbols=unsplittable,
+        symbol_assumptions=tuple((name, "positive") for name in unsplittable),
+    )
+
+
+def _rotate(root: ExprNode, right: bool, tag_handler: TagHandler) -> ExprNode:
+    """Tree rotation at ``root``, to the right (the left child becomes the root) or to the left.
+
+    Returns the new root.
+    """
+    # The child that becomes the root, and which of its children moves across to the old root.
+    pivot, inner = (0, -1) if right else (1, 0)
+    new_root = root.children[pivot]
+    # Only binary nodes can be rotated; groups (one child) are atomic.
+    if len(new_root.children) < 2:
+        raise QuantityParseError(f"Cannot rotate {'right' if right else 'left'}.")
+    root.children[pivot] = new_root.children[inner]
+    new_root.children[inner] = root
+    # Retagging can change the nodes too: in strict mode it strips the unit tag from a juxtaposition's children.
+    root.tags = tag_handler(root)
+    new_root.tags = tag_handler(new_root)
+    return new_root
+
+
+def _rotate_until_root_is_split(root: ExprNode, tag_handler: TagHandler) -> ExprNode:
+    """Rotate ``SPACE`` roots until the root separates value (left) from unit (right); returns the new root.
+
+    Only binary nodes are rotated into: a group (e.g. ``(2 m)``) is kept whole.
+    A rotation followed by the opposite one would undo it, so a change of
+    direction means there is no split (e.g. ``5 m/s x``, a unit between
+    value parts).
+    """
+    previous: bool | None = None  # the direction of the last rotation (True: right)
+    while root.label == Label.SPACE:
+        left, right = root.children
+        if QuantityTag.UNIT not in root.tags and len(right.children) > 1:
+            rotate_right = False
+        elif QuantityTag.UNIT in left.tags and len(left.children) > 1:
+            rotate_right = True
+        else:
+            return root
+        if previous is not None and rotate_right != previous:
+            raise QuantityParseError(f"Cannot separate the value from the unit in {root.original!r}.")
+        logger.debug("rotate %s to split value from unit", "right" if rotate_right else "left")
+        root = _rotate(root, rotate_right, tag_handler)
+        previous = rotate_right
+    return root
+
+
+def _split_value_and_unit(root: ExprNode, tag_handler: TagHandler) -> tuple[ExprNode, ExprNode | None, ExprNode | None]:
+    """The root after rotating it to separate value from unit, the value and the unit.
+
+    See :func:`_rotate_until_root_is_split`. Raises :class:`QuantityParseError` if
+    they can't be separated, or the unit's exponents can't be used.
+    """
+    root = _rotate_until_root_is_split(root, tag_handler)
+    value: ExprNode | None = None
+    unit: ExprNode | None = None
+    if (
+        root.label == Label.SPACE
+        and QuantityTag.UNIT not in root.children[0].tags
+        and QuantityTag.UNIT in root.children[1].tags
+    ):
+        value, unit = root.children
+    elif QuantityTag.UNIT in root.tags:
+        unit = root
+    else:
+        value = root
+    if logger.isEnabledFor(logging.DEBUG):
+        value_text = None if value is None else value.content_string()
+        unit_text = None if unit is None else unit.content_string()
+        logger.debug("split %r into value %r and unit %r", root.original, value_text, unit_text)
+    # e.g. "2 m 3 s" or "1 hour 30 minutes": the unit would contain a number.
+    if unit is not None and _has_stray_number(unit):
+        raise QuantityParseError(f"Cannot separate the value from the unit in {root.original!r}.")
+    if unit is not None and (problem := _exponent_problem(unit)) is not None:
+        raise QuantityParseError(problem)
+    return root, value, unit
+
+
+def _revert_value_text(value: ExprNode) -> tuple[RevertedUnit, ...]:
+    """Restore the value's text as written; returns its unit-like parts (parents first).
+
+    The value's nodes get their typed text back as their content, in place:
+    the tree was just parsed, and nothing else holds it. A unit-like node's
+    marked text is its restored content around its children's text from
+    before restoring (computed once, bottom-up, by :func:`_subtree_texts`,
+    rather than per node, which was quadratic).
+    """
+    texts = _subtree_texts(value)
+    reverted = []
+    for node in value.walk():
+        if node.label != GROUP_LABEL:
+            node.content = node.original[node.start : node.end + 1]
+        if node.label == Label.UNIT or QuantityTag.UNIT in node.tags:
+            marked = "".join(
+                part if is_output else texts[id(part)] for is_output, part in node.traverse_step(node, _content)
+            )
+            reverted.append(
+                RevertedUnit(before=node.original[: node.start], marked=marked, after=node.original[node.end + 1 :])
+            )
+    return tuple(reverted)
+
+
+def _value_latex(value: ExprNode | None, params: QuantityParams) -> str | None:
+    """LaTeX previewing the value (``None`` without one)."""
+    if value is None:
+        return None
+    original = value.original_string()
+    # Unit forms inside a called name (``s`` and ``in`` in ``sin(2)``) would split
+    # the call in the preview, though the value itself is parsed as the call.
+    calls = called_names(original)
+    unit_forms = [
+        form
+        for form in _unsplittable_names(params, all_forms=True)
+        if not any(form in call and form != call for call in calls)
+    ]
+    reserved = (*params.reserved_keywords, *unit_forms)
+    preview_params = params.replace(reserved_keywords=reserved, rationalise=False)
+    if preview_params.is_latex:
+        # A LaTeX value is previewed as-is (as expression_parsing.preview_function used to).
+        return original
+    try:
+        preprocessed = preprocess_expression(original, preview_params, name="response")
+    except (BracketNotationError, AbsoluteValueNotationError) as exc:
+        # Best-effort: preview with the guessed rewrite rather than failing outright.
+        preprocessed = exc.expression
+    parsed = parse_expressions(preprocessed, SympyParsingConfig.from_params(preview_params))
+    settings = {"mul_symbol": r" \cdot "}
+    if len(parsed) > 1:
+        parts = sorted(sympy_to_latex(expr, preview_params.symbols, settings=settings) for expr in parsed)
+        return "\\left\\{" + ",~".join(parts) + "\\right\\}"
+    return sympy_to_latex(parsed[0], preview_params.symbols, settings=settings)
+
+
+def _expand_units(node: ExprNode, parser: SLRParser) -> ExprNode:
+    """Replace non-base units by their expression in SI base units (in place where possible)."""
+    if node.label == Label.UNIT and not node.children and node.content not in _BASE_UNIT_NAMES:
+        node = _conversion_tree(parser, node.content).copy()
+    node.children = [_expand_units(child, parser) for child in node.children]
+    return node
+
+
+class _SympyForms(NamedTuple):
+    standard_values: tuple[Basic, ...] | None
+    standard_unit: Basic | None
+    expanded_unit: Basic | None
+    dimension: Basic
+    base_dimension: Basic
+    unit_factor: Basic
+
+
+def _sympy_forms(
+    name: str,
+    value: ExprNode | None,
+    unit: ExprNode | None,
+    params: QuantityParams,
+    config: SympyParsingConfig,
+    parser: SLRParser,
+) -> _SympyForms:
+    """The SymPy forms: the standard value and unit, the expanded unit, dimensions and unit factor.
+
+    Raises :class:`UnitConversionError` (naming ``name``) if the unit's expansion doesn't parse.
+    """
+    value_text: Any = value.content_string() if value is not None else None
+    if value_text is not None and params.is_latex:
+        value_text = parse_latex(value_text, params.symbols, params.simplify)
+    standard_unit: Any = None
+    expanded_unit: Any = None
+    dimension: Basic = Integer(1)
+    unit_factor: Basic = Integer(1)
+    if unit is not None:
+        expanded_unit_string = _expand_units(unit.copy(), parser).content_string()
+        try:
+            expanded_unit = standard_unit = parse_expression(expanded_unit_string, config)
+        except Exception as e:  # SymPy raises many types; all mean the expansion didn't parse
+            raise UnitConversionError(f"SymPy was unable to parse the {name} unit") from e
+        if value is not None:
+            base_symbols = {symbol: 1 for symbol in standard_unit.free_symbols if str(symbol) in _BASE_UNIT_NAMES}
+            unit_factor = standard_unit.subs(base_symbols).simplify()
+            standard_unit = (standard_unit / unit_factor).simplify(rational=True)
+            value_text = f"({value_text})*({unit_factor})"
+        dimension = parse_expression(substitute(expanded_unit_string, _BASE_UNIT_DIMENSIONS), config)
+    return _SympyForms(
+        standard_values=None if value_text is None else parse_expressions(value_text, config),
+        standard_unit=standard_unit,
+        expanded_unit=expanded_unit,
+        dimension=dimension,
+        base_dimension=_without_factor(dimension),
+        unit_factor=unit_factor,
+    )
+
+
+# ----------------------------------------------------------------------
+# The result
+# ----------------------------------------------------------------------
+
+
+@dataclass(frozen=True, eq=False, repr=False)
 class PhysicalQuantity:
     """A response read as a quantity: its value and unit, their LaTeX, and SI forms.
 
     Use :func:`parse_quantity` to create one. SymPy results use the SI base
     units of :data:`~lambdafeedback.units.SI_BASE_UNITS` as symbols; mass is
     in grams (``kilogram`` expands to ``1000*gram``).
+
+    Its attributes can't be set (it is frozen), but ``value``, ``unit`` and
+    ``ast_root`` are ordinary parse trees. Quantities compare by identity.
 
     Attributes:
         value, unit: the value and unit subtrees (either may be ``None``).
@@ -244,11 +457,10 @@ class PhysicalQuantity:
     name: str
     params: QuantityParams
     ast_root: ExprNode
-    parser: SLRParser
     parsing_config: SympyParsingConfig
-    reverted_units: list[RevertedUnit]
     value: ExprNode | None
     unit: ExprNode | None
+    reverted_units: tuple[RevertedUnit, ...]
     value_latex: str | None
     unit_latex: str | None
     latex: str
@@ -259,201 +471,54 @@ class PhysicalQuantity:
     base_dimension: Basic
     unit_factor: Basic
 
-    def __init__(self, name: str, params: QuantityParams, ast_root: ExprNode, parser: SLRParser) -> None:
-        self.name = name
-        self.params = params
-        self.ast_root = ast_root
-        self.parser = parser
-        unsplittable = _unsplittable_names(params, all_forms=False)
-        self.parsing_config = SympyParsingConfig.from_params(
-            params,
-            unsplittable_symbols=unsplittable,
-            symbol_assumptions=tuple((name, "positive") for name in unsplittable),
+    @classmethod
+    def from_tree(cls, name: str, params: QuantityParams, ast_root: ExprNode, parser: SLRParser) -> PhysicalQuantity:
+        """Read a quantity from its parse tree (built by ``parser``, the quantity parser for ``params``).
+
+        :func:`parse_quantity` parses the text and calls this. ``ast_root`` is
+        rotated and its value's text restored in place.
+        """
+        config = _parsing_config(params)
+        root, value, unit = _split_value_and_unit(ast_root, parser.tag_handler)
+        reverted_units = _revert_value_text(value) if value is not None else ()
+        value_latex = _value_latex(value, params)
+        unit_latex = "".join(_unit_latex(unit)) if unit is not None else None
+        separator = "~" if value_latex is not None and unit_latex is not None else ""
+        forms = _sympy_forms(name, value, unit, params, config, parser)
+        return cls(
+            name=name,
+            params=params,
+            ast_root=root,
+            parsing_config=config,
+            value=value,
+            unit=unit,
+            reverted_units=reverted_units,
+            value_latex=value_latex,
+            unit_latex=unit_latex,
+            latex=(value_latex or "") + separator + (unit_latex or ""),
+            standard_values=forms.standard_values,
+            standard_unit=forms.standard_unit,
+            expanded_unit=forms.expanded_unit,
+            dimension=forms.dimension,
+            base_dimension=forms.base_dimension,
+            unit_factor=forms.unit_factor,
         )
-        self.reverted_units = []
-        self.value = None
-        self.unit = None
 
-        self._split_value_and_unit()
-        if self.value is not None:
-            self._revert_value_text(self.value)
-        self.value_latex = self._value_latex()
-        self.unit_latex = "".join(_unit_latex(self.unit)) if self.unit is not None else None
-        separator = "~" if self.value_latex is not None and self.unit_latex is not None else ""
-        self.latex = (self.value_latex or "") + separator + (self.unit_latex or "")
-        self._set_sympy_forms()
-
-    def __getstate__(self) -> dict[str, Any]:
-        # The parser holds closures, so it can't be pickled; it is rebuilt (from the cache) on unpickling.
-        state = dict(vars(self))
-        del state["parser"]
-        return state
-
-    def __setstate__(self, state: dict[str, Any]) -> None:
-        self.__dict__.update(state)
-        self.parser = build_quantity_parser(self.params.unit_sets, self.params.strictness)
+    @property
+    def parser(self) -> SLRParser:
+        """Deprecated (removed in 1.0): the quantity parser for ``params``; use :func:`build_quantity_parser`."""
+        warnings.warn(
+            "PhysicalQuantity.parser is deprecated and will be removed in 1.0; "
+            "use build_quantity_parser(params.unit_sets, params.strictness) instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return build_quantity_parser(self.params.unit_sets, self.params.strictness)
 
     def __repr__(self) -> str:
         value = None if self.value is None else self.value.content_string()
         unit = None if self.unit is None else self.unit.content_string()
         return f"PhysicalQuantity(value={value!r}, unit={unit!r})"
-
-    # ------------------------------------------------------------------
-    # Splitting value and unit
-    # ------------------------------------------------------------------
-
-    def _rotate(self, right: bool) -> None:
-        """Tree rotation at the root, to the right (the left child becomes the root) or to the left."""
-        old_root = self.ast_root
-        # The child that becomes the root, and which of its children moves across to the old root.
-        pivot, inner = (0, -1) if right else (1, 0)
-        new_root = old_root.children[pivot]
-        # Only binary nodes can be rotated; groups (one child) are atomic.
-        if len(new_root.children) < 2:
-            raise QuantityParseError(f"Cannot rotate {'right' if right else 'left'}.")
-        old_root.children[pivot] = new_root.children[inner]
-        new_root.children[inner] = old_root
-        old_root.tags = self.parser.tag_handler(old_root)
-        new_root.tags = self.parser.tag_handler(new_root)
-        self.ast_root = new_root
-
-    def _rotate_until_root_is_split(self) -> None:
-        """Rotate ``SPACE`` roots until the root separates value (left) from unit (right).
-
-        Only binary nodes are rotated into: a group (e.g. ``(2 m)``) is kept whole.
-        A rotation followed by the opposite one would undo it, so a change of
-        direction means there is no split (e.g. ``5 m/s x``, a unit between
-        value parts).
-        """
-        previous: bool | None = None  # the direction of the last rotation (True: right)
-        while self.ast_root.label == Label.SPACE:
-            left, right = self.ast_root.children
-            if QuantityTag.UNIT not in self.ast_root.tags and len(right.children) > 1:
-                rotate_right = False
-            elif QuantityTag.UNIT in left.tags and len(left.children) > 1:
-                rotate_right = True
-            else:
-                return
-            if previous is not None and rotate_right != previous:
-                raise QuantityParseError(f"Cannot separate the value from the unit in {self.ast_root.original!r}.")
-            logger.debug("rotate %s to split value from unit", "right" if rotate_right else "left")
-            self._rotate(rotate_right)
-            previous = rotate_right
-
-    def _split_value_and_unit(self) -> None:
-        self._rotate_until_root_is_split()
-        root = self.ast_root
-        if (
-            root.label == Label.SPACE
-            and QuantityTag.UNIT not in root.children[0].tags
-            and QuantityTag.UNIT in root.children[1].tags
-        ):
-            self.value, self.unit = root.children
-        elif QuantityTag.UNIT in root.tags:
-            self.unit = root
-        else:
-            self.value = root
-        # e.g. "2 m 3 s" or "1 hour 30 minutes": the unit would contain a number.
-        if logger.isEnabledFor(logging.DEBUG):
-            value = None if self.value is None else self.value.content_string()
-            unit = None if self.unit is None else self.unit.content_string()
-            logger.debug("split %r into value %r and unit %r", root.original, value, unit)
-        if self.unit is not None and _has_stray_number(self.unit):
-            raise QuantityParseError(f"Cannot separate the value from the unit in {root.original!r}.")
-        if self.unit is not None and (problem := _exponent_problem(self.unit)) is not None:
-            raise QuantityParseError(problem)
-
-    def _revert_value_text(self, value: ExprNode) -> None:
-        """Restore the value's text as written, noting its unit-like parts in ``reverted_units`` (parents first).
-
-        A unit-like node's marked text is its restored content around its
-        children's text from before restoring (computed once, bottom-up, by
-        :func:`_subtree_texts`, rather than per node, which was quadratic).
-        """
-        texts = _subtree_texts(value)
-        for node in value.walk():
-            if node.label != GROUP_LABEL:
-                node.content = node.original[node.start : node.end + 1]
-            if node.label == Label.UNIT or QuantityTag.UNIT in node.tags:
-                marked = "".join(
-                    part if is_output else texts[id(part)] for is_output, part in node.traverse_step(node, _content)
-                )
-                self.reverted_units.append(
-                    RevertedUnit(before=node.original[: node.start], marked=marked, after=node.original[node.end + 1 :])
-                )
-
-    # ------------------------------------------------------------------
-    # LaTeX
-    # ------------------------------------------------------------------
-
-    def _value_latex(self) -> str | None:
-        if self.value is None:
-            return None
-        original = self.value.original_string()
-        # Unit forms inside a called name (``s`` and ``in`` in ``sin(2)``) would split
-        # the call in the preview, though the value itself is parsed as the call.
-        calls = called_names(original)
-        unit_forms = [
-            form
-            for form in _unsplittable_names(self.params, all_forms=True)
-            if not any(form in call and form != call for call in calls)
-        ]
-        reserved = (*self.params.reserved_keywords, *unit_forms)
-        params = self.params.replace(reserved_keywords=reserved, rationalise=False)
-        if params.is_latex:
-            # A LaTeX value is previewed as-is (as expression_parsing.preview_function used to).
-            return original
-        try:
-            preprocessed = preprocess_expression(original, params, name="response")
-        except (BracketNotationError, AbsoluteValueNotationError) as exc:
-            # Best-effort: preview with the guessed rewrite rather than failing outright.
-            preprocessed = exc.expression
-        parsed = parse_expressions(preprocessed, SympyParsingConfig.from_params(params))
-        settings = {"mul_symbol": r" \cdot "}
-        if len(parsed) > 1:
-            parts = sorted(sympy_to_latex(expr, params.symbols, settings=settings) for expr in parsed)
-            return "\\left\\{" + ",~".join(parts) + "\\right\\}"
-        return sympy_to_latex(parsed[0], params.symbols, settings=settings)
-
-    # ------------------------------------------------------------------
-    # Conversion to SI base units
-    # ------------------------------------------------------------------
-
-    def _expand_units(self, node: ExprNode) -> ExprNode:
-        """Replace non-base units by their expression in SI base units (in place where possible)."""
-        if node.label == Label.UNIT and not node.children and node.content not in _BASE_UNIT_NAMES:
-            node = _conversion_tree(self.parser, node.content).copy()
-        node.children = [self._expand_units(child) for child in node.children]
-        return node
-
-    def _set_sympy_forms(self) -> None:
-        """Set the SymPy forms: the standard value and unit, the expanded unit, dimensions and unit factor."""
-        config = self.parsing_config
-        value: Any = self.value.content_string() if self.value is not None else None
-        if value is not None and self.params.is_latex:
-            value = parse_latex(value, self.params.symbols, self.params.simplify)
-        unit: Any = None
-        expanded_unit: Any = None
-        dimension: Basic = Integer(1)
-        unit_factor: Basic = Integer(1)
-        if self.unit is not None:
-            expanded_unit_string = self._expand_units(self.unit.copy()).content_string()
-            try:
-                expanded_unit = unit = parse_expression(expanded_unit_string, config)
-            except Exception as e:  # SymPy raises many types; all mean the expansion didn't parse
-                raise UnitConversionError(f"SymPy was unable to parse the {self.name} unit") from e
-            if self.value is not None:
-                base_symbols = {symbol: 1 for symbol in unit.free_symbols if str(symbol) in _BASE_UNIT_NAMES}
-                unit_factor = unit.subs(base_symbols).simplify()
-                unit = (unit / unit_factor).simplify(rational=True)
-                value = f"({value})*({unit_factor})"
-            dimension = parse_expression(substitute(expanded_unit_string, _BASE_UNIT_DIMENSIONS), config)
-        self.standard_values = None if value is None else parse_expressions(value, config)
-        self.standard_unit = unit
-        self.expanded_unit = expanded_unit
-        self.dimension = dimension
-        self.base_dimension = _without_factor(dimension)
-        self.unit_factor = unit_factor
 
 
 def parse_quantity(expr: str, params: QuantityParams, name: str = "response") -> PhysicalQuantity:
@@ -503,7 +568,7 @@ def parse_quantity(expr: str, params: QuantityParams, name: str = "response") ->
         roots = parser.parse(parser.scan(text.strip()))
         if len(roots) > 1:
             raise QuantityParseError("Parsed quantity does not have a single root.")
-        return PhysicalQuantity(name, params, roots[0], parser)
+        return PhysicalQuantity.from_tree(name, params, roots[0], parser)
     except QuantityError as exc:
         if exc.expression is None:
             exc.expression = expr
