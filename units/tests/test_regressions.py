@@ -1,9 +1,20 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
 import pytest
-from sympy import simplify
+from sympy import Basic, simplify
 
-from lambdafeedback.units import DisallowedUnitError, QuantityParams, QuantityParseError, RevertedUnit, parse_quantity
+from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode
+from lambdafeedback.units import (
+    DisallowedUnitError,
+    PhysicalQuantity,
+    QuantityParams,
+    QuantityParseError,
+    RevertedUnit,
+    build_quantity_parser,
+    parse_quantity,
+)
+from lambdafeedback.units._split import split_value_and_unit
+from lambdafeedback.units.quantity import _revert_value_text
 
 NATURAL = QuantityParams(strictness="natural")
 
@@ -170,7 +181,47 @@ class TestParsing:
         # from the "kg 2" it now holds, or that span is reported as a unit too ("kilogram 2").
         quantity = parse(expr, QuantityParams(strictness="strict"))
         assert quantity.value.content_string() == expr and quantity.unit is None
-        assert quantity.reverted_units == [RevertedUnit(*parts) for parts in reverted]
+        assert quantity.reverted_units == tuple(RevertedUnit(*parts) for parts in reverted)
+
+
+class TestReadingSteps:
+    """The steps PhysicalQuantity.from_tree runs, each on a freshly parsed tree."""
+
+    @staticmethod
+    def tree(expr, params=NATURAL):
+        parser = build_quantity_parser(params.unit_sets, params.strictness)
+        return parser.parse(parser.scan(expr))[0], parser.tag_handler
+
+    def test_split_raises_when_a_unit_is_between_value_parts(self):
+        # The rotations change direction: there is no split.
+        with pytest.raises(QuantityParseError, match="Cannot separate the value from the unit"):
+            split_value_and_unit(*self.tree("5 m/s x"))
+
+    def test_split_keeps_a_group_whole(self):
+        root, value, unit = split_value_and_unit(*self.tree("(2 m)"))
+        assert root.label == GROUP_LABEL and unit is root and value is None
+
+    def test_split_returns_the_rotated_root(self):
+        root, value, unit = split_value_and_unit(*self.tree("2 x m"))
+        assert (value.content_string(), unit.content_string()) == ("2 x", "metre")
+        assert root.children == [value, unit]
+
+    def test_revert_value_text_reports_unit_like_parts(self):
+        _, value, unit = split_value_and_unit(*self.tree("2 kg + 3"))
+        assert unit is None
+        # The first entry is the group enclosing the unit, with garbled text (a known issue, see the README).
+        assert _revert_value_text(value) == (
+            RevertedUnit(before="2", marked="2 kilogram", after="kg + 3"),
+            RevertedUnit(before="2 ", marked="kg", after=" + 3"),
+        )
+        assert value.content_string() == "2 kg + 3"  # restored as typed
+
+    def test_quantity_is_frozen(self):
+        from dataclasses import FrozenInstanceError
+
+        quantity = parse("5 km/h")
+        with pytest.raises(FrozenInstanceError):
+            quantity.value = None
 
 
 class TestPickling:
@@ -183,15 +234,35 @@ class TestPickling:
         error = pickle.loads(pickle.dumps(QuantityParamsError("strictness", "bad")))
         assert (error.field, error.message, str(error)) == ("strictness", "bad", "Invalid parameter 'strictness': bad")
 
-    def test_parser_is_left_out_and_rebuilt(self):
+    def test_quantity_pickles_every_field_without_custom_state(self):
+        import pickle
+        from dataclasses import fields
+
+        # The quantity no longer holds the parser (closures, which can't be pickled), so nothing is left out.
+        assert "__getstate__" not in vars(PhysicalQuantity) and "__setstate__" not in vars(PhysicalQuantity)
+        quantity = parse("5 km/h")
+        copy = pickle.loads(pickle.dumps(quantity))
+
+        def comparable(value):
+            if isinstance(value, ExprNode):
+                return value.content_string()
+            if isinstance(value, tuple):
+                return tuple(comparable(item) for item in value)
+            if isinstance(value, Basic):
+                # SymPy evaluates unevaluated expressions when unpickling (5*5/18 comes back as 25/18).
+                return str(simplify(value))
+            return value  # params, config, strings and RevertedUnits compare with ==
+
+        for field in fields(PhysicalQuantity):
+            assert comparable(getattr(copy, field.name)) == comparable(getattr(quantity, field.name)), field.name
+
+    def test_parser_is_deprecated_and_still_the_cached_parser(self):
         from lambdafeedback.units import build_quantity_parser
 
         quantity = parse("5 km/h")
-        state = quantity.__getstate__()
-        assert "parser" not in state  # it holds closures, which can't be pickled
-        copy = object.__new__(type(quantity))
-        copy.__setstate__(state)
-        assert copy.parser is build_quantity_parser(quantity.params.unit_sets, quantity.params.strictness)
+        with pytest.deprecated_call(match="PhysicalQuantity.parser"):
+            parser = quantity.parser
+        assert parser is build_quantity_parser(quantity.params.unit_sets, quantity.params.strictness)
 
     def test_quantity_round_trips(self):
         import pickle
