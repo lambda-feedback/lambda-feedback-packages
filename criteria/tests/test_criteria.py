@@ -157,6 +157,16 @@ class TestCriteriaGraph:
         g.add_evaluation_node("EVAL", "eval", "eval details")
         assert isinstance(g.to_mermaid(), str)
 
+    def test_mermaid_draws_each_kind_of_node_in_its_shape(self):
+        g = CriteriaGraph("root")
+        g.add_evaluation_node("EVAL", "eval", "eval details")
+        g.add_criterion_node("CRIT", "crit", "crit details")
+        g.add_output_node("OUT", "out", "out details")
+        lines = g.to_mermaid().split("\n\t")
+        assert 'N_0_0(["EVAL<br/>---<br/>eval details"])' in lines
+        assert 'N_1_0["CRIT<br/>---<br/>crit details"]' in lines
+        assert 'N_2_0{{"OUT<br/>---<br/>out details"}}' in lines
+
     def test_duplicate_evaluation_node_rejected(self):
         g = CriteriaGraph("root")
         g.add_evaluation_node("EVAL", "eval", "eval details")
