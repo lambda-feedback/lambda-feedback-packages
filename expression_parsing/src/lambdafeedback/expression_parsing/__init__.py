@@ -31,6 +31,7 @@ from .errors import (
     UnknownConventionError,
 )
 from .latex import MAX_LATEX_NESTING, extract_latex, latex_symbols, parse_latex, sanitise_latex, sympy_to_latex
+from .notation import NotationWarning, notation_warnings
 from .numbers import (
     compute_relative_tolerance_from_significant_decimals,
     generate_arbitrary_number_pattern_matcher,
@@ -82,6 +83,7 @@ __all__ = [
     "FunctionName",
     "InvalidParameterError",
     "LatexParseError",
+    "NotationWarning",
     "SymbolAssumptionError",
     "SymbolSpec",
     "SympyParsingConfig",
@@ -103,6 +105,7 @@ __all__ = [
     "is_number",
     "latex_symbols",
     "normalise_unicode_operators",
+    "notation_warnings",
     "parse_expression",
     "parse_expressions",
     "parse_latex",

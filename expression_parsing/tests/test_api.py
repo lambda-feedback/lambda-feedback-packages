@@ -8,6 +8,7 @@ from lambdafeedback.expression_parsing import (
     ExpressionParsingError,
     InvalidParameterError,
     LatexParseError,
+    NotationWarning,
     SymbolAssumptionError,
     SymbolSpec,
     SympyParsingConfig,
@@ -17,6 +18,7 @@ from lambdafeedback.expression_parsing import (
     is_complex_number_on_cartesian_form,
     is_complex_number_on_exponential_form,
     is_number,
+    notation_warnings,
     parse_expression,
     parse_expressions,
     parse_latex,
@@ -185,3 +187,29 @@ def test_number_forms():
     assert is_complex_number_on_cartesian_form("1+2*I")
     assert is_complex_number_on_exponential_form("2*exp(3*I)")
     assert not is_number("x")
+
+
+class TestNotationWarnings:
+    @pytest.mark.parametrize(
+        "response, strict, expected",
+        [
+            ("x**2", True, []),
+            ("x^2", True, [NotationWarning.EXPONENT]),
+            ("x^2", False, []),
+            ("n!", True, [NotationWarning.FACTORIAL]),
+            ("n!", False, []),
+            ("x != y", True, [NotationWarning.FACTORIAL]),
+            ("n!!!", False, [NotationWarning.TRIPLE_FACTORIAL]),
+            ("n!!!", True, [NotationWarning.FACTORIAL, NotationWarning.TRIPLE_FACTORIAL]),
+            ("x^n!", True, [NotationWarning.EXPONENT, NotationWarning.FACTORIAL]),
+        ],
+    )
+    def test_warnings(self, response, strict, expected):
+        assert notation_warnings(response, strict) == expected
+
+    def test_values_are_the_compare_expressions_tags(self):
+        assert [str(warning) for warning in NotationWarning] == [
+            "NOTATION_WARNING_EXPONENT",
+            "NOTATION_WARNING_FACTORIAL",
+            "NOTATION_WARNING_TRIPLE_FACTORIAL",
+        ]
