@@ -7,7 +7,23 @@ import sys
 import warnings
 
 import pytest
-from sympy import Abs, Eq, Function, Integral, Rational, Sum, Symbol, factorial, sqrt, srepr
+from sympy import (
+    Abs,
+    Derivative,
+    Eq,
+    Function,
+    Integral,
+    Limit,
+    Product,
+    Rational,
+    Sum,
+    Symbol,
+    factorial,
+    oo,
+    pi,
+    sqrt,
+    srepr,
+)
 
 from lambdafeedback.expression_parsing import (
     UNEVALUATED_SUM,
@@ -793,7 +809,20 @@ class TestSumWithoutLimits:
             ("Sum(k!, (k, 1, 3000))", Sum(factorial(Symbol("k")), (Symbol("k"), 1, 3000))),
         ],
     )
-    def test_with_limits_is_left_unevaluated(self, expr, expected, simplify):
+    def test_with_finite_limits_is_left_unevaluated(self, expr, expected, simplify):
+        assert self.parse(expr, simplify=simplify) == expected
+
+    @pytest.mark.parametrize("simplify", [False, True])
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            # A divergent series is oo: SymPy can't approximate it, so comparing it unevaluated fails.
+            ("sum(2*k - 1, (k, 1, oo))", oo),
+            ("sum(1/k^2, (k, 1, oo))", pi**2 / 6),
+            ("summation(1/k^2, (k, -oo, -1))", pi**2 / 6),
+        ],
+    )
+    def test_with_an_infinite_limit_is_summed(self, expr, expected, simplify):
         assert self.parse(expr, simplify=simplify) == expected
 
     @pytest.mark.parametrize(
@@ -812,6 +841,38 @@ class TestSumWithoutLimits:
         params = {"symbols": {"sum": {"latex": r"\sum_{k=0}^{\infty}", "aliases": []}}}
         for expr in ("1/2 + (2/π) * sum (1/(2k+1)) * sin((2k+1) * x)", "1/2 + (2/ pi)sum( sin((2k+1)x)/(2k+1))"):
             assert self.parse(expr, simplify=True, **params).has(UNEVALUATED_SUM)
+
+
+class TestCalculusLeftUnevaluated:
+    """``integrate``, ``product`` and ``limit`` were worked out while parsing, which can take practically forever."""
+
+    x, k, n = Symbol("x"), Symbol("k"), Symbol("n")
+
+    @staticmethod
+    def parse(expr, **params):
+        params = ExpressionParams.from_dict(params)
+        return parse_expression(preprocess_expression(expr, params), SympyParsingConfig.from_params(params))
+
+    @pytest.mark.parametrize("simplify", [False, True])
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            ("integrate(x, (x, 0, 1))", Integral(x, (x, 0, 1))),
+            ("product(k, (k, 1, n))", Product(k, (k, 1, n))),
+            # Working this out would build a number of millions of digits.
+            ("product(k!, (k, 1, 3000))", Product(factorial(k), (k, 1, 3000))),
+            ("limit(x^2, x, 0)", Limit(x**2, x, 0)),
+        ],
+    )
+    def test_is_left_unevaluated(self, expr, expected, simplify):
+        assert self.parse(expr, simplify=simplify) == expected
+
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [("Product(k, (k, 1, 5))", Product(k, (k, 1, 5))), ("Derivative(x^2, x)", Derivative(x**2, x))],
+    )
+    def test_simplify_does_not_work_them_out(self, expr, expected):
+        assert self.parse(expr, simplify=True) == expected
 
 
 def test_parsing_logs_its_decisions_at_debug_only(caplog):

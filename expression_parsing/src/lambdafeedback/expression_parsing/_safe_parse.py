@@ -32,12 +32,16 @@ from sympy import (
     Add,
     Basic,
     Function,
+    Integral,
+    Limit,
     Max,
     Min,
     Mod,
     Mul,
     Pow,
+    Product,
     Rational,
+    Sum,
     arg,
     ceiling,
     conjugate,
@@ -59,7 +63,10 @@ from sympy.parsing.sympy_parser import eval_expr, evaluateFalse, stringify_expr
 from .errors import ExpressionParsingError
 
 # Plain Python functions (not Basic subclasses) that are part of the maths.
-_MATH_FUNCTIONS = ("sqrt", "root", "cbrt", "real_root", "diff", "integrate", "summation", "product", "limit")
+_MATH_FUNCTIONS = ("sqrt", "root", "cbrt", "real_root", "diff")
+# Functions that work out an integral, sum, product or limit, read as the unevaluated
+# object instead: working one out can take practically forever (sum(k!, (k, 1, 10**6))).
+_UNEVALUATED_FUNCTIONS = {"integrate": Integral, "summation": Sum, "product": Product, "limit": Limit}
 
 
 def _math_namespace() -> dict[str, Any]:
@@ -69,6 +76,7 @@ def _math_namespace() -> dict[str, Any]:
         if isinstance(obj, Basic) or (isinstance(obj, type) and issubclass(obj, Basic)):
             namespace[name] = obj
     namespace.update({name: getattr(sympy, name) for name in _MATH_FUNCTIONS})
+    namespace.update(_UNEVALUATED_FUNCTIONS)
     # The spellings parse_expr's default namespace provides via builtins.
     namespace.update({"abs": Abs, "max": Max, "min": Min})
     namespace["__builtins__"] = {}
