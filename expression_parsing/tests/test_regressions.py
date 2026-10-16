@@ -9,7 +9,6 @@ import warnings
 import pytest
 from sympy import (
     Abs,
-    Derivative,
     Eq,
     Function,
     Integral,
@@ -843,8 +842,8 @@ class TestSumWithoutLimits:
             assert self.parse(expr, simplify=True, **params).has(UNEVALUATED_SUM)
 
 
-class TestCalculusLeftUnevaluated:
-    """``integrate``, ``product`` and ``limit`` were worked out while parsing, which can take practically forever."""
+class TestCalculusFunctions:
+    """``integrate``, ``product`` and ``limit`` were worked out while parsing, even without ``simplify``."""
 
     x, k, n = Symbol("x"), Symbol("k"), Symbol("n")
 
@@ -853,7 +852,6 @@ class TestCalculusLeftUnevaluated:
         params = ExpressionParams.from_dict(params)
         return parse_expression(preprocess_expression(expr, params), SympyParsingConfig.from_params(params))
 
-    @pytest.mark.parametrize("simplify", [False, True])
     @pytest.mark.parametrize(
         ("expr", "expected"),
         [
@@ -864,15 +862,32 @@ class TestCalculusLeftUnevaluated:
             ("limit(x^2, x, 0)", Limit(x**2, x, 0)),
         ],
     )
-    def test_is_left_unevaluated(self, expr, expected, simplify):
-        assert self.parse(expr, simplify=simplify) == expected
+    def test_are_left_unevaluated_without_simplify(self, expr, expected):
+        assert self.parse(expr) == expected
 
     @pytest.mark.parametrize(
         ("expr", "expected"),
-        [("Product(k, (k, 1, 5))", Product(k, (k, 1, 5))), ("Derivative(x^2, x)", Derivative(x**2, x))],
+        [
+            ("product(k, (k, 1, 5))", 120),
+            ("product(k, (k, 1, n))", factorial(n)),
+            ("limit(x^2, x, 0)", 0),
+            ("Derivative(x^2, x)", 2 * x),
+        ],
     )
-    def test_simplify_does_not_work_them_out(self, expr, expected):
+    def test_simplify_works_them_out(self, expr, expected):
         assert self.parse(expr, simplify=True) == expected
+
+    @pytest.mark.parametrize(
+        ("expr", "message"),
+        [
+            ("product(k, (k, 1, 500))", "more than 1000 digits"),  # 500! has 1,135 digits
+            ("product(k!, (k, 1, 3000))", "too many factors"),
+            ("product(2, (k, 1, 10^6))", "too many factors"),
+        ],
+    )
+    def test_simplify_rejects_a_product_too_costly_to_work_out(self, expr, message):
+        with pytest.raises(ExpressionParsingError, match=message):
+            self.parse(expr, simplify=True)
 
 
 def test_parsing_logs_its_decisions_at_debug_only(caplog):

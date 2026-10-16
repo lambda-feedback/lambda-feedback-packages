@@ -18,7 +18,13 @@ compareExpressions, not here. Failures are raised as typed exceptions (see
 import logging
 from importlib.metadata import PackageNotFoundError, version
 
-from ._safe_parse import MAX_INPUT_LENGTH, MAX_NUMBER_DIGITS, MAX_NUMBER_EXPONENT, MAX_SIMPLIFY_POWER
+from ._safe_parse import (
+    MAX_INPUT_LENGTH,
+    MAX_NUMBER_DIGITS,
+    MAX_NUMBER_EXPONENT,
+    MAX_PRODUCT_TERMS,
+    MAX_SIMPLIFY_POWER,
+)
 from ._scanning import find_matching_parenthesis
 from .conventions import apply_convention, convention_parser
 from .errors import (
@@ -72,6 +78,7 @@ __all__ = [
     "MAX_LATEX_NESTING",
     "MAX_NUMBER_DIGITS",
     "MAX_NUMBER_EXPONENT",
+    "MAX_PRODUCT_TERMS",
     "MAX_SIMPLIFY_POWER",
     "UNEVALUATED_SUM",
     "UNICODE_OPERATORS",

@@ -106,10 +106,11 @@ one (``2*sum(x)`` is not ``sum(2*x)``), since which symbol is the index is unkno
 def _summation(*args: Any) -> Any:
     """An unevaluated ``Sum``, or :data:`UNEVALUATED_SUM` when called with just a summand.
 
-    A sum with finite limits is not worked out while parsing, even with
-    ``simplify``: ``sum(k!, (k, 1, 10**6))`` would not finish. A sum with an
-    infinite limit is, since comparing one needs its value (``oo`` for a
-    divergent series), which SymPy can't approximate numerically.
+    A sum with finite limits stays unevaluated, even with ``simplify``
+    (which leaves sums alone): ``sum(k!, (k, 1, 10**6))`` would not finish.
+    A sum with an infinite limit is worked out straight away, since
+    comparing one needs its value (``oo`` for a divergent series), which
+    SymPy can't approximate numerically.
     """
     if len(args) == 1:
         return UNEVALUATED_SUM(*args)
@@ -379,8 +380,7 @@ def _parse_side(
     if isinstance(unevaluated, Basic):
         check_evaluation_cost(unevaluated, expr)
     parsed = _parse_expr(expr, transformations=transformations, local_dict=symbol_dict)
-    # doit=False: simplify would otherwise work out sums, products, limits and derivatives.
-    return parsed.simplify(doit=False) if isinstance(parsed, Basic) else parsed
+    return parsed.simplify() if isinstance(parsed, Basic) else parsed
 
 
 def parse_expressions(expr: str, config: SympyParsingConfig) -> tuple[Basic, ...]:
