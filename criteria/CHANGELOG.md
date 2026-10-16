@@ -60,6 +60,10 @@ Behaviour differences to be aware of when adopting:
 - **Tags in `to_dict()`.** lf_toolkit only includes `tags` with `include_test_data=True`; `EvaluationResult.serialise()` always did.
 - **Stripping.** Feedback text is stripped when resolved (it used to be stripped when serialised), so the stored texts are already trimmed.
 
+### Added
+
+- `build_quantity_criteria_parser(reserved_expressions, token_list=, productions=)` parses criteria on physical quantities (`response matches answer`, `dimension(response) matches dimension(answer)`, and `=`, `<=`, `>=`, `<`, `>` between quantities). Its defaults are `quantity_grammar.QUANTITY_TOKENS` / `QUANTITY_PRODUCTIONS`. It was `generate_criteria_parser` in compareExpressions' physical-quantity context, and its parse trees are unchanged. It takes the same arguments as `build_criteria_parser`, so either can fill the same slot. `reserved_expressions` isn't used yet: only `response` and `answer` scan as quantities.
+
 ### Changed
 
 - DEBUG logging through module loggers (`lambdafeedback.criteria.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. `generate_feedback` logs each evaluation run, the criteria it reported and replacements followed.
