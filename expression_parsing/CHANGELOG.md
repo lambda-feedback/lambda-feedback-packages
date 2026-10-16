@@ -42,6 +42,7 @@ The first public release. Further tidy-up after the 0.2.0 extraction: previewing
 ### Added
 
 - `SympyParsingConfig.replace` also takes `extra_unsplittable_symbols` and `extra_symbol_assumptions`, alongside parameter changes (`config.replace(simplify=False, extra_unsplittable_symbols=(...))`); they needed `dataclasses.replace` before.
+- `notation_warnings(response, strict_syntax)` returns the `NotationWarning`s for a response: `EXPONENT` (`^`) and `FACTORIAL` (`!`) under strict syntax, and `TRIPLE_FACTORIAL` (`!!!`) always. `NotationWarning` is a `StrEnum` whose values are compareExpressions' feedback tags (`NOTATION_WARNING_EXPONENT`, ...), so a tag lookup keeps working. Wording the warnings is still up to the caller. It was `notation_warnings` in compareExpressions' `evaluation.py`, and behaves the same: the checks are substring tests, so under strict syntax `!=` also warns `FACTORIAL`, and `!!!` warns both `FACTORIAL` and `TRIPLE_FACTORIAL`.
 - DEBUG logging through module loggers (`lambdafeedback.expression_parsing.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. Preprocessing, parsing and `parse_latex` log each step's result.
 
 ### Security
