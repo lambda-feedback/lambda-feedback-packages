@@ -9,6 +9,10 @@ class CriteriaGraphError(CriteriaError, ValueError):
     """A criteria graph was built or queried inconsistently."""
 
 
+class CriteriaSyntaxError(CriteriaError, ValueError):
+    """A criteria string is not well formed."""
+
+
 class CriteriaEvaluationError(CriteriaError):
     """An evaluation node's ``evaluate`` function failed; the cause is chained."""
 
