@@ -93,9 +93,9 @@ def _revert_value_text(value: ExprNode) -> tuple[RevertedUnit, ...]:
 class PhysicalQuantity:
     """A response read as a quantity: its value and unit, their LaTeX, and SI forms.
 
-    Use :func:`parse_quantity` to create one. SymPy results use the SI base
-    units of :data:`~lambdafeedback.units.SI_BASE_UNITS` as symbols; mass is
-    in grams (``kilogram`` expands to ``1000*gram``).
+    Use :func:`parse_quantity` to create one. SymPy results use the base
+    units of :data:`~lambdafeedback.units.BASE_UNITS` (the SI ones and the
+    radian) as symbols; mass is in grams (``kilogram`` expands to ``1000*gram``).
 
     Its attributes can't be set (it is frozen), but ``value``, ``unit`` and
     ``ast_root`` are ordinary parse trees. Quantities compare by identity.
@@ -252,7 +252,8 @@ def same_dimension(first: PhysicalQuantity, second: PhysicalQuantity) -> bool:
     """Whether two quantities have the same dimension, whatever their units' factors.
 
     ``5 km/h`` and ``3 m/s`` have the same dimension (``length/time``); so do
-    ``1 L`` and ``1 m^3``. Quantities without units are dimensionless, as are
-    angles (``2 deg`` has the same dimension as ``2``).
+    ``1 L`` and ``1 m^3``. Quantities without units are dimensionless. Angles
+    are not (``2 deg`` is an ``angle``, not ``2``), so ``1 Hz`` (a cycle per
+    second) has the dimension of ``1 rad/s``, not of ``1/s``.
     """
     return bool(simplify(first.base_dimension - second.base_dimension) == 0)
