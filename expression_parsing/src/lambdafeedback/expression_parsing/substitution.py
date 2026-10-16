@@ -135,6 +135,13 @@ def _function_original(text: str) -> str | FunctionName:
     return FunctionName(text) if text.casefold() in EMBEDDABLE_FUNCTION_NAMES else text
 
 
+def _always_function_original(text: str, symbol_aliases: set[str]) -> str | FunctionName:
+    """An :data:`ALWAYS_FUNCTIONS` spelling; one the task also uses as an alias only matches where applied."""
+    if text in symbol_aliases:
+        return FunctionName(text)
+    return _function_original(text)
+
+
 def _named_substitutions(table: Sequence[tuple[str, Sequence[str]]], expr: str, padding: str) -> list[Substitution]:
     """``(spelling, padded name)`` for each name and alias in ``table`` found in ``expr``."""
     replacement = padding.format
@@ -196,11 +203,16 @@ def substitute_input_symbols(expr: str, params: ExpressionParams) -> str:
     if params.elementary_functions:
         for table, original in ((ELEMENTARY_FUNCTIONS, _function_original), (GREEK_SYMBOLS, str)):
             for name, aliases in table:
-                taken = set() if name in ALWAYS_FUNCTIONS else symbol_aliases
-                if name in taken:
+                spellings = [spelling for spelling in (name, *aliases) if spelling in expr]
+                if name in ALWAYS_FUNCTIONS:
+                    # Applied, still the function; on its own, the task's symbol.
+                    substitutions += [
+                        (_always_function_original(spelling, symbol_aliases), " " + name) for spelling in spellings
+                    ]
+                    continue
+                if name in symbol_aliases:
                     continue  # the task uses this name for one of its own symbols
-                spellings = [name] if name in expr else []
-                spellings += [alias for alias in aliases if alias in expr and alias not in taken]
+                spellings = [spelling for spelling in spellings if spelling not in symbol_aliases]
                 substitutions += [(original(spelling), " " + name) for spelling in spellings]
 
     for code, spec in params.symbols.items():

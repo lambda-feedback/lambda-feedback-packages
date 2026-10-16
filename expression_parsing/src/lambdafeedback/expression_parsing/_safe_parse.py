@@ -24,6 +24,7 @@ from __future__ import annotations
 import ast
 import math
 from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any
 
 import sympy
@@ -32,12 +33,16 @@ from sympy import (
     Add,
     Basic,
     Function,
+    Integral,
+    Limit,
     Max,
     Min,
     Mod,
     Mul,
     Pow,
+    Product,
     Rational,
+    Sum,
     arg,
     ceiling,
     conjugate,
@@ -46,8 +51,10 @@ from sympy import (
     frac,
     im,
     log,
+    oo,
     re,
     sign,
+    zoo,
 )
 from sympy.core.function import AppliedUndef, FunctionClass
 from sympy.core.operations import AssocOp
@@ -59,7 +66,10 @@ from sympy.parsing.sympy_parser import eval_expr, evaluateFalse, stringify_expr
 from .errors import ExpressionParsingError
 
 # Plain Python functions (not Basic subclasses) that are part of the maths.
-_MATH_FUNCTIONS = ("sqrt", "root", "cbrt", "real_root", "diff", "integrate", "summation", "product", "limit")
+_MATH_FUNCTIONS = ("sqrt", "root", "cbrt", "real_root", "diff")
+# Functions that work out an integral, sum, product or limit, read as the unevaluated
+# object instead: working one out can take practically forever (sum(k!, (k, 1, 10**6))).
+_UNEVALUATED_FUNCTIONS = {"integrate": Integral, "summation": Sum, "product": Product, "limit": Limit}
 
 
 def _math_namespace() -> dict[str, Any]:
@@ -69,6 +79,7 @@ def _math_namespace() -> dict[str, Any]:
         if isinstance(obj, Basic) or (isinstance(obj, type) and issubclass(obj, Basic)):
             namespace[name] = obj
     namespace.update({name: getattr(sympy, name) for name in _MATH_FUNCTIONS})
+    namespace.update(_UNEVALUATED_FUNCTIONS)
     # The spellings parse_expr's default namespace provides via builtins.
     namespace.update({"abs": Abs, "max": Max, "min": Min})
     namespace["__builtins__"] = {}
@@ -268,6 +279,9 @@ def check_input_length(text: str, error: type[ExpressionParsingError] = Expressi
 MAX_SIMPLIFY_POWER = 500
 """Largest power a sum containing symbols may be raised to when simplifying (``(x+1)**500``)."""
 
+MAX_PRODUCT_TERMS = 1000
+"""Most factors a product with numeric limits may have when simplifying (``product(k, (k, 1, 1000))``)."""
+
 # Functions whose value is no larger than their arguments' (or not an exact number at all).
 _BOUNDED_FUNCTIONS = (Abs, sign, re, im, conjugate, floor, ceiling, frac, Mod)
 _INEXACT_FUNCTIONS = (
@@ -290,10 +304,15 @@ def check_evaluation_cost(expr: Basic, text: str) -> None:
     from their argument. Any exact number evaluation could build is bounded
     by :data:`MAX_NUMBER_DIGITS` digits, like a number the learner types. A
     sum containing symbols may be raised to at most :data:`MAX_SIMPLIFY_POWER`:
-    simplifying ``(x+1)**1000`` takes seconds.
+    simplifying ``(x+1)**1000`` takes seconds. A ``Product`` with numeric
+    limits may have at most :data:`MAX_PRODUCT_TERMS` factors, and its index
+    counts as large as its largest bound (``product(k, (k, 1, 500))`` builds
+    a 1,135-digit number). A ``Sum`` isn't checked: simplifying leaves it
+    unevaluated.
 
     This bounds evaluation, not SymPy's symbolic algorithms: simplifying can
-    still be slow on large or contrived expressions.
+    still be slow on large or contrived expressions, and a limit, or a
+    product with symbolic or infinite limits, isn't bounded.
     """
     try:
         _log_size(expr)
@@ -314,16 +333,21 @@ def _magnitude(log_size: float) -> float:
     return math.inf if log_size > 300 else float(10**log_size)
 
 
-def _log_size(node: Basic) -> float:
+def _log_size(node: Basic, index_sizes: Mapping[Basic, float] = MappingProxyType({})) -> float:
     """At least ``log10`` of the largest exact number (numerator or denominator) evaluating ``node`` builds.
 
     Symbols and inexact values (floats, ``pi``, ``sin(x)``) count as 1: their
-    powers don't build exact numbers.
+    powers don't build exact numbers. The index of an enclosing product
+    counts as its size in ``index_sizes``.
     """
     if isinstance(node, Rational):
         # Exact for small numbers: an overestimate here compounds through nested powers.
         return math.log10(max(abs(node.p), node.q))
-    sizes = [_log_size(argument) for argument in node.args]
+    if node in index_sizes:
+        return index_sizes[node]
+    if isinstance(node, Product):
+        return _checked(_product_log_size(node, index_sizes))
+    sizes = [_log_size(argument, index_sizes) for argument in node.args]
     largest = max(sizes, default=0.0)
     if isinstance(node, Add):
         size = largest + math.log10(len(sizes) or 1)
@@ -339,7 +363,7 @@ def _log_size(node: Basic) -> float:
             )
         size = base * power if base else 0.0
     elif isinstance(node, _BOUNDED_FUNCTIONS) or not isinstance(node, Function):
-        size = largest  # also symbols, relations, tuples, Max/Min, unevaluated sums and integrals
+        size = largest  # also symbols, relations, tuples, Max/Min, sums, integrals and limits
     elif isinstance(node, _INEXACT_FUNCTIONS):
         size = 0.0
     else:
@@ -347,9 +371,37 @@ def _log_size(node: Basic) -> float:
         # argument, with values of up to about n*log10(n) digits (n! has fewer).
         n = _magnitude(largest)
         size = n * math.log10(2 * n)
+    return _checked(size)
+
+
+def _checked(size: float) -> float:
+    """``size``, unless it is more than :data:`MAX_NUMBER_DIGITS` digits."""
     if size > MAX_NUMBER_DIGITS:
         raise _TooCostlyError(
             f"Evaluating {{text}} builds a number of more than {MAX_NUMBER_DIGITS} digits; "
             f"at most {MAX_NUMBER_DIGITS} are allowed."
         )
     return size
+
+
+def _product_log_size(node: Product, index_sizes: Mapping[Basic, float]) -> float:
+    """:func:`_log_size` of a product: at most :data:`MAX_PRODUCT_TERMS` factors, each index as large as its bounds."""
+    sizes = dict(index_sizes)
+    terms = 1.0
+    for index, lower, upper in node.limits:
+        sizes[index] = max(_log_size(lower, sizes), _log_size(upper, sizes))
+        terms *= _term_count(lower, upper, sizes[index])
+    if terms > MAX_PRODUCT_TERMS:
+        raise _TooCostlyError(f"{{text}} has too many factors to work out; at most {MAX_PRODUCT_TERMS} are allowed.")
+    return _log_size(node.function, sizes) * terms
+
+
+def _term_count(lower: Basic, upper: Basic, bound_size: float) -> float:
+    """How many values an index from ``lower`` to ``upper`` takes; 1 for symbolic or infinite limits (not bounded)."""
+    if lower.free_symbols or upper.free_symbols:
+        return 1.0  # worked out in closed form, if at all
+    if lower.has(oo, -oo, zoo) or upper.has(oo, -oo, zoo):
+        return 1.0
+    if isinstance(lower, Rational) and isinstance(upper, Rational):
+        return float(abs(upper - lower) + 1)
+    return 2 * _magnitude(bound_size)  # an unevaluated bound such as 10**6: as many as its size allows

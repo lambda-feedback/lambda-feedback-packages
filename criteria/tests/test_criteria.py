@@ -92,15 +92,23 @@ class TestSplitCriteria:
             ("response = f(x, y), response > 0", ["response = f(x, y)", "response > 0"]),
             ("response = [1, 2], response = {a, b}", ["response = [1, 2]", "response = {a, b}"]),
             ("response = f([x, {y, z}]), answer > 0", ["response = f([x, {y, z}])", "answer > 0"]),
-            ("response = answer,", ["response = answer", ""]),
-            ("", [""]),
+            ("response in [0, 1), response > 0", ["response in [0, 1)", "response > 0"]),
+            ("response in (0, 1], answer in (a, b]", ["response in (0, 1]", "answer in (a, b]"]),
         ],
     )
     def test_splits_on_commas_outside_brackets(self, criteria, expected):
         assert split_criteria(criteria) == expected
 
     @pytest.mark.parametrize(
-        "criteria", ["response = x), answer > 0", "response = (x, answer > 0", "response = (x], y"]
+        "criteria",
+        ["", "  ", "response = answer,", "response = answer, ", ", response > 0", "response = answer,, x > 0"],
+    )
+    def test_empty_criterion_raises(self, criteria):
+        with pytest.raises(CriteriaSyntaxError, match="Empty criterion"):
+            split_criteria(criteria)
+
+    @pytest.mark.parametrize(
+        "criteria", ["response = x), answer > 0", "response = (x, answer > 0", "response = [0, 1)), y", "f(x"]
     )
     def test_unbalanced_brackets_raise(self, criteria):
         with pytest.raises(CriteriaSyntaxError):
@@ -148,6 +156,16 @@ class TestCriteriaGraph:
         g = CriteriaGraph("root")
         g.add_evaluation_node("EVAL", "eval", "eval details")
         assert isinstance(g.to_mermaid(), str)
+
+    def test_mermaid_draws_each_kind_of_node_in_its_shape(self):
+        g = CriteriaGraph("root")
+        g.add_evaluation_node("EVAL", "eval", "eval details")
+        g.add_criterion_node("CRIT", "crit", "crit details")
+        g.add_output_node("OUT", "out", "out details")
+        lines = g.to_mermaid().split("\n\t")
+        assert 'N_0_0(["EVAL<br/>---<br/>eval details"])' in lines
+        assert 'N_1_0["CRIT<br/>---<br/>crit details"]' in lines
+        assert 'N_2_0{{"OUT<br/>---<br/>out details"}}' in lines
 
     def test_duplicate_evaluation_node_rejected(self):
         g = CriteriaGraph("root")

@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-criteria
 
-## 0.3.0 (unreleased; pre-release 0.3.0rc2, tag v0.3.0-rc.2)
+## 0.3.0 (unreleased; pre-release 0.3.0rc3, tag v0.3.0-rc.3)
 
 The first public release, after the extraction refactor. The import path is now `lambdafeedback.criteria` (was `criteria`). There was no 0.2.0 release: all four `lambdafeedback-*` packages share one version, and the first release is 0.3.0. Supports Python 3.12 to 3.14 (3.11 is not supported); `__version__` gives the installed version.
 
@@ -63,7 +63,7 @@ Behaviour differences to be aware of when adopting:
 ### Added
 
 - `build_quantity_criteria_parser(reserved_expressions, token_list=, productions=)` parses criteria on physical quantities (`response matches answer`, `dimension(response) matches dimension(answer)`, and `=`, `<=`, `>=`, `<`, `>` between quantities). Its defaults are `quantity_grammar.QUANTITY_TOKENS` / `QUANTITY_PRODUCTIONS`. It was `generate_criteria_parser` in compareExpressions' physical-quantity context, and its parse trees are unchanged. It takes the same arguments as `build_criteria_parser`, so either can fill the same slot. `reserved_expressions` isn't used yet: only `response` and `answer` scan as quantities.
-- `split_criteria(criteria)` splits a string of criteria on the commas outside `()`, `[]` and `{}`, and strips each criterion. It was `split_criteria` in compareExpressions' `evaluation.py`. Unlike that version, it raises `CriteriaSyntaxError` (new, a `CriteriaError` and `ValueError`) when a bracket is closed before it is opened, or left open. The old version stopped splitting at the first such bracket instead.
+- `split_criteria(criteria)` splits a string of criteria on the commas outside `()`, `[]` and `{}`, and strips each criterion. It was `split_criteria` in compareExpressions' `evaluation.py`. Any closing bracket closes any opening one, so a half-open interval keeps its comma: `response in [0, 1), response > 0` is two criteria. The old version counted each kind of bracket on its own and stopped splitting after `[0, 1)`, running the rest into one criterion. Unlike that version, it raises `CriteriaSyntaxError` (new, a `CriteriaError` and `ValueError`) when a bracket is closed when none is open, or left open. The old version stopped splitting at the first such bracket instead. It also raises `CriteriaSyntaxError` for an empty criterion (`response = answer,`, `a = b,, c = d` or an empty string), which the old version returned as `""` for the criteria parser to fail on.
 - `where_substitutions(substitutions)` gives `[(name, expression), ...]` for the substitution part of a `where` criterion (the second child of a `WHERE` node), with the expressions as text. It replaces the node-reading half of compareExpressions' `parse_where_substitutions`; the caller now parses the expressions, so this package doesn't need `expression_parsing`. The grammar also accepts other relations after `where` (`where x > 2`, `where x proportional to y`). compareExpressions' `where_substitution_nodes` returned the node itself for these, instead of a list, and this function raises `CriteriaSyntaxError` for them. A `SEPARATOR` that mixes in such a relation (`where a = 2; x > 3`) used to be read as substitutions, and also raises now.
 
 ### Changed

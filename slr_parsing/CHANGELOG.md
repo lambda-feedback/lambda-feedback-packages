@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-slr-parsing
 
-## 0.3.0 (unreleased; pre-release 0.3.0rc2, tag v0.3.0-rc.2)
+## 0.3.0 (unreleased; pre-release 0.3.0rc3, tag v0.3.0-rc.3)
 
 The first public release, after the extraction refactor. The import path is now `lambdafeedback.slr_parsing` (was `slr_parsing`). There was no 0.2.0 release: all four `lambdafeedback-*` packages share one version, and the first release is 0.3.0. Supports Python 3.12 to 3.14 (3.11 is not supported); `__version__` gives the installed version.
 
@@ -46,7 +46,8 @@ The first public release, after the extraction refactor. The import path is now 
   - a head that isn't exactly one symbol (only the first symbol was used);
   - an undeclared start, end or null symbol (was `ScanError`);
   - a production that isn't a `(head, body, action-or-None)` triple (a 2-tuple raised `IndexError`; a non-callable action raised `TypeError` on the first parse);
-  - an error handler that isn't a `(condition, action)` pair of callables (was `TypeError`).
+  - an error handler that isn't a `(condition, action)` pair of callables (was `TypeError`);
+  - a reduction with no goto from the state below it, which only an error action that rewrites the stack can cause (was a bare `KeyError`).
 - **Token patterns are literals, not regular expressions.** The pattern of a `(pattern, label)` token specification is a plain string, matched exactly, or the new `Lexeme(forms, space_before=False, space_after=False)`: the first of several literal forms, optionally with spaces around it, where a space inside a form matches one or more spaces. `(r" *\+ *", "PLUS")` becomes `(Lexeme(("+",), True, True), "PLUS")`, and `(r"\(", "LPAR")` becomes `("(", "LPAR")`. Anything else (a run of digits, say) is scanned with a matcher, the `(symbol, label, matcher)` shape, which was already supported. Ties between equally long matches go to the specification with the larger `Lexeme.weight` (the longest form, plus 2 per side allowing spaces) or the longer literal, mirroring the old order by pattern length. `build_expression_parser` builds `Lexeme`s for its operators and delimiters, so its callers are unaffected.
 - `repr(ExprNode)` matches `str(ExprNode)`.
 - Modules: `tokens`, `actions`, `tags`, `grammar` (with the grammar format documented), `errors`, `scanner`, `table`, `parser`, `builder`. Fully type-annotated (`py.typed`). The type aliases used in public signatures (`ErrorCondition`, `ErrorAction`, `TraverseStep`, `TagRule`, `TagCondition`) are exported from the package root.

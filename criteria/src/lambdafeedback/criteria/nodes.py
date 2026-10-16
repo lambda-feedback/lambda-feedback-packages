@@ -27,11 +27,6 @@ FeedbackStringGenerator: TypeAlias = Callable[[Mapping[str, Any]], str | None]
 
 NodeKind: TypeAlias = Literal["evaluation", "criterion", "output"]
 
-# Mermaid node shapes (opening, closing).
-EVALUATION_STYLE = ("([", "])")
-CRITERION_STYLE = ("[", "]")
-OUTPUT_STYLE = ("{{", "}}")
-
 
 class ResultLike(Protocol):
     """The part of a result object ``CriteriaGraph.export_feedback`` needs (``lf_toolkit.evaluation.Result`` fits)."""
@@ -91,7 +86,7 @@ class EvaluationNode(Node):
     """
 
     KIND: ClassVar[NodeKind | None] = "evaluation"
-    STYLE: ClassVar[tuple[str, str] | None] = EVALUATION_STYLE
+    STYLE: ClassVar[tuple[str, str] | None] = ("([", "])")
 
     evaluate: Evaluate | None = None
     replacement: str | None = None
@@ -119,7 +114,7 @@ class CriterionNode(Node):
     """An outcome of an evaluation, with the generator for its feedback text."""
 
     KIND: ClassVar[NodeKind | None] = "criterion"
-    STYLE: ClassVar[tuple[str, str] | None] = CRITERION_STYLE
+    STYLE: ClassVar[tuple[str, str] | None] = ("[", "]")
 
     feedback_string_generator: FeedbackStringGenerator = no_feedback
 
@@ -139,7 +134,7 @@ class OutputNode(Node):
     """A terminal node; output nodes have no outgoing edges."""
 
     KIND: ClassVar[NodeKind | None] = "output"
-    STYLE: ClassVar[tuple[str, str] | None] = OUTPUT_STYLE
+    STYLE: ClassVar[tuple[str, str] | None] = ("{{", "}}")
 
     def copy_into(self, graph: CriteriaGraph) -> OutputNode:
         return graph.add_output_node(self.label, self.summary, self.details)
