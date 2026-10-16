@@ -7,7 +7,7 @@ import sys
 import warnings
 
 import pytest
-from sympy import Abs, Eq, Function, Integral, Rational, Symbol, sqrt, srepr
+from sympy import Abs, Eq, Function, Integral, Rational, Sum, Symbol, factorial, sqrt, srepr
 
 from lambdafeedback.expression_parsing import (
     UNEVALUATED_SUM,
@@ -783,12 +783,18 @@ class TestSumWithoutLimits:
         assert self.parse("sum(x+x)", simplify=True) == self.parse("sum(2*x)", simplify=True)
         assert self.parse("2*sum(x)", simplify=True) != self.parse("sum(2*x)", simplify=True)
 
+    @pytest.mark.parametrize("simplify", [False, True])
     @pytest.mark.parametrize(
         ("expr", "expected"),
-        [("sum(2*k - 1, (k, 1, n))", Symbol("n") ** 2), ("summation(x, (x, 1, 3))", 6)],
+        [
+            ("sum(k, (k, 1, n))", Sum(Symbol("k"), (Symbol("k"), 1, Symbol("n")))),
+            ("summation(x, (x, 1, 3))", Sum(Symbol("x"), (Symbol("x"), 1, 3))),
+            # Summing this would take seconds, then fail on a 6,000-digit number.
+            ("Sum(k!, (k, 1, 3000))", Sum(factorial(Symbol("k")), (Symbol("k"), 1, 3000))),
+        ],
     )
-    def test_with_limits_is_still_summed(self, expr, expected):
-        assert self.parse(expr) == expected
+    def test_with_limits_is_left_unevaluated(self, expr, expected, simplify):
+        assert self.parse(expr, simplify=simplify) == expected
 
     @pytest.mark.parametrize(
         ("expr", "latex"),

@@ -14,7 +14,7 @@ from tokenize import TokenError, generate_tokens
 from typing import Any
 
 import sympy
-from sympy import Basic, Chi, E, Equality, Function, I, Lambda, Set, Symbol, Tuple, beta, gamma, summation, zeta
+from sympy import Basic, Chi, E, Equality, Function, I, Lambda, Set, Sum, Symbol, Tuple, beta, gamma, zeta
 from sympy.parsing.sympy_parser import (
     _token_splittable,
     auto_number,
@@ -104,8 +104,12 @@ one (``2*sum(x)`` is not ``sum(2*x)``), since which symbol is the index is unkno
 
 
 def _summation(*args: Any) -> Any:
-    """``summation``, or :data:`UNEVALUATED_SUM` when called with just a summand."""
-    return UNEVALUATED_SUM(*args) if len(args) == 1 else summation(*args)
+    """An unevaluated ``Sum``, or :data:`UNEVALUATED_SUM` when called with just a summand.
+
+    A sum with limits is never worked out while parsing, even with
+    ``simplify``: ``sum(k!, (k, 1, 10**6))`` would not finish.
+    """
+    return UNEVALUATED_SUM(*args) if len(args) == 1 else Sum(*args)
 
 
 def _base_symbol_dict(params: ExpressionParams) -> dict[str, Any]:
