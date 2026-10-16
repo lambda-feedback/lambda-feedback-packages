@@ -771,6 +771,14 @@ class TestSumWithoutLimits:
         x, n = Symbol("x"), Symbol("n")
         assert self.parse("sum(x^n) + sum*n", simplify=True, **params) == UNEVALUATED_SUM(x**n) + Symbol("S") * n
 
+    def test_a_task_alias_of_the_function_name_still_names_the_symbol_where_not_applied(self):
+        params = {"symbols": {"S": {"latex": r"\sum", "aliases": ["summation"]}}}
+        x, n = Symbol("x"), Symbol("n")
+        assert self.parse("2*summation", **params) == 2 * Symbol("S")
+        assert self.parse("summation(x^n) + summation*n", simplify=True, **params) == (
+            UNEVALUATED_SUM(x**n) + Symbol("S") * n
+        )
+
     def test_equal_when_the_summands_are(self):
         assert self.parse("sum(x+x)", simplify=True) == self.parse("sum(2*x)", simplify=True)
         assert self.parse("2*sum(x)", simplify=True) != self.parse("sum(2*x)", simplify=True)
