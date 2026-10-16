@@ -16,6 +16,7 @@ from lambdafeedback.criteria import (
     build_criteria_parser,
     build_quantity_criteria_parser,
     split_criteria,
+    where_substitutions,
 )
 from lambdafeedback.slr_parsing import append_last, create_node, infix, join, proceed
 
@@ -104,6 +105,31 @@ class TestSplitCriteria:
     def test_unbalanced_brackets_raise(self, criteria):
         with pytest.raises(CriteriaSyntaxError):
             split_criteria(criteria)
+
+
+class TestWhereSubstitutions:
+    @pytest.mark.parametrize(
+        "criterion, expected",
+        [
+            ("response = answer where a = 2", [("a", "2")]),
+            ("response = answer where a = 2; b = x+1", [("a", "2"), ("b", "x+1")]),
+            ("response = answer where a = 2; b = 3; c = 4", [("a", "2"), ("b", "3"), ("c", "4")]),
+        ],
+    )
+    def test_substitutions(self, criterion, expected):
+        assert where_substitutions(_parse(criterion).children[1]) == expected
+
+    @pytest.mark.parametrize(
+        "criterion",
+        [
+            "response = answer where x > 2",
+            "response = answer where x proportional to y",
+            "response = answer where a = 2; x > 3",
+        ],
+    )
+    def test_other_relations_raise(self, criterion):
+        with pytest.raises(CriteriaSyntaxError):
+            where_substitutions(_parse(criterion).children[1])
 
 
 class TestCriteriaGraph:
