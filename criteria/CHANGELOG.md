@@ -63,6 +63,7 @@ Behaviour differences to be aware of when adopting:
 ### Added
 
 - `build_quantity_criteria_parser(reserved_expressions, token_list=, productions=)` parses criteria on physical quantities (`response matches answer`, `dimension(response) matches dimension(answer)`, and `=`, `<=`, `>=`, `<`, `>` between quantities). Its defaults are `quantity_grammar.QUANTITY_TOKENS` / `QUANTITY_PRODUCTIONS`. It was `generate_criteria_parser` in compareExpressions' physical-quantity context, and its parse trees are unchanged. It takes the same arguments as `build_criteria_parser`, so either can fill the same slot. `reserved_expressions` isn't used yet: only `response` and `answer` scan as quantities.
+- `split_criteria(criteria)` splits a string of criteria on the commas outside `()`, `[]` and `{}`, and strips each criterion. It was `split_criteria` in compareExpressions' `evaluation.py`. Unlike that version, it raises `CriteriaSyntaxError` (new, a `CriteriaError` and `ValueError`) when a bracket is closed before it is opened, or left open. The old version stopped splitting at the first such bracket instead.
 
 ### Changed
 

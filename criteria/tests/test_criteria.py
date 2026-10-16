@@ -12,8 +12,10 @@ import pytest
 from lambdafeedback.criteria import (
     CriteriaGraph,
     CriteriaGraphError,
+    CriteriaSyntaxError,
     build_criteria_parser,
     build_quantity_criteria_parser,
+    split_criteria,
 )
 from lambdafeedback.slr_parsing import append_last, create_node, infix, join, proceed
 
@@ -78,6 +80,30 @@ class TestQuantityCriteriaParser:
             ("QUANTITY", "response"),
             ("INPUT", "9.81 m/s^2"),
         ]
+
+
+class TestSplitCriteria:
+    @pytest.mark.parametrize(
+        "criteria, expected",
+        [
+            ("response = answer", ["response = answer"]),
+            (" response = answer ,response > 0 ", ["response = answer", "response > 0"]),
+            ("response = f(x, y), response > 0", ["response = f(x, y)", "response > 0"]),
+            ("response = [1, 2], response = {a, b}", ["response = [1, 2]", "response = {a, b}"]),
+            ("response = f([x, {y, z}]), answer > 0", ["response = f([x, {y, z}])", "answer > 0"]),
+            ("response = answer,", ["response = answer", ""]),
+            ("", [""]),
+        ],
+    )
+    def test_splits_on_commas_outside_brackets(self, criteria, expected):
+        assert split_criteria(criteria) == expected
+
+    @pytest.mark.parametrize(
+        "criteria", ["response = x), answer > 0", "response = (x, answer > 0", "response = (x], y"]
+    )
+    def test_unbalanced_brackets_raise(self, criteria):
+        with pytest.raises(CriteriaSyntaxError):
+            split_criteria(criteria)
 
 
 class TestCriteriaGraph:
