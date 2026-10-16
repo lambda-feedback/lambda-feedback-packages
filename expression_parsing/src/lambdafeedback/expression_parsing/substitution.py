@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .symbol_tables import (
+    ALWAYS_FUNCTIONS,
     ELEMENTARY_FUNCTIONS,
     EMBEDDABLE_FUNCTION_NAMES,
     GREEK_SYMBOLS,
@@ -196,10 +197,11 @@ def substitute_input_symbols(expr: str, params: ExpressionParams) -> str:
     if params.elementary_functions:
         for table, original in ((ELEMENTARY_FUNCTIONS, _function_original), (GREEK_SYMBOLS, str)):
             for name, aliases in table:
-                if name in symbol_aliases:
+                taken = set() if name in ALWAYS_FUNCTIONS else symbol_aliases
+                if name in taken:
                     continue  # the task uses this name for one of its own symbols
                 spellings = [name] if name in expr else []
-                spellings += [alias for alias in aliases if alias in expr and alias not in symbol_aliases]
+                spellings += [alias for alias in aliases if alias in expr and alias not in taken]
                 substitutions += [(original(spelling), " " + name) for spelling in spellings]
 
     for code, spec in params.symbols.items():

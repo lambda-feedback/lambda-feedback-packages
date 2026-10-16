@@ -56,7 +56,7 @@ from .substitution import (
     substitutions_sort_key,
 )
 from .symbol_tables import UNICODE_OPERATORS
-from .sympy_parsing import SympyParsingConfig, parse_expression, parse_expressions, sympy_symbols
+from .sympy_parsing import UNEVALUATED_SUM, SympyParsingConfig, parse_expression, parse_expressions, sympy_symbols
 
 # Library convention: callers decide where log records go (``logging.basicConfig(level=logging.DEBUG)`` shows them).
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -72,6 +72,7 @@ __all__ = [
     "MAX_NUMBER_DIGITS",
     "MAX_NUMBER_EXPONENT",
     "MAX_SIMPLIFY_POWER",
+    "UNEVALUATED_SUM",
     "UNICODE_OPERATORS",
     "AbsoluteValueNotationError",
     "BracketNotationError",

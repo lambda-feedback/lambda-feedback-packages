@@ -60,6 +60,13 @@ They only count as a function when followed by ``(``, ``^`` or ``**``
 including on their own, they are read as letters.
 """
 
+ALWAYS_FUNCTIONS = frozenset({"summation"})
+"""Function names whose spellings stay that function where applied, even if a task uses one as a symbol alias.
+
+A task may name a symbol ``sum`` just to show it as ``\\sum``; ``sum(...)``
+is still a sum, while ``sum`` on its own is the task's symbol.
+"""
+
 GREEK_SYMBOLS: tuple[SymbolAliases, ...] = tuple(
     SymbolAliases(name, tuple(aliases))
     for name, aliases in [
