@@ -225,6 +225,17 @@ def test_parse_error_is_public_for_error_actions():
         parse("a+", make_parser(error_handlers=[(lambda items, next_symbol: True, give_up)]))
 
 
+def test_a_missing_goto_is_a_grammar_error():
+    # An error action that leaves the stack in a state the grammar can't reach used to raise a bare KeyError.
+    def corrupt_stack(parser, state):
+        after_e = parser.table.goto(0, parser.scanner.grammar_symbol("E", "Test symbol"))
+        after_id = parser.table.entry(0, parser.scan("a")[0]).state
+        state.stack[:] = [after_e, after_id]  # reducing F --> id then needs a goto on F from after_e
+
+    with pytest.raises(GrammarError, match="No goto from state"):
+        parse("a)", make_parser(error_handlers=[(lambda items, next_symbol: True, corrupt_stack)]))
+
+
 def test_parsing_table_string_tells_accept_from_reductions():
     # The accept entry was printed as "r0", like a reduction by production 0.
     parser = make_parser()
