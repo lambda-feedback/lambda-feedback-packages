@@ -9,7 +9,12 @@ import json
 
 import pytest
 
-from lambdafeedback.criteria import CriteriaGraph, CriteriaGraphError, build_criteria_parser
+from lambdafeedback.criteria import (
+    CriteriaGraph,
+    CriteriaGraphError,
+    build_criteria_parser,
+    build_quantity_criteria_parser,
+)
 from lambdafeedback.slr_parsing import append_last, create_node, infix, join, proceed
 
 RESERVED = {"learner": {"response": None}, "task": {"answer": None}}
@@ -44,6 +49,35 @@ class TestCriteriaParser:
     def test_where_clause_parses(self):
         node = _parse("response = answer where x = 1")
         assert node.label == "WHERE"
+
+
+def _parse_quantity(criterion):
+    parser = build_quantity_criteria_parser(RESERVED)
+    return parser.parse(parser.scan(criterion))[0]
+
+
+class TestQuantityCriteriaParser:
+    @pytest.mark.parametrize("operator", ["matches", "=", "<=", ">=", "<", ">"])
+    def test_relation_between_quantities(self, operator):
+        node = _parse_quantity(f"response {operator} answer")
+        assert node.label == f" {operator} "
+        assert [(child.label, child.content_string()) for child in node.children] == [
+            ("QUANTITY", "response"),
+            ("QUANTITY", "answer"),
+        ]
+
+    def test_dimensions_match(self):
+        node = _parse_quantity("dimension(response) matches dimension(answer)")
+        assert node.label == " matches "
+        assert [child.label for child in node.children] == [" dimension ", " dimension "]
+        assert [child.children[0].content_string() for child in node.children] == ["response", "answer"]
+
+    def test_other_text_is_a_quantity(self):
+        node = _parse_quantity("response matches 9.81 m/s^2")
+        assert [(child.label, child.content_string()) for child in node.children] == [
+            ("QUANTITY", "response"),
+            ("INPUT", "9.81 m/s^2"),
+        ]
 
 
 class TestCriteriaGraph:

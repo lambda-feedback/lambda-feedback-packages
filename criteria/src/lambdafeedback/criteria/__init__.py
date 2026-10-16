@@ -2,6 +2,8 @@
 
 - :func:`build_criteria_parser` parses criteria such as
   ``response = answer where a = 2``.
+- :func:`build_quantity_criteria_parser` parses criteria on physical
+  quantities, such as ``response matches answer``.
 - :class:`CriteriaGraph` links evaluations to the criteria they establish,
   runs them (:meth:`CriteriaGraph.generate_feedback`), turns the criteria
   reached into feedback on a result object such as
@@ -26,6 +28,7 @@ from .nodes import (
     ReachedCriteria,
     ResultLike,
 )
+from .quantity_grammar import build_quantity_criteria_parser
 from .tree import CriteriaTree
 
 # Library convention: callers decide where log records go (``logging.basicConfig(level=logging.DEBUG)`` shows them).
@@ -53,4 +56,5 @@ __all__ = [
     "ResultLike",
     "__version__",
     "build_criteria_parser",
+    "build_quantity_criteria_parser",
 ]
