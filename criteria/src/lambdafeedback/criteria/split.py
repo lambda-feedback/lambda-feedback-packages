@@ -13,7 +13,7 @@ def split_criteria(criteria: str) -> list[str]:
 
     Each kind of bracket (``()``, ``[]``, ``{}``) is counted on its own. Raises
     :class:`CriteriaSyntaxError` if a bracket is closed before it is opened,
-    or left open.
+    or left open, or if a criterion is empty (``a = b,`` or ``a = b,, c = d``).
     """
     depth = dict.fromkeys(_OPENING.values(), 0)
     parts = []
@@ -27,9 +27,17 @@ def split_criteria(criteria: str) -> list[str]:
                 raise CriteriaSyntaxError(f"`{char}` at position {index} closes no `{opening}` in: {criteria}")
             depth[opening] -= 1
         elif char == "," and not any(depth.values()):
-            parts.append(criteria[start:index].strip())
+            parts.append(_criterion(criteria, start, index))
             start = index + 1
     if any(depth.values()):
         raise CriteriaSyntaxError(f"Unclosed bracket in: {criteria}")
-    parts.append(criteria[start:].strip())
+    parts.append(_criterion(criteria, start, len(criteria)))
     return parts
+
+
+def _criterion(criteria: str, start: int, end: int) -> str:
+    """``criteria[start:end]``, stripped; raises :class:`CriteriaSyntaxError` if that leaves nothing."""
+    criterion = criteria[start:end].strip()
+    if not criterion:
+        raise CriteriaSyntaxError(f"Empty criterion at position {start} in: {criteria}")
+    return criterion

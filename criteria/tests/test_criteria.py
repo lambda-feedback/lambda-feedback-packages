@@ -92,12 +92,18 @@ class TestSplitCriteria:
             ("response = f(x, y), response > 0", ["response = f(x, y)", "response > 0"]),
             ("response = [1, 2], response = {a, b}", ["response = [1, 2]", "response = {a, b}"]),
             ("response = f([x, {y, z}]), answer > 0", ["response = f([x, {y, z}])", "answer > 0"]),
-            ("response = answer,", ["response = answer", ""]),
-            ("", [""]),
         ],
     )
     def test_splits_on_commas_outside_brackets(self, criteria, expected):
         assert split_criteria(criteria) == expected
+
+    @pytest.mark.parametrize(
+        "criteria",
+        ["", "  ", "response = answer,", "response = answer, ", ", response > 0", "response = answer,, x > 0"],
+    )
+    def test_empty_criterion_raises(self, criteria):
+        with pytest.raises(CriteriaSyntaxError, match="Empty criterion"):
+            split_criteria(criteria)
 
     @pytest.mark.parametrize(
         "criteria", ["response = x), answer > 0", "response = (x, answer > 0", "response = (x], y"]
