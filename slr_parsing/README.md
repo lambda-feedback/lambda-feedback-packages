@@ -159,7 +159,10 @@ content (for example with `content_string()`), not with `==`.
 
 Set the `lambdafeedback.slr_parsing.parser` logger to `DEBUG` to trace every
 shift and reduction. `parser.parsing_table_to_string()` and
-`parser.state_string(state)` print the generated table and states.
+`parser.state_string(state)` print the generated table and states; the
+table itself is `parser.table` (a `ParseTable`, with its `states`, `first`
+and `follow` sets and typed entries such as `Shift(state)` and
+`Reduce(production)`).
 
 ## Changelog
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
@@ -151,6 +152,70 @@ def _unsplittable_names(params: QuantityParams, all_forms: bool) -> list[str]:
     return sorted(names)
 
 
+# ----------------------------------------------------------------------
+# LaTeX for units: one renderer per node label (see _UNIT_LATEX)
+# ----------------------------------------------------------------------
+
+
+def _unit_latex(node: ExprNode) -> list[str]:
+    """LaTeX for a unit subtree, as pieces to join."""
+    render = _UNIT_LATEX.get(node.label, _plain_latex)
+    return render(node)
+
+
+def _braced_latex(node: ExprNode) -> list[str]:
+    """LaTeX for a node already grouped by braces (a numerator, denominator or exponent): no brackets of its own."""
+    while node.label == GROUP_LABEL and len(node.children) == 1:  # (x) or ((x)), not juxtaposition
+        node = node.children[0]
+    return _unit_latex(node)
+
+
+def _plain_latex(node: ExprNode) -> list[str]:
+    """A number, or any other node without a renderer of its own: its content."""
+    return [node.content]
+
+
+def _unit_name_latex(node: ExprNode) -> list[str]:
+    return ["\\mathrm{", node.content, "}"]
+
+
+def _product_latex(node: ExprNode) -> list[str]:
+    left, right = node.children
+    return [*_unit_latex(left), "\\cdot", *_unit_latex(right)]
+
+
+def _space_latex(node: ExprNode) -> list[str]:
+    left, right = node.children
+    return [*_unit_latex(left), "~", *_unit_latex(right)]
+
+
+def _power_latex(node: ExprNode) -> list[str]:
+    base, exponent = node.children
+    return [*_unit_latex(base), "^{", *_braced_latex(exponent), "}"]
+
+
+def _solidus_latex(node: ExprNode) -> list[str]:
+    numerator, denominator = node.children
+    return ["\\frac{", *_braced_latex(numerator), "}{", *_braced_latex(denominator), "}"]
+
+
+def _group_latex(node: ExprNode) -> list[str]:
+    if node.delimiters is None:
+        return _plain_latex(node)
+    opening, closing = node.delimiters
+    return [opening.content, *(part for child in node.children for part in _unit_latex(child)), closing.content]
+
+
+_UNIT_LATEX: dict[str, Callable[[ExprNode], list[str]]] = {
+    Label.UNIT: _unit_name_latex,
+    Label.PRODUCT: _product_latex,
+    Label.SPACE: _space_latex,
+    Label.POWER: _power_latex,
+    Label.SOLIDUS: _solidus_latex,
+    GROUP_LABEL: _group_latex,
+}
+
+
 class PhysicalQuantity:
     """A response read as a quantity: its value and unit, their LaTeX, and SI forms.
 
@@ -213,7 +278,7 @@ class PhysicalQuantity:
         if self.value is not None:
             self._revert_value_text(self.value)
         self.value_latex = self._value_latex()
-        self.unit_latex = "".join(self._unit_latex(self.unit)) if self.unit is not None else None
+        self.unit_latex = "".join(_unit_latex(self.unit)) if self.unit is not None else None
         separator = "~" if self.value_latex is not None and self.unit_latex is not None else ""
         self.latex = (self.value_latex or "") + separator + (self.unit_latex or "")
         self._set_sympy_forms()
@@ -349,29 +414,6 @@ class PhysicalQuantity:
             parts = sorted(sympy_to_latex(expr, params.symbols, settings=settings) for expr in parsed)
             return "\\left\\{" + ",~".join(parts) + "\\right\\}"
         return sympy_to_latex(parsed[0], params.symbols, settings=settings)
-
-    def _unit_latex(self, node: ExprNode) -> list[str]:
-        children = node.children
-        if node.label == Label.PRODUCT:
-            return [*self._unit_latex(children[0]), "\\cdot", *self._unit_latex(children[1])]
-        if node.label == Label.SPACE:
-            return [*self._unit_latex(children[0]), "~", *self._unit_latex(children[1])]
-        if node.label == Label.UNIT:
-            return ["\\mathrm{", node.content, "}"]
-        if node.label == GROUP_LABEL and node.delimiters is not None:
-            opening, closing = node.delimiters
-            return [opening.content, *(part for child in children for part in self._unit_latex(child)), closing.content]
-        if node.label == Label.POWER:
-            return [*self._unit_latex(children[0]), "^{", *self._braced_latex(children[1]), "}"]
-        if node.label == Label.SOLIDUS:
-            return ["\\frac{", *self._braced_latex(children[0]), "}{", *self._braced_latex(children[1]), "}"]
-        return [node.content]  # NUMBER and anything else
-
-    def _braced_latex(self, node: ExprNode) -> list[str]:
-        """LaTeX for a node already grouped by braces (a numerator, denominator or exponent): no brackets of its own."""
-        while node.label == GROUP_LABEL and len(node.children) == 1:  # (x) or ((x)), not juxtaposition
-            node = node.children[0]
-        return self._unit_latex(node)
 
     # ------------------------------------------------------------------
     # Conversion to SI base units

@@ -49,6 +49,8 @@ from .grammar import (
     TokenSpec,
 )
 from .parser import SLRParser
+from .scanner import Scanner
+from .table import Accept, Entry, ParseTable, Recover, Reduce, Reject, Shift
 from .tags import (
     TagCondition,
     TagRule,
@@ -81,8 +83,10 @@ __all__ = [
     "END_DELIMITER_LABEL",
     "GROUP_LABEL",
     "START_DELIMITER_LABEL",
+    "Accept",
     "Action",
     "CatchAll",
+    "Entry",
     "ErrorAction",
     "ErrorCondition",
     "ErrorHandler",
@@ -93,10 +97,16 @@ __all__ = [
     "Matcher",
     "ParseError",
     "ParseState",
+    "ParseTable",
     "Production",
+    "Recover",
+    "Reduce",
+    "Reject",
     "SLRError",
     "SLRParser",
     "ScanError",
+    "Scanner",
+    "Shift",
     "TagCondition",
     "TagHandler",
     "TagRule",

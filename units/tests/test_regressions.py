@@ -3,7 +3,7 @@
 import pytest
 from sympy import simplify
 
-from lambdafeedback.units import DisallowedUnitError, QuantityParams, QuantityParseError, parse_quantity
+from lambdafeedback.units import DisallowedUnitError, QuantityParams, QuantityParseError, RevertedUnit, parse_quantity
 
 NATURAL = QuantityParams(strictness="natural")
 
@@ -156,6 +156,21 @@ class TestParsing:
         # v0.1 rotated left and right alternately until RecursionError.
         with pytest.raises(QuantityParseError, match="Cannot separate the value from the unit"):
             parse("5 m/s x")
+
+    @pytest.mark.parametrize(
+        ("expr", "reverted"),
+        [
+            ("kg 2x", [("", "kg", " 2x")]),
+            ("m 3y", [("", "m", " 3y")]),
+            ("kg m 2x", [("kg", "kilogram metre", "m 2x"), ("", "kg", " m 2x"), ("kg ", "m", " 2x")]),
+        ],
+    )
+    def test_strict_unit_before_juxtaposed_value_is_reverted_once(self, expr, reverted):
+        # Splitting rotates the juxtaposition "2x" to the root; retagging it must strip the unit
+        # from the "kg 2" it now holds, or that span is reported as a unit too ("kilogram 2").
+        quantity = parse(expr, QuantityParams(strictness="strict"))
+        assert quantity.value.content_string() == expr and quantity.unit is None
+        assert quantity.reverted_units == [RevertedUnit(*parts) for parts in reverted]
 
 
 class TestPickling:

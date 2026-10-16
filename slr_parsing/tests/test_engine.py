@@ -9,6 +9,7 @@ from itertools import takewhile
 import pytest
 
 from lambdafeedback.slr_parsing import (
+    Accept,
     CatchAll,
     ErrorHandler,
     GrammarError,
@@ -74,14 +75,14 @@ def parse(text, parser=None):
 
 class TestTableConstruction:
     def test_first_and_follow_sets(self):
-        # Checked through private attributes: these are the core of SLR(1).
-        parser = make_parser()
+        # These are the core of SLR(1).
+        table = make_parser().table
 
         def labels(tokens):
             return {t.label for t in tokens}
 
-        first = {nt.label: labels(parser._first_dict[nt]) for nt in parser._nonterminals}
-        follow = {nt.label: labels(parser._follow[nt]) for nt in parser._nonterminals}
+        first = {nt.label: labels(table.first[nt]) for nt in table.nonterminals}
+        follow = {nt.label: labels(table.follow[nt]) for nt in table.nonterminals}
         assert first == {"START": {"LPAR", "ID"}, "E": {"LPAR", "ID"}, "T": {"LPAR", "ID"}, "F": {"LPAR", "ID"}}
         assert follow == {
             "START": {"END"},
@@ -230,7 +231,7 @@ def test_parsing_table_string_tells_accept_from_reductions():
     rows = [line.split("\t")[1:] for line in parser.parsing_table_to_string().splitlines()[1:]]
     for table_row, printed_row in zip(parser.parsing_table, rows, strict=True):
         for entry, cell in zip(table_row, printed_row, strict=True):
-            assert (cell == "acc") == (entry == len(parser.states))
+            assert (cell == "acc") == isinstance(entry, Accept)
 
 
 def test_walk_lists_each_node_before_its_children():
