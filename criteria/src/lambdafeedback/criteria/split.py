@@ -4,32 +4,32 @@ from __future__ import annotations
 
 from .errors import CriteriaSyntaxError
 
-_OPENING = {")": "(", "]": "[", "}": "{"}
-"""The opening bracket for each closing bracket."""
+_OPENING = frozenset("([{")
+_CLOSING = frozenset(")]}")
 
 
 def split_criteria(criteria: str) -> list[str]:
     """``criteria`` split on the commas outside brackets, with each criterion stripped.
 
-    Each kind of bracket (``()``, ``[]``, ``{}``) is counted on its own. Raises
-    :class:`CriteriaSyntaxError` if a bracket is closed before it is opened,
+    Any closing bracket (``)``, ``]``, ``}``) closes any opening one, so
+    half-open intervals such as ``x in [0, 1)`` keep their comma. Raises
+    :class:`CriteriaSyntaxError` if a bracket is closed when none is open,
     or left open, or if a criterion is empty (``a = b,`` or ``a = b,, c = d``).
     """
-    depth = dict.fromkeys(_OPENING.values(), 0)
+    depth = 0
     parts = []
     start = 0
     for index, char in enumerate(criteria):
-        if char in depth:
-            depth[char] += 1
-        elif char in _OPENING:
-            opening = _OPENING[char]
-            if depth[opening] == 0:
-                raise CriteriaSyntaxError(f"`{char}` at position {index} closes no `{opening}` in: {criteria}")
-            depth[opening] -= 1
-        elif char == "," and not any(depth.values()):
+        if char in _OPENING:
+            depth += 1
+        elif char in _CLOSING:
+            if depth == 0:
+                raise CriteriaSyntaxError(f"`{char}` at position {index} closes no bracket in: {criteria}")
+            depth -= 1
+        elif char == "," and depth == 0:
             parts.append(_criterion(criteria, start, index))
             start = index + 1
-    if any(depth.values()):
+    if depth:
         raise CriteriaSyntaxError(f"Unclosed bracket in: {criteria}")
     parts.append(_criterion(criteria, start, len(criteria)))
     return parts

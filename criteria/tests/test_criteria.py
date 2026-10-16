@@ -92,6 +92,8 @@ class TestSplitCriteria:
             ("response = f(x, y), response > 0", ["response = f(x, y)", "response > 0"]),
             ("response = [1, 2], response = {a, b}", ["response = [1, 2]", "response = {a, b}"]),
             ("response = f([x, {y, z}]), answer > 0", ["response = f([x, {y, z}])", "answer > 0"]),
+            ("response in [0, 1), response > 0", ["response in [0, 1)", "response > 0"]),
+            ("response in (0, 1], answer in (a, b]", ["response in (0, 1]", "answer in (a, b]"]),
         ],
     )
     def test_splits_on_commas_outside_brackets(self, criteria, expected):
@@ -106,7 +108,7 @@ class TestSplitCriteria:
             split_criteria(criteria)
 
     @pytest.mark.parametrize(
-        "criteria", ["response = x), answer > 0", "response = (x, answer > 0", "response = (x], y"]
+        "criteria", ["response = x), answer > 0", "response = (x, answer > 0", "response = [0, 1)), y", "f(x"]
     )
     def test_unbalanced_brackets_raise(self, criteria):
         with pytest.raises(CriteriaSyntaxError):
