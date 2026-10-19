@@ -6,7 +6,8 @@ import json
 from collections.abc import Collection, Mapping
 from typing import TYPE_CHECKING, Any
 
-from .nodes import CRITERION_STYLE, EVALUATION_STYLE, OUTPUT_STYLE, EvaluationNode, Node
+from .errors import CriteriaGraphError
+from .nodes import EvaluationNode, Node
 
 if TYPE_CHECKING:
     from .graph import CriteriaGraph
@@ -52,20 +53,24 @@ def graph_to_json(graph: CriteriaGraph) -> str:
     )
 
 
+def _style(node: Node) -> tuple[str, str]:
+    """``node``'s mermaid shape (opening, closing): its kind's ``STYLE``."""
+    if node.STYLE is None:
+        raise CriteriaGraphError(f"Cannot display node {node.label} of type {type(node).__name__}.")
+    return node.STYLE
+
+
 def graph_to_mermaid(graph: CriteriaGraph) -> str:
     """Mermaid flowchart source for ``graph``; sufficiencies are drawn as dotted edges."""
-    node_groups: list[tuple[Mapping[str, Node], tuple[str, str]]] = [
-        (graph.evaluations, EVALUATION_STYLE),
-        (graph.criteria, CRITERION_STYLE),
-        (graph.outputs, OUTPUT_STYLE),
-    ]
-    keys = {label: f"N_{g}_{i}" for g, (nodes, _) in enumerate(node_groups) for i, label in enumerate(nodes)}
+    node_groups: list[Mapping[str, Node]] = [graph.evaluations, graph.criteria, graph.outputs]
+    keys = {label: f"N_{g}_{i}" for g, nodes in enumerate(node_groups) for i, label in enumerate(nodes)}
     lines = ["flowchart TD"]
     # Ordered de-duplication (dict keys), so the output doesn't depend on the hash seed.
     edges: dict[tuple[str, str], None] = {}
     sufficiencies: dict[tuple[str, str], None] = {}
-    for nodes, (opening, closing) in node_groups:
+    for nodes in node_groups:
         for label, node in nodes.items():
+            opening, closing = _style(node)
             lines.append(f'{keys[label]}{opening}"{_text(label)}<br/>---<br/>{_text(node.details)}"{closing}')
             edges.update(
                 dict.fromkeys((keys[e.source.label], keys[e.target.label]) for e in node.outgoing + node.incoming)

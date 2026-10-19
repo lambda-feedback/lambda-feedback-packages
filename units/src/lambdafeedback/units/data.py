@@ -16,6 +16,7 @@ a milli-inch. Some symbols differ from the SI ones to avoid collisions:
 from __future__ import annotations
 
 from collections.abc import Mapping
+from functools import cache
 from types import MappingProxyType
 from typing import NamedTuple
 
@@ -190,18 +191,19 @@ def units_in(unit_sets: frozenset[str] | set[str]) -> tuple[AnyUnit, ...]:
     return tuple(dict.fromkeys(unit for name, units in UNIT_SETS.items() if name in unit_sets for unit in units))
 
 
-def unsplittable_names(unit_sets: frozenset[str] | set[str], all_forms: bool) -> list[str]:
+@cache
+def unsplittable_names(unit_sets: frozenset[str], all_forms: bool) -> tuple[str, ...]:
     """Names that must not be split into letters: prefixes, units, and dimension names.
 
     For the units in ``unit_sets``. ``all_forms`` adds unit symbols,
     alternative spellings and plurals (used for the value's preview) to the
-    unit names (used for parsing).
+    unit names (used for parsing). Cached: every quantity parse asks for them.
     """
     names = {prefix.name for prefix in SI_PREFIXES} | {unit.name for unit in SI_BASE_UNITS}
     names |= {unit.dimension for unit in SI_BASE_UNITS}
     for unit in units_in(unit_sets):
         names |= {unit.name, unit.symbol, *unit.alternatives, *unit.plurals} if all_forms else {unit.name}
-    return sorted(names)
+    return tuple(sorted(names))
 
 
 def _conversion_to_base_si() -> dict[str, str]:

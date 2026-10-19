@@ -62,9 +62,6 @@ class SLRParser:
         )
         self.states = self.table.states
         self.parsing_table = self.table.rows
-        # Looked up on every parse step, so bound here rather than reached through the table's methods.
-        self._symbol_ids = self.table.symbol_ids
-        self._gotos = self.table.gotos
         self._report_unreachable()
 
     # ------------------------------------------------------------------
@@ -122,7 +119,7 @@ class SLRParser:
 
     def parsing_action(self, state: int, symbol: Token) -> Entry:
         """The parse-table entry for ``state`` with ``symbol`` next."""
-        return self.parsing_table[state][self._symbol_ids[symbol]]
+        return self.table.entry(state, symbol)
 
     def _next_action(self, state: ParseState) -> Shift | Reduce | Accept:
         """The table entry for the current state and lookahead, after any error-recovery handlers, or raise."""
@@ -148,7 +145,7 @@ class SLRParser:
             raise GrammarError(f"Production {tuple(self.productions[p][:2])} has no reduction action.")
         state.output = reduction(production, state.output, self.tag_handler)
         del state.stack[-len(production[1]) :]
-        state.stack.append(self._gotos[state.stack[-1]][production[0]])
+        state.stack.append(self.table.goto(state.stack[-1], production[0]))
         if trace:
             body = "".join(x.content for x in production[1])
             logger.debug("reduce by %s --> %s  %s", production[0].content, body, state.output)

@@ -7,7 +7,22 @@ import sys
 import warnings
 
 import pytest
-from sympy import Abs, Eq, Function, Integral, Rational, Symbol, sqrt, srepr
+from sympy import (
+    Abs,
+    Eq,
+    Function,
+    Integral,
+    Limit,
+    Product,
+    Rational,
+    Sum,
+    Symbol,
+    factorial,
+    oo,
+    pi,
+    sqrt,
+    srepr,
+)
 
 from lambdafeedback.expression_parsing import (
     UNEVALUATED_SUM,
@@ -771,16 +786,43 @@ class TestSumWithoutLimits:
         x, n = Symbol("x"), Symbol("n")
         assert self.parse("sum(x^n) + sum*n", simplify=True, **params) == UNEVALUATED_SUM(x**n) + Symbol("S") * n
 
+    def test_a_task_alias_of_the_function_name_still_names_the_symbol_where_not_applied(self):
+        params = {"symbols": {"S": {"latex": r"\sum", "aliases": ["summation"]}}}
+        x, n = Symbol("x"), Symbol("n")
+        assert self.parse("2*summation", **params) == 2 * Symbol("S")
+        assert self.parse("summation(x^n) + summation*n", simplify=True, **params) == (
+            UNEVALUATED_SUM(x**n) + Symbol("S") * n
+        )
+
     def test_equal_when_the_summands_are(self):
         assert self.parse("sum(x+x)", simplify=True) == self.parse("sum(2*x)", simplify=True)
         assert self.parse("2*sum(x)", simplify=True) != self.parse("sum(2*x)", simplify=True)
 
+    @pytest.mark.parametrize("simplify", [False, True])
     @pytest.mark.parametrize(
         ("expr", "expected"),
-        [("sum(2*k - 1, (k, 1, n))", Symbol("n") ** 2), ("summation(x, (x, 1, 3))", 6)],
+        [
+            ("sum(k, (k, 1, n))", Sum(Symbol("k"), (Symbol("k"), 1, Symbol("n")))),
+            ("summation(x, (x, 1, 3))", Sum(Symbol("x"), (Symbol("x"), 1, 3))),
+            # Summing this would take seconds, then fail on a 6,000-digit number.
+            ("Sum(k!, (k, 1, 3000))", Sum(factorial(Symbol("k")), (Symbol("k"), 1, 3000))),
+        ],
     )
-    def test_with_limits_is_still_summed(self, expr, expected):
-        assert self.parse(expr) == expected
+    def test_with_finite_limits_is_left_unevaluated(self, expr, expected, simplify):
+        assert self.parse(expr, simplify=simplify) == expected
+
+    @pytest.mark.parametrize("simplify", [False, True])
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            # A divergent series is oo: SymPy can't approximate it, so comparing it unevaluated fails.
+            ("sum(2*k - 1, (k, 1, oo))", oo),
+            ("sum(1/k^2, (k, 1, oo))", pi**2 / 6),
+            ("summation(1/k^2, (k, -oo, -1))", pi**2 / 6),
+        ],
+    )
+    def test_with_an_infinite_limit_is_summed(self, expr, expected, simplify):
+        assert self.parse(expr, simplify=simplify) == expected
 
     @pytest.mark.parametrize(
         ("expr", "latex"),
@@ -798,6 +840,67 @@ class TestSumWithoutLimits:
         params = {"symbols": {"sum": {"latex": r"\sum_{k=0}^{\infty}", "aliases": []}}}
         for expr in ("1/2 + (2/π) * sum (1/(2k+1)) * sin((2k+1) * x)", "1/2 + (2/ pi)sum( sin((2k+1)x)/(2k+1))"):
             assert self.parse(expr, simplify=True, **params).has(UNEVALUATED_SUM)
+
+
+class TestCalculusFunctions:
+    """``integrate``, ``product`` and ``limit`` were worked out while parsing, even without ``simplify``."""
+
+    x, k, n = Symbol("x"), Symbol("k"), Symbol("n")
+
+    @staticmethod
+    def parse(expr, **params):
+        params = ExpressionParams.from_dict(params)
+        return parse_expression(preprocess_expression(expr, params), SympyParsingConfig.from_params(params))
+
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            ("integrate(x, (x, 0, 1))", Integral(x, (x, 0, 1))),
+            ("product(k, (k, 1, n))", Product(k, (k, 1, n))),
+            # Working this out would build a number of millions of digits.
+            ("product(k!, (k, 1, 3000))", Product(factorial(k), (k, 1, 3000))),
+            ("limit(x^2, x, 0)", Limit(x**2, x, 0)),
+        ],
+    )
+    def test_are_left_unevaluated_without_simplify(self, expr, expected):
+        assert self.parse(expr) == expected
+
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            ("product(k, (k, 1, 5))", 120),
+            ("product(k, (k, 1, n))", factorial(n)),
+            ("limit(x^2, x, 0)", 0),
+            ("Derivative(x^2, x)", 2 * x),
+        ],
+    )
+    def test_simplify_works_them_out(self, expr, expected):
+        assert self.parse(expr, simplify=True) == expected
+
+    @pytest.mark.parametrize(
+        ("expr", "message"),
+        [
+            ("product(k, (k, 1, 500))", "more than 1000 digits"),  # 500! has 1,135 digits
+            ("product(k!, (k, 1, 3000))", "too many factors"),
+            ("product(2, (k, 1, 10^6))", "too many factors"),
+        ],
+    )
+    def test_simplify_rejects_a_product_too_costly_to_work_out(self, expr, message):
+        with pytest.raises(ExpressionParsingError, match=message):
+            self.parse(expr, simplify=True)
+
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            ("integrate(x, (x, 0, 1))", Integral(x, (x, 0, 1))),
+            ("integrate(x, x)", Integral(x, x)),
+            ("INTEGRATE(x, x)", Integral(x, x)),
+            ("2*integrate(x, x)", 2 * Integral(x, x)),
+        ],
+    )
+    def test_integrate_with_elementary_functions(self, expr, expected):
+        # Its e's were read as Euler's number, giving `int E grat E(...)`, which failed to parse.
+        assert self.parse(expr, elementary_functions=True) == expected
 
 
 def test_parsing_logs_its_decisions_at_debug_only(caplog):
