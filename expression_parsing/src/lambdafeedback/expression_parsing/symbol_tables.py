@@ -46,7 +46,7 @@ ELEMENTARY_FUNCTIONS = _with_upper_case(
         # Kept intact during preprocessing so that ± / ∓ expansion still works
         (PLUS_MINUS, []), (MINUS_PLUS, []),
         # Common operations rather than elementary functions, but handled the same way
-        ("summation", ["sum", "Sum"]), ("Integral", ["int"]), ("Derivative", ["diff"]), ("re", ["real"]),
+        ("summation", ["sum", "Sum"]), ("Integral", ["int", "integrate"]), ("Derivative", ["diff"]), ("re", ["real"]),
         ("im", ["imag"]), ("conjugate", ["conj"]),
     ]
 )  # fmt: skip

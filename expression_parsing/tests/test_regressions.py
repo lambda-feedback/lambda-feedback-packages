@@ -889,6 +889,19 @@ class TestCalculusFunctions:
         with pytest.raises(ExpressionParsingError, match=message):
             self.parse(expr, simplify=True)
 
+    @pytest.mark.parametrize(
+        ("expr", "expected"),
+        [
+            ("integrate(x, (x, 0, 1))", Integral(x, (x, 0, 1))),
+            ("integrate(x, x)", Integral(x, x)),
+            ("INTEGRATE(x, x)", Integral(x, x)),
+            ("2*integrate(x, x)", 2 * Integral(x, x)),
+        ],
+    )
+    def test_integrate_with_elementary_functions(self, expr, expected):
+        # Its e's were read as Euler's number, giving `int E grat E(...)`, which failed to parse.
+        assert self.parse(expr, elementary_functions=True) == expected
+
 
 def test_parsing_logs_its_decisions_at_debug_only(caplog):
     import logging
