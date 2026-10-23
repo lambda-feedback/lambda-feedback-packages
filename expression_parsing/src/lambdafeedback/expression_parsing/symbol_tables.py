@@ -142,6 +142,9 @@ UNICODE_OPERATORS: Mapping[str, str] = MappingProxyType(
         "∙": "*",  # BULLET OPERATOR
         "÷": "/",  # DIVISION SIGN
         "∕": "/",  # DIVISION SLASH
+        "≠": "!=",  # NOT EQUAL TO
+        "≤": "<=",  # LESS-THAN OR EQUAL TO
+        "≥": ">=",  # GREATER-THAN OR EQUAL TO
     }
 )
 """Unicode operators (as typed on phones or pasted from documents) and their ASCII forms."""
