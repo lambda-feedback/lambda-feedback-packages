@@ -8,13 +8,36 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import cached_property
 from io import StringIO
+from itertools import pairwise
 from keyword import iskeyword
 from token import NAME, OP
 from tokenize import TokenError, generate_tokens
 from typing import Any
 
 import sympy
-from sympy import Basic, Chi, E, Equality, Function, I, Lambda, Set, Sum, Symbol, Tuple, beta, gamma, summation, zeta
+from sympy import (
+    And,
+    Basic,
+    Chi,
+    E,
+    Equality,
+    Function,
+    Ge,
+    Gt,
+    I,
+    Lambda,
+    Le,
+    Lt,
+    Ne,
+    Set,
+    Sum,
+    Symbol,
+    Tuple,
+    beta,
+    gamma,
+    summation,
+    zeta,
+)
 from sympy.core.function import UndefinedFunction
 from sympy.parsing.sympy_parser import (
     _token_splittable,
@@ -36,7 +59,7 @@ from ._safe_parse import MATH_NAMESPACE, TOO_DEEP_MESSAGE, check_evaluation_cost
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import ExpressionParams
-from .preprocessing import convert_bracket_notation, create_expression_set, split_equation
+from .preprocessing import convert_bracket_notation, create_expression_set, split_relations
 from .substitution import (
     Substitution,
     elementary_function_substitutions,
@@ -418,15 +441,34 @@ def _substitute_names(expr: str, config: SympyParsingConfig) -> str:
     return " ".join(substitute(expr, sorted_substitutions(substitutions)).split())
 
 
+def _relation(operator: str, lhs: Any, rhs: Any) -> Basic:
+    """The unevaluated SymPy relation ``lhs operator rhs``."""
+    if operator == "=":
+        return Equality(lhs, rhs, evaluate=False)
+    elif operator == "!=":
+        return Ne(lhs, rhs, evaluate=False)
+    elif operator == "<":
+        return Lt(lhs, rhs, evaluate=False)
+    elif operator == "<=":
+        return Le(lhs, rhs, evaluate=False)
+    elif operator == ">":
+        return Gt(lhs, rhs, evaluate=False)
+    elif operator == ">=":
+        return Ge(lhs, rhs, evaluate=False)
+    raise ValueError(f"Not a relational operator: {operator!r}")
+
+
 def _evaluate(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
     symbol_dict = dict(config.symbol_dict)
-    sides = split_equation(expr, ExpressionParsingError)
+    operands, operators = split_relations(expr, ExpressionParsingError)
     parsed: Any
-    if len(sides) == 2:
-        # Each side as if it were a whole expression: unevaluated unless simplifying
+    if operators:
+        # Each operand as if it were a whole expression: unevaluated unless simplifying
         # (evaluating 9**9**9 = x would never finish).
-        lhs, rhs = (_parse_side(side, config, transformations, symbol_dict) for side in sides)
-        parsed = Equality(lhs, rhs, evaluate=False)
+        sides = [_parse_side(operand, config, transformations, symbol_dict) for operand in operands]
+        relations = [_relation(operator, *pair) for operator, pair in zip(operators, pairwise(sides), strict=True)]
+        # A chain (1 < x < 5) states each relation between neighbours.
+        parsed = relations[0] if len(relations) == 1 else And(*relations, evaluate=False)
     else:
         parsed = _parse_side(expr, config, transformations, symbol_dict)
     if not isinstance(parsed, Basic):
