@@ -10,6 +10,7 @@ shorter reading never lets more of the text match.
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 
 DEFAULT_SIGNIFICANT_FIGURES = 2
 
@@ -180,6 +181,76 @@ def generate_arbitrary_number_pattern_matcher(string: str) -> Callable[[str], bo
         return index == len(comp_string)
 
     return matcher
+
+
+@dataclass(frozen=True)
+class WrittenNumber:
+    """A number as written, digit for digit: what its precision is depends on how it was written.
+
+    ``92`` and ``92.00`` are the same value written to 2 and 4 significant
+    figures; ``540`` has 2 and ``540.`` (with a point) 3.
+    """
+
+    integer: str
+    """The digits before the point (may be empty, as in ``.5``)."""
+    fraction: str
+    """The digits after the point (may be empty)."""
+    has_point: bool
+    exponent: int = 0
+
+    @property
+    def significant_figures(self) -> int:
+        """Leading zeros don't count; trailing zeros count only after a written point. Zero has 1."""
+        digits = (self.integer + self.fraction).lstrip("0")
+        if not digits:
+            return 1
+        if not self.has_point:
+            digits = digits.rstrip("0")
+        return len(digits) or 1
+
+    @property
+    def decimal_places(self) -> int:
+        """The digits after the point, less the exponent: ``5.02e4`` has 0, ``5e-3`` has 3."""
+        return max(len(self.fraction) - self.exponent, 0)
+
+
+def read_written_number(string: str) -> WrittenNumber | None:
+    """``string`` as a :class:`WrittenNumber`, if it is exactly one decimal number; ``None`` otherwise.
+
+    More lenient than :func:`is_number`, since a learner's precision is read
+    from what they wrote: a ``+`` sign, leading zeros and a trailing point
+    (``540.``) are allowed. The exponent is written as in :func:`is_number`
+    (``e``, ``E``, ``*10^`` or ``*10**``), with an optional sign.
+    """
+    string = string.strip()
+    index = 1 if string[:1] in ("+", "-") else 0
+    integer_end = _digits_end(string, index)
+    has_point = string.startswith(".", integer_end)
+    fraction_end = _digits_end(string, integer_end + 1) if has_point else integer_end
+    integer, fraction = string[index:integer_end], string[integer_end + 1 : fraction_end]
+    if not integer and not fraction:
+        return None
+    exponent = 0
+    if fraction_end < len(string):
+        mark = next((mark for mark in _EXPONENT_MARKS if string.startswith(mark, fraction_end)), None)
+        if mark is None:
+            return None
+        exponent_text = string[fraction_end + len(mark) :]
+        digits = exponent_text[1:] if exponent_text[:1] in ("+", "-") else exponent_text
+        if not digits or _digits_end(digits, 0) != len(digits):
+            return None
+        exponent = int(exponent_text)
+    return WrittenNumber(integer, fraction, has_point, exponent)
+
+
+def round_to_significant_figures(value: float, figures: int) -> float:
+    """``value`` rounded to ``figures`` significant figures (``3.14159`` to 3 is ``3.14``)."""
+    return float(f"{value:.{figures}g}")
+
+
+def round_to_decimal_places(value: float, places: int) -> str:
+    """``value`` rounded to ``places`` decimal places, as a string to keep trailing zeros (``0`` to 2 is ``0.00``)."""
+    return f"{value:.{places}f}"
 
 
 def compute_relative_tolerance_from_significant_decimals(string: str) -> float:
