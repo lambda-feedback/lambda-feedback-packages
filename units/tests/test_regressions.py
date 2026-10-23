@@ -1,7 +1,7 @@
 """Regression tests for bugs carried over from the v0.1 extraction."""
 
 import pytest
-from sympy import Basic, simplify
+from sympy import Basic, pi, simplify
 
 from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode
 from lambdafeedback.units import (
@@ -39,8 +39,21 @@ class TestUnitData:
 
     def test_angle_units_share_one_base(self):
         # Degrees and radians were in turns but arcminutes in radians, so 60' != 1°.
-        assert parse("1 radian").unit_factor == 1
+        assert str(parse("1 radian").standard_unit) == "radian"
         assert simplify(parse("60 angleminute").standard_values[0] - parse("1 degree").standard_values[0]) == 0
+
+    def test_hertz_is_a_cycle_per_second(self):
+        # 1 rad/s was 1 Hz: the radian was 1 and the hertz 1/s, losing the 2*pi per cycle.
+        hertz, radian_per_second = parse("1 Hz"), parse("1 radian/second")
+        assert hertz.standard_unit == radian_per_second.standard_unit
+        assert simplify(hertz.standard_values[0] / radian_per_second.standard_values[0] - 2 * pi) == 0
+
+    @pytest.mark.parametrize("params", [NATURAL, QuantityParams(strictness="natural", elementary_functions=True)])
+    def test_angular_frequency_matches_frequency(self, params):
+        # Upstream test_radians_to_frequency: 2*pi*f rad/s is f Hz.
+        angular, frequency = parse("2*pi*f radian/second", params), parse("f Hz", params)
+        assert angular.standard_unit == frequency.standard_unit
+        assert simplify(angular.standard_values[0] - frequency.standard_values[0]) == 0
 
 
 class TestParsing:

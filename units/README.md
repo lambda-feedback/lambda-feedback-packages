@@ -69,13 +69,17 @@ parse_quantity(text, params)  # PhysicalQuantity(value='2', unit='micrometre')
 | `standard_unit` | The unit in SI base units, without its numeric factor. |
 | `expanded_unit` | The unit in SI base units, with its factor. |
 | `unit_factor` | The factor between the unit and SI base units. |
-| `base_dimension` | The unit's dimension in terms of `length`, `mass`, `time`, `electric_current`, `temperature`, `amount_of_substance` and `luminous_intensity` (`km/h` gives `length/time`). `1` for a quantity without a unit, and for angles. Compare two quantities with `same_dimension(a, b)`. |
+| `base_dimension` | The unit's dimension in terms of `length`, `mass`, `time`, `electric_current`, `temperature`, `amount_of_substance`, `luminous_intensity` and `angle` (`km/h` gives `length/time`, `Hz` gives `angle/time`). `1` for a quantity without a unit. Compare two quantities with `same_dimension(a, b)`. |
 | `dimension` | The same, but keeping the unit's factor: `km/h` gives `10**3*length/((3600*time))`. |
 | `value_latex`, `unit_latex`, `latex` | LaTeX previews. |
 | `reverted_units` | `RevertedUnit(before, marked, after)` records for unit-like text that was read as part of the value (e.g. `kg` in `2 kg + 3`). |
 
 Mass is in **grams**, so that SI prefixes apply uniformly: `kilogram` expands
-to `1000*gram`. Angles are dimensionless, with the radian equal to 1.
+to `1000*gram`. **Angles have a dimension**, `angle`, with the radian as
+its base unit: the degree is `pi/180*radian` and the steradian `radian**2`.
+The hertz is a cycle per second, `2*pi*radian/second`, so `f Hz` equals
+`2*pi*f rad/s`, while `1 Hz` and `1/s` (or `1 Bq`) have different
+dimensions, as do `1 rad` and `1`.
 
 ## Parameters
 
