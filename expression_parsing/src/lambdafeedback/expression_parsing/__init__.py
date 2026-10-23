@@ -48,12 +48,14 @@ from .numbers import (
 )
 from .params import Convention, ExpressionParams, SymbolSpec, parse_symbol_assumptions
 from .preprocessing import (
+    RELATIONAL_OPERATORS,
     convert_absolute_notation,
     convert_bracket_notation,
     create_expression_set,
     has_matching_brackets,
     is_multiple_answers_wrapper,
     preprocess_expression,
+    split_relations,
 )
 from .substitution import (
     FunctionName,
@@ -80,6 +82,7 @@ __all__ = [
     "MAX_NUMBER_EXPONENT",
     "MAX_PRODUCT_TERMS",
     "MAX_SIMPLIFY_POWER",
+    "RELATIONAL_OPERATORS",
     "UNEVALUATED_SUM",
     "UNICODE_OPERATORS",
     "AbsoluteValueNotationError",
@@ -120,6 +123,7 @@ __all__ = [
     "plain_number_end",
     "preprocess_expression",
     "sanitise_latex",
+    "split_relations",
     "substitute",
     "substitute_input_symbols",
     "substitutions_sort_key",
