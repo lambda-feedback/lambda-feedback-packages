@@ -116,8 +116,11 @@
   "value": "ERROR"
  },
  "expr.parse|assumptions|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|assumptions|x – 1": {
   "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
@@ -142,8 +145,11 @@
   "value": "ERROR"
  },
  "expr.parse|complex|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|complex|x – 1": {
   "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
@@ -175,8 +181,11 @@
   }
  },
  "expr.parse|default|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|default|x – 1": {
   "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
@@ -208,8 +217,11 @@
   "value": "ERROR"
  },
  "expr.parse|elementary|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|elementary|x – 1": {
   "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
@@ -234,8 +246,11 @@
   "value": "ERROR"
  },
  "expr.parse|implicit_higher|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|implicit_higher|x – 1": {
   "reason": "expression_parsing: Unicode minus and en dash are read as '-' (normalise_unicode_operators); was the product x*−*1",
@@ -256,8 +271,11 @@
   "value": "ERROR"
  },
  "expr.parse|strict|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|strict|as": {
   "reason": "expression_parsing: Python keywords (as, in, is, ...) are read as symbols; in strict syntax 'as' is one symbol (was a*s)",
@@ -296,8 +314,11 @@
   "value": "ERROR"
  },
  "expr.parse|symbols|a=b=c": {
-  "reason": "expression_parsing: an expression with more than one '=' is rejected instead of silently parsing as Eq of the first two parts",
-  "value": "ERROR"
+  "reason": "expression_parsing: a chain of equalities a=b=c is And(Eq(a, b), Eq(b, c)) (compareExpressions#278); it silently parsed as Eq of the first two parts",
+  "value": {
+   "latex": "a = b \\wedge b = c",
+   "parsed": "Eq(a, b) & Eq(b, c)"
+  }
  },
  "expr.parse|symbols|lam + lambda": {
   "reason": "expression_parsing: task symbols are normalised once (lambda -> lamda) in ExpressionParams, so every path maps the task's lambda to lamda and prints it with the task's LaTeX",

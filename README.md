@@ -94,7 +94,7 @@ value (bug fixes only).
 Each package builds on its own:
 
 ```bash
-cd units && poetry build
+cd physical_quantities && poetry build
 ```
 
 During development, sibling dependencies resolve from the monorepo as path

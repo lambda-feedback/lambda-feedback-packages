@@ -8,13 +8,37 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from functools import cached_property
 from io import StringIO
+from itertools import pairwise
 from keyword import iskeyword
 from token import NAME, OP
 from tokenize import TokenError, generate_tokens
 from typing import Any
 
 import sympy
-from sympy import Basic, Chi, E, Equality, Function, I, Lambda, Set, Sum, Symbol, Tuple, beta, gamma, summation, zeta
+from sympy import (
+    And,
+    Basic,
+    Chi,
+    E,
+    Equality,
+    Function,
+    Ge,
+    Gt,
+    I,
+    Lambda,
+    Le,
+    Lt,
+    Ne,
+    Set,
+    Sum,
+    Symbol,
+    Tuple,
+    beta,
+    gamma,
+    summation,
+    zeta,
+)
+from sympy.core.function import UndefinedFunction
 from sympy.parsing.sympy_parser import (
     _token_splittable,
     auto_number,
@@ -35,7 +59,7 @@ from ._safe_parse import MATH_NAMESPACE, TOO_DEEP_MESSAGE, check_evaluation_cost
 from .conventions import apply_convention
 from .errors import ExpressionParsingError, SymbolAssumptionError
 from .params import ExpressionParams
-from .preprocessing import convert_bracket_notation, create_expression_set, split_equation
+from .preprocessing import convert_bracket_notation, create_expression_set, split_relations
 from .substitution import (
     Substitution,
     elementary_function_substitutions,
@@ -93,6 +117,62 @@ def _keywords_as_names(tokens: list[Any], local_dict: dict[str, Any], global_dic
 def sympy_symbols(symbols: Iterable[str]) -> dict[str, Symbol]:
     """``{name: Symbol(name)}`` for use as ``parse_expr``'s ``local_dict``."""
     return {name: Symbol(name) for name in symbols}
+
+
+BIG_OPERATOR_PREFIXES = (r"\sum", r"\int", r"\prod", r"\lim", r"\bigcup", r"\bigcap")
+"""LaTeX commands that make a task symbol a prefix operator (see :func:`prefix_operator`)."""
+
+
+def _print_prefix_operator(self: Any, printer: Any) -> str:
+    # Read from a class attribute, so the function pickles (a closure over the LaTeX wouldn't).
+    return f"{self._latex_prefix} {printer.doprint(self.args[0])}"
+
+
+def prefix_operator(name: str, latex: str) -> UndefinedFunction:
+    """An undefined function for a task symbol whose LaTeX is a big operator (``\\sum_{n=1}^{\\infty}``).
+
+    As a ``Symbol``, ``infsum(x)`` would be read as ``infsum*x``, and the
+    operator printed inside fractions or followed by ``\\cdot``. As a function
+    it wraps its argument, and prints as ``latex`` followed by it.
+    """
+    return UndefinedFunction(name, _latex_prefix=latex, _latex=_print_prefix_operator)
+
+
+_OPERATOR_SUFFIX = "__operator"
+
+
+def _prefix_operators(params: ExpressionParams) -> dict[str, UndefinedFunction]:
+    """``{code__operator: prefix_operator(code, latex)}`` for each task symbol whose LaTeX starts with a big operator.
+
+    The code itself stays a ``Symbol``: :func:`_applied_prefix_operators`
+    swaps in the operator only where it is applied.
+    """
+    from .latex import extract_latex  # imported here: latex imports this module
+
+    operators = {}
+    for code, spec in params.symbols.items():
+        if spec.latex is None:
+            continue
+        latex = extract_latex(spec.latex).strip()
+        if latex.startswith(BIG_OPERATOR_PREFIXES):
+            operators[f"{code}{_OPERATOR_SUFFIX}"] = prefix_operator(code, latex)
+    return operators
+
+
+def _applied_prefix_operators(tokens: list[Any], local_dict: dict[str, Any], global_dict: Any) -> list[Any]:
+    """Read a big-operator task symbol followed by ``(`` as its prefix operator (``infsum(x)``).
+
+    Not applied to anything (``2*infsum``), it is still the task's symbol.
+    """
+    result: list[Any] = []
+    values = [value for _, value in tokens]
+    for index, (kind, value) in enumerate(tokens):
+        operator = f"{value}{_OPERATOR_SUFFIX}"
+        if kind == NAME and operator in local_dict and _following(values, index) == "(":
+            result.append((NAME, operator))
+        else:
+            result.append((kind, value))
+    return result
 
 
 UNEVALUATED_SUM = Function("sum")
@@ -168,7 +248,7 @@ class SympyParsingConfig:
         params = self.params
         unsplittable = [*self.extra_unsplittable_symbols, *params.reserved_keywords]
         unsplittable += [code for code in params.symbols if len(code) > 1]
-        symbol_dict = {**_base_symbol_dict(params), **sympy_symbols(unsplittable)}
+        symbol_dict = {**_base_symbol_dict(params), **sympy_symbols(unsplittable), **_prefix_operators(params)}
         constants: set[str] = set()
         for symbol, assumption in (*self.extra_symbol_assumptions, *params.symbol_assumptions):
             # Assumptions become Symbol keyword arguments; SymPy stores any identifier.
@@ -235,7 +315,14 @@ class SympyParsingConfig:
         """
         # _keywords_as_names goes after auto_symbol (which leaves keywords alone, and
         # would wrap our Symbol('in') again), before the symbol splitting.
-        leading = (lambda_notation, auto_symbol, _keywords_as_names, repeated_decimals, auto_number)
+        leading = (
+            lambda_notation,
+            auto_symbol,
+            _keywords_as_names,
+            _applied_prefix_operators,
+            repeated_decimals,
+            auto_number,
+        )
         transformations: tuple[Any, ...]
         if self.params.strict_syntax:
             transformations = (*leading, function_exponentiation)
@@ -354,15 +441,34 @@ def _substitute_names(expr: str, config: SympyParsingConfig) -> str:
     return " ".join(substitute(expr, sorted_substitutions(substitutions)).split())
 
 
+def _relation(operator: str, lhs: Any, rhs: Any) -> Basic:
+    """The unevaluated SymPy relation ``lhs operator rhs``."""
+    if operator == "=":
+        return Equality(lhs, rhs, evaluate=False)
+    elif operator == "!=":
+        return Ne(lhs, rhs, evaluate=False)
+    elif operator == "<":
+        return Lt(lhs, rhs, evaluate=False)
+    elif operator == "<=":
+        return Le(lhs, rhs, evaluate=False)
+    elif operator == ">":
+        return Gt(lhs, rhs, evaluate=False)
+    elif operator == ">=":
+        return Ge(lhs, rhs, evaluate=False)
+    raise ValueError(f"Not a relational operator: {operator!r}")
+
+
 def _evaluate(expr: str, config: SympyParsingConfig, transformations: tuple[Any, ...]) -> Basic:
     symbol_dict = dict(config.symbol_dict)
-    sides = split_equation(expr, ExpressionParsingError)
+    operands, operators = split_relations(expr, ExpressionParsingError)
     parsed: Any
-    if len(sides) == 2:
-        # Each side as if it were a whole expression: unevaluated unless simplifying
+    if operators:
+        # Each operand as if it were a whole expression: unevaluated unless simplifying
         # (evaluating 9**9**9 = x would never finish).
-        lhs, rhs = (_parse_side(side, config, transformations, symbol_dict) for side in sides)
-        parsed = Equality(lhs, rhs, evaluate=False)
+        sides = [_parse_side(operand, config, transformations, symbol_dict) for operand in operands]
+        relations = [_relation(operator, *pair) for operator, pair in zip(operators, pairwise(sides), strict=True)]
+        # A chain (1 < x < 5) states each relation between neighbours.
+        parsed = relations[0] if len(relations) == 1 else And(*relations, evaluate=False)
     else:
         parsed = _parse_side(expr, config, transformations, symbol_dict)
     if not isinstance(parsed, Basic):

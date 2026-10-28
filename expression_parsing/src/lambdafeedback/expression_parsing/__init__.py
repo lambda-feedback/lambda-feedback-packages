@@ -39,21 +39,27 @@ from .errors import (
 from .latex import MAX_LATEX_NESTING, extract_latex, latex_symbols, parse_latex, sanitise_latex, sympy_to_latex
 from .notation import NotationWarning, notation_warnings
 from .numbers import (
+    WrittenNumber,
     compute_relative_tolerance_from_significant_decimals,
     generate_arbitrary_number_pattern_matcher,
     is_complex_number_on_cartesian_form,
     is_complex_number_on_exponential_form,
     is_number,
     plain_number_end,
+    read_written_number,
+    round_to_decimal_places,
+    round_to_significant_figures,
 )
 from .params import Convention, ExpressionParams, SymbolSpec, parse_symbol_assumptions
 from .preprocessing import (
+    RELATIONAL_OPERATORS,
     convert_absolute_notation,
     convert_bracket_notation,
     create_expression_set,
     has_matching_brackets,
     is_multiple_answers_wrapper,
     preprocess_expression,
+    split_relations,
 )
 from .substitution import (
     FunctionName,
@@ -80,6 +86,7 @@ __all__ = [
     "MAX_NUMBER_EXPONENT",
     "MAX_PRODUCT_TERMS",
     "MAX_SIMPLIFY_POWER",
+    "RELATIONAL_OPERATORS",
     "UNEVALUATED_SUM",
     "UNICODE_OPERATORS",
     "AbsoluteValueNotationError",
@@ -95,6 +102,7 @@ __all__ = [
     "SymbolSpec",
     "SympyParsingConfig",
     "UnknownConventionError",
+    "WrittenNumber",
     "__version__",
     "apply_convention",
     "compute_relative_tolerance_from_significant_decimals",
@@ -119,7 +127,11 @@ __all__ = [
     "parse_symbol_assumptions",
     "plain_number_end",
     "preprocess_expression",
+    "read_written_number",
+    "round_to_decimal_places",
+    "round_to_significant_figures",
     "sanitise_latex",
+    "split_relations",
     "substitute",
     "substitute_input_symbols",
     "substitutions_sort_key",

@@ -9,6 +9,7 @@ import warnings
 import pytest
 from sympy import (
     Abs,
+    And,
     Eq,
     Function,
     Integral,
@@ -130,9 +131,10 @@ class TestParsing:
         assert str(parse_expression("2E", parsing_params())) == "2*E"
         assert str(parse_expression("xE", parsing_params())) == "E*x"
 
-    def test_chained_equalities_are_rejected(self):
-        with pytest.raises(ValueError, match="="):
-            parse_expression("a=b=c", parsing_params())
+    def test_chained_equalities_are_each_equation(self):
+        # Was silently Eq(a, b), then rejected; a chain since compareExpressions#278.
+        a, b, c = Symbol("a"), Symbol("b"), Symbol("c")
+        assert parse_expression("a=b=c", parsing_params()) == And(Eq(a, b), Eq(b, c))
 
     def test_arithmetic_on_sets_is_rejected_in_strict_syntax(self):
         with warnings.catch_warnings():
@@ -211,10 +213,13 @@ class TestLatexEquations:
         # Simplifying the Eq as a whole turned "x = x" into "True".
         assert parse_latex("x = x", {}, simplify=True) == "x = x"
 
-    def test_more_than_one_equals_sign_is_rejected(self):
-        with pytest.raises(LatexParseError, match="=") as info:
-            parse_latex("x = y = 2", {})
-        assert info.value.expression == "x = y = 2"
+    def test_chained_equality_keeps_every_side(self):
+        assert parse_latex("x = y = 2", {}) == "x = y = 2"
+
+    def test_empty_side_is_rejected(self):
+        with pytest.raises(LatexParseError, match="on each side") as info:
+            parse_latex("x = = 2", {})
+        assert info.value.expression == "x = = 2"
 
 
 class TestPublicReleaseReview:
@@ -901,6 +906,61 @@ class TestCalculusFunctions:
     def test_integrate_with_elementary_functions(self, expr, expected):
         # Its e's were read as Euler's number, giving `int E grat E(...)`, which failed to parse.
         assert self.parse(expr, elementary_functions=True) == expected
+
+
+_BIG_OPERATOR_SYMBOLS = {"infsum": {"latex": r"\sum_{n=1}^{\infty}"}, "pi": {"latex": r"\pi"}}
+
+
+class TestBigOperatorSymbols:
+    """A task symbol with big-operator LaTeX (``infsum`` as ``\\sum``) was a Symbol, so ``infsum(x)`` was ``infsum*x``."""
+
+    def parse(self, response):
+        params = ExpressionParams.from_dict({"elementary_functions": True, "symbols": _BIG_OPERATOR_SYMBOLS})
+        expr = parse_expression(preprocess_expression(response, params), SympyParsingConfig.from_params(params))
+        return expr, params
+
+    def test_symbol_is_a_function_of_its_argument(self):
+        expr, _ = self.parse("infsum((-1)^n / n^2)")
+        assert expr.func.__name__ == "infsum"
+
+    @pytest.mark.parametrize(
+        ("response", "latex"),
+        [
+            ("infsum((-1)^n / n^2)", r"\sum_{n=1}^{\infty} \frac{\left(-1\right)^{n}}{n^{2}}"),
+            (
+                "infsum((4/n^2)*(-1)^n*cos(nx))",
+                r"\sum_{n=1}^{\infty} \frac{4 \cdot \left(-1\right)^{n} \cdot \cos{\left(n \cdot x \right)}}{n^{2}}",
+            ),
+            (
+                "((pi^2)/(3))+infsum((4/n^2)*(-1)^n*cos(nx))",
+                r"\frac{\pi^{2}}{3} + \sum_{n=1}^{\infty} \frac{4 \cdot \left(-1\right)^{n} \cdot \cos{\left(n \cdot x \right)}}{n^{2}}",
+            ),
+        ],
+    )
+    def test_prints_the_operator_before_its_argument(self, response, latex):
+        expr, params = self.parse(response)
+        assert sympy_to_latex(expr, params.symbols, {"mul_symbol": "dot"}) == latex
+
+    @pytest.mark.parametrize("latex", [r"\int_0^1", r"\prod_{k=1}^{n}", r"\lim_{x \to 0}", r"$\bigcup_i$"])
+    def test_every_big_operator_is_a_prefix(self, latex):
+        params = ExpressionParams.from_dict({"symbols": {"op": {"latex": latex}}})
+        assert parse_expression("op(x)", SympyParsingConfig.from_params(params)).func.__name__ == "op"
+
+    def test_not_applied_it_is_still_the_symbol(self):
+        expr, _ = self.parse("2*infsum + infsum(x)")
+        assert expr.has(Symbol("infsum"))
+        assert any(term.func.__name__ == "infsum" for term in expr.args)
+
+    def test_other_symbols_stay_symbols(self):
+        params = ExpressionParams.from_dict({"symbols": {"ab": {"latex": r"\alpha_b"}}})
+        assert parse_expression("ab", SympyParsingConfig.from_params(params)) == Symbol("ab")
+
+    def test_config_round_trips_through_pickle(self):
+        import pickle
+
+        params = ExpressionParams.from_dict({"symbols": _BIG_OPERATOR_SYMBOLS})
+        config = pickle.loads(pickle.dumps(SympyParsingConfig.from_params(params)))
+        assert sympy_to_latex(parse_expression("infsum(x)", config), params.symbols) == r"\sum_{n=1}^{\infty} x"
 
 
 def test_parsing_logs_its_decisions_at_debug_only(caplog):
