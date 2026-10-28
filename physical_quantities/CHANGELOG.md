@@ -41,6 +41,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Fixed
 
+- A value that is a list, with a unit, is converted value by value: `{1, 2} km`, `1,2~\mathrm{km}` (LaTeX), `plus_minus 2 km` and `\pm 2~\mathrm{km}` give `standard_values` of 1000 and 2000 (or −2000 and 2000). Before, the unit factor multiplied the list as a whole, and `parse_quantity` raised `QuantityParseError`.
 - The roentgen was converted as kelvin per kilogram; it is 2.58×10⁻⁴ C/kg (ampere·second per kilogram).
 - The imperial pint was 0.00056826 m³; it is 0.00056826125 m³, so that 8 pints make a gallon.
 - `nautical_miles` is recognised as the plural of `nautical_mile`. Before, only `nauticalmiles` was, and in natural mode `2 nautical_miles` parsed as 2 nautical_mile·second.
