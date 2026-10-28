@@ -60,7 +60,7 @@ def _expand_units(node: ExprNode, parser: SLRParser) -> ExprNode:
 
 
 class SympyForms(NamedTuple):
-    """The SymPy fields of a :class:`~lambdafeedback.units.PhysicalQuantity`."""
+    """The SymPy fields of a :class:`~lambdafeedback.physical_quantities.PhysicalQuantity`."""
 
     standard_values: tuple[Basic, ...] | None
     standard_unit: Basic | None

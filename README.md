@@ -17,13 +17,13 @@ tag. They depend on each other by version, so install the ones you use
 **and the packages they depend on** from the same tag:
 
 ```bash
-pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.3#subdirectory=slr_parsing"
-pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.3#subdirectory=criteria"
-pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.3#subdirectory=expression_parsing"
-pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.3#subdirectory=units"
+pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=slr_parsing"
+pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=criteria"
+pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=expression_parsing"
+pip install "lambdafeedback-physical-quantities @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=physical_quantities"
 ```
 
-With Poetry: `lambdafeedback-units = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0-rc.3", subdirectory = "units" }`, and likewise for each package.
+With Poetry: `lambdafeedback-physical-quantities = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0-rc.4", subdirectory = "physical_quantities" }`, and likewise for each package.
 
 ## Packages
 
@@ -32,7 +32,7 @@ With Poetry: `lambdafeedback-units = { git = "https://github.com/lambda-feedback
 | `slr_parsing` | `lambdafeedback-slr-parsing` | `lambdafeedback.slr_parsing` | Generic SLR(1) parser engine | — |
 | `criteria` | `lambdafeedback-criteria` | `lambdafeedback.criteria` | Criteria DSL parser and evaluation graph | `slr_parsing` |
 | `expression_parsing` | `lambdafeedback-expression-parsing` | `lambdafeedback.expression_parsing` | Safe SymPy parsing, preprocessing and LaTeX input/output | `slr_parsing`, `sympy`, `latex2sympy2_extended` |
-| `units` | `lambdafeedback-units` | `lambdafeedback.units` | Unit-system data, physical-quantity parsing and dimensional analysis | `slr_parsing`, `expression_parsing`, `sympy` |
+| `physical_quantities` | `lambdafeedback-physical-quantities` | `lambdafeedback.physical_quantities` | Unit-system data, physical-quantity parsing and dimensional analysis | `slr_parsing`, `expression_parsing`, `sympy` |
 
 ```python
 from lambdafeedback.expression_parsing import (
@@ -41,7 +41,7 @@ from lambdafeedback.expression_parsing import (
     parse_expression,
     preprocess_expression,
 )
-from lambdafeedback.units import QuantityParams, parse_quantity
+from lambdafeedback.physical_quantities import QuantityParams, parse_quantity
 
 params = ExpressionParams.from_dict(evaluation_params)  # JSON parameters → typed
 pre = preprocess_expression(response, params, name="response")  # aliases, brackets, |x|
@@ -54,7 +54,7 @@ quantity = parse_quantity("9.81 m/s^2", QuantityParams.from_dict(evaluation_para
 from [toolkit-python](https://github.com/lambda-feedback/toolkit-python), with
 `CriteriaGraph.export_feedback` for criteria feedback.
 
-Each package uses a `src/` layout: `units/src/lambdafeedback/units/`.
+Each package uses a `src/` layout: `physical_quantities/src/lambdafeedback/physical_quantities/`.
 There is deliberately no `lambdafeedback/__init__.py`; the namespace is
 [PEP 420](https://peps.python.org/pep-0420/), so the separately installed
 packages merge under one import root.
@@ -69,7 +69,7 @@ that installs every package in develop mode, plus the tooling, into one venv:
 ```bash
 poetry install                      # creates the venv with all packages + dev tools
 poetry run scripts/test.sh -q       # every package's tests (one pytest process each)
-poetry run pytest units/tests       # a single package
+poetry run pytest physical_quantities/tests  # a single package
 poetry run ruff check . && poetry run ruff format --check .
 poetry run mypy
 poetry run python tools/parity/check.py   # diff behaviour against the v0.1 baseline
@@ -121,7 +121,7 @@ attached to a GitHub Release (marked as a pre-release for pre-release tags).
 ## Logging
 
 The packages log at DEBUG only, through loggers named after their modules
-(`lambdafeedback.expression_parsing.preprocessing`, `lambdafeedback.units.quantity`, ...):
+(`lambdafeedback.expression_parsing.preprocessing`, `lambdafeedback.physical_quantities.quantity`, ...):
 how a response was preprocessed and read, how a quantity was split into value
 and unit, which evaluations a criteria graph ran. Failures are exceptions, not
 log records. To see them:

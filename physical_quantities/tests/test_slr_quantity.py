@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from lambdafeedback.units import (
+from lambdafeedback.physical_quantities import (
     COMMON_UNITS,
     IMPERIAL_UNITS,
     SI_BASE_UNITS,

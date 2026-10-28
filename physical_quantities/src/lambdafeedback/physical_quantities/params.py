@@ -13,7 +13,10 @@ from .data import UNIT_SETS
 from .errors import QuantityParamsError
 
 MAX_INPUT_LENGTH = 10_000
-"""Longest input :func:`~lambdafeedback.units.parse_quantity` reads, in characters: a bound on its running time."""
+"""Longest input :func:`~lambdafeedback.physical_quantities.parse_quantity` reads, in characters.
+
+A bound on its running time.
+"""
 
 Strictness = Literal["strict", "natural"]
 """``strict``: only unit names and symbols, units separated by ``*`` / ``/`` / spaces;
@@ -28,7 +31,7 @@ class QuantityParams(ExpressionParams):
     legacy_preprocessing: bool = False
     """Deprecated (removed in 1.0): rewrite the response the way the old ``legacy`` strictness did."""
     unit_sets: frozenset[str] = frozenset(UNIT_SETS)
-    """Names from :data:`~lambdafeedback.units.data.UNIT_SETS` whose units are recognised."""
+    """Names from :data:`~lambdafeedback.physical_quantities.data.UNIT_SETS` whose units are recognised."""
 
     def __post_init__(self) -> None:
         super().__post_init__()

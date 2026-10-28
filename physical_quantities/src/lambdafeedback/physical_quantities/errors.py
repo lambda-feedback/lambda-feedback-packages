@@ -1,4 +1,4 @@
-"""Exceptions raised by the units package."""
+"""Exceptions raised by the physical quantities package."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from lambdafeedback.expression_parsing import ExpressionParsingError
 
 
 class QuantityError(ValueError):
-    """Base class for errors raised by the units package.
+    """Base class for errors raised by the physical quantities package.
 
     ``expression`` is the text being read, when known, and ``name`` (e.g.
     ``"response"``) identifies which quantity it was.
@@ -47,7 +47,7 @@ class UnitConversionError(QuantityError):
 
 
 class QuantityParamsError(QuantityError, ExpressionParsingError):
-    """A :class:`~lambdafeedback.units.QuantityParams` field is invalid; ``field`` is its name.
+    """A :class:`~lambdafeedback.physical_quantities.QuantityParams` field is invalid; ``field`` is its name.
 
     Also an ``ExpressionParsingError``, like the errors for the inherited
     :class:`~lambdafeedback.expression_parsing.ExpressionParams` fields.

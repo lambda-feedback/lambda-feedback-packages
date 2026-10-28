@@ -3,8 +3,7 @@
 import pytest
 from sympy import Basic, simplify
 
-from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode
-from lambdafeedback.units import (
+from lambdafeedback.physical_quantities import (
     DisallowedUnitError,
     PhysicalQuantity,
     QuantityParams,
@@ -13,8 +12,9 @@ from lambdafeedback.units import (
     build_quantity_parser,
     parse_quantity,
 )
-from lambdafeedback.units._split import split_value_and_unit
-from lambdafeedback.units.quantity import _revert_value_text
+from lambdafeedback.physical_quantities._split import split_value_and_unit
+from lambdafeedback.physical_quantities.quantity import _revert_value_text
+from lambdafeedback.slr_parsing import GROUP_LABEL, ExprNode
 
 NATURAL = QuantityParams(strictness="natural")
 
@@ -228,7 +228,7 @@ class TestPickling:
     def test_params_error_round_trips(self):
         import pickle
 
-        from lambdafeedback.units import QuantityParamsError
+        from lambdafeedback.physical_quantities import QuantityParamsError
 
         # The default reduce called QuantityParamsError(formatted_message), which needs two arguments.
         error = pickle.loads(pickle.dumps(QuantityParamsError("strictness", "bad")))
@@ -257,7 +257,7 @@ class TestPickling:
             assert comparable(getattr(copy, field.name)) == comparable(getattr(quantity, field.name)), field.name
 
     def test_parser_is_deprecated_and_still_the_cached_parser(self):
-        from lambdafeedback.units import build_quantity_parser
+        from lambdafeedback.physical_quantities import build_quantity_parser
 
         quantity = parse("5 km/h")
         with pytest.deprecated_call(match="PhysicalQuantity.parser"):
@@ -302,13 +302,13 @@ class TestHugeNumbers:
 
 class TestInputLimits:
     def test_input_at_the_cap_is_read(self):
-        from lambdafeedback.units import MAX_INPUT_LENGTH
+        from lambdafeedback.physical_quantities import MAX_INPUT_LENGTH
 
         expr = "2 m".ljust(MAX_INPUT_LENGTH)
         assert parse(expr).unit.content_string() == "metre"
 
     def test_input_over_the_cap_raises(self):
-        from lambdafeedback.units import MAX_INPUT_LENGTH
+        from lambdafeedback.physical_quantities import MAX_INPUT_LENGTH
 
         with pytest.raises(QuantityParseError, match="too long"):
             parse("2 m".ljust(MAX_INPUT_LENGTH + 1))
@@ -316,7 +316,7 @@ class TestInputLimits:
     def test_preprocessing_passes_over_long_input_through(self):
         import time
 
-        from lambdafeedback.units import MAX_INPUT_LENGTH, preprocess_quantity
+        from lambdafeedback.physical_quantities import MAX_INPUT_LENGTH, preprocess_quantity
 
         expr = "5 μ s " * (MAX_INPUT_LENGTH // 6 + 1)
         start = time.perf_counter()
@@ -328,7 +328,7 @@ class TestInputLimits:
         import time
         import warnings
 
-        from lambdafeedback.units import MAX_LEGACY_LENGTH, preprocess_quantity
+        from lambdafeedback.physical_quantities import MAX_LEGACY_LENGTH, preprocess_quantity
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)

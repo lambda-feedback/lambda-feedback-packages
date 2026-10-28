@@ -94,7 +94,7 @@ class PhysicalQuantity:
     """A response read as a quantity: its value and unit, their LaTeX, and SI forms.
 
     Use :func:`parse_quantity` to create one. SymPy results use the SI base
-    units of :data:`~lambdafeedback.units.SI_BASE_UNITS` as symbols; mass is
+    units of :data:`~lambdafeedback.physical_quantities.SI_BASE_UNITS` as symbols; mass is
     in grams (``kilogram`` expands to ``1000*gram``).
 
     Its attributes can't be set (it is frozen), but ``value``, ``unit`` and
