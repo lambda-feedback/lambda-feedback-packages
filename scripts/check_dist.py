@@ -22,12 +22,12 @@ import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PACKAGES = ("slr_parsing", "criteria", "expression_parsing", "units")
+PACKAGES = ("slr_parsing", "criteria", "expression_parsing", "physical_quantities")
 
 SMOKE_TEST = """
 from lambdafeedback.criteria import build_criteria_parser
 from lambdafeedback.expression_parsing import ExpressionParams, SympyParsingConfig, parse_expression
-from lambdafeedback.units import QuantityParams, parse_quantity
+from lambdafeedback.physical_quantities import QuantityParams, parse_quantity
 from lambdafeedback.slr_parsing import SLRParser
 
 assert str(parse_expression("2x+1", SympyParsingConfig.from_params(ExpressionParams()))) == "2*x + 1"

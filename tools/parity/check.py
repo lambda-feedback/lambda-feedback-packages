@@ -43,7 +43,7 @@ from lambdafeedback.expression_parsing import (  # noqa: E402
     parse_expressions,
     sympy_to_latex,
 )
-from lambdafeedback.units import QuantityParams, parse_quantity  # noqa: E402
+from lambdafeedback.physical_quantities import QuantityParams, parse_quantity  # noqa: E402
 
 ERROR = "ERROR"
 

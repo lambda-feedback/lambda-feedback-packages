@@ -26,8 +26,8 @@ def preprocess_quantity(expr: str, params: QuantityParams, *, name: str | None =
     Same shape as ``expression_parsing.preprocess_expression``, so either can
     serve as a context's preprocessing step. ``name`` is unused (nothing is raised).
 
-    Input longer than :data:`~lambdafeedback.units.MAX_INPUT_LENGTH` is
-    returned unchanged (:func:`~lambdafeedback.units.parse_quantity` rejects
+    Input longer than :data:`~lambdafeedback.physical_quantities.MAX_INPUT_LENGTH` is
+    returned unchanged (:func:`~lambdafeedback.physical_quantities.parse_quantity` rejects
     it), and so is input longer than :data:`MAX_LEGACY_LENGTH` with legacy
     preprocessing.
     """

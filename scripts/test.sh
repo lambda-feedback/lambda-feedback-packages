@@ -6,7 +6,7 @@
 #   poetry run scripts/test.sh -q
 set -e
 cd "$(dirname "$0")/.."
-for pkg in slr_parsing criteria expression_parsing units; do
+for pkg in slr_parsing criteria expression_parsing physical_quantities; do
     echo "== $pkg"
     pytest "$pkg/tests" "$@"
 done

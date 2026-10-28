@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 ROOT = Path(__file__).resolve().parent.parent
-PACKAGES = ("slr_parsing", "criteria", "expression_parsing", "units")
+PACKAGES = ("slr_parsing", "criteria", "expression_parsing", "physical_quantities")
 # Semantic-version pre-release labels and their PEP 440 spellings, in release order.
 PRE_RELEASE_LABELS = {"alpha": "a", "beta": "b", "rc": "rc"}
 

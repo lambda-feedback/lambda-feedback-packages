@@ -1,4 +1,4 @@
-# lambdafeedback-units
+# lambdafeedback-physical-quantities
 
 Parse physical quantities such as `9.81 m/s^2` or `5 kilometres/hour` into a
 value and a unit, convert them to SI base units, and compare dimensions. Built
@@ -17,17 +17,17 @@ evaluation function.
 From git (not on PyPI yet):
 
 ```bash
-pip install "lambdafeedback-units @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.3#subdirectory=units"
+pip install "lambdafeedback-physical-quantities @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=physical_quantities"
 ```
 
 Install the packages it depends on (`slr_parsing`, `expression_parsing`) from the same tag; see the [repository README](../README.md#install).
 
-Requires Python 3.12 or later. The import root is `lambdafeedback.units`.
+Requires Python 3.12 or later. The import root is `lambdafeedback.physical_quantities`.
 
 ## Quick start
 
 ```python
-from lambdafeedback.units import QuantityParams, parse_quantity, same_dimension
+from lambdafeedback.physical_quantities import QuantityParams, parse_quantity, same_dimension
 
 q = parse_quantity("5 km/h", QuantityParams())
 q  # PhysicalQuantity(value='5', unit='kilometre/hour')
@@ -53,7 +53,7 @@ prefix spellings such as `μ`, `µ` and `deka`, and collapses whitespace.
 Without it, `2 µm` is read as a value with no unit.
 
 ```python
-from lambdafeedback.units import preprocess_quantity
+from lambdafeedback.physical_quantities import preprocess_quantity
 
 params = QuantityParams()
 text = preprocess_quantity("2 µm", params, name="response")  # '2 microm'
@@ -108,7 +108,7 @@ An invalid value raises `QuantityParamsError`, which is also an
 
 ## Units
 
-The tables are in `lambdafeedback.units` as tuples of named tuples:
+The tables are in `lambdafeedback.physical_quantities` as tuples of named tuples:
 `SI_PREFIXES`, `SI_BASE_UNITS`, `SI_DERIVED_UNITS`, `VERY_COMMON_UNITS`,
 `COMMON_UNITS` and `IMPERIAL_UNITS`. `UNIT_SETS` maps each set name to its
 units, and `CONVERSION_TO_BASE_SI` maps every (prefixed) unit name to its SI
@@ -137,7 +137,7 @@ All errors derive from `QuantityError`, which is a `ValueError`, and carry
 | `QuantityParamsError` | A `QuantityParams` field is invalid. |
 
 ```python
-from lambdafeedback.units import QuantityError
+from lambdafeedback.physical_quantities import QuantityError
 
 try:
     parse_quantity("2 m)", QuantityParams())
@@ -179,7 +179,7 @@ except QuantityError as error:
 
 ## Changelog
 
-See [CHANGELOG.md](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/units/CHANGELOG.md).
+See [CHANGELOG.md](https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/physical_quantities/CHANGELOG.md).
 
 ## License
 

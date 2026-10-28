@@ -2,10 +2,10 @@
 
 import pytest
 
-from lambdafeedback.units import QuantityParams
-from lambdafeedback.units.parser import _number_prefix
-from lambdafeedback.units.preprocessing import transform_prefixes_to_standard
-from lambdafeedback.units.text import (
+from lambdafeedback.physical_quantities import QuantityParams
+from lambdafeedback.physical_quantities.parser import _number_prefix
+from lambdafeedback.physical_quantities.preprocessing import transform_prefixes_to_standard
+from lambdafeedback.physical_quantities.text import (
     called_names,
     collapse_whitespace,
     mentions_celsius_or_fahrenheit,

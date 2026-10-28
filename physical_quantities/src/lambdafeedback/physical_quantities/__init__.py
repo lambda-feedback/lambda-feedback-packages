@@ -49,7 +49,7 @@ from .tags import QuantityTag
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 try:
-    __version__ = version("lambdafeedback-units")
+    __version__ = version("lambdafeedback-physical-quantities")
 except PackageNotFoundError:  # running from a source checkout that isn't installed
     __version__ = "0+unknown"
 
