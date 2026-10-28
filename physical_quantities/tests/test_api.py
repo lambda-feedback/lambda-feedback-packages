@@ -3,9 +3,9 @@
 import pytest
 from sympy import Rational, simplify
 
-import lambdafeedback.units
+import lambdafeedback.physical_quantities
 from lambdafeedback.expression_parsing import ExpressionParsingError
-from lambdafeedback.units import (
+from lambdafeedback.physical_quantities import (
     ALL_UNITS,
     CONVERSION_TO_BASE_SI,
     SI_BASE_UNITS,
@@ -26,7 +26,7 @@ from lambdafeedback.units import (
 
 
 def test_version():
-    assert isinstance(lambdafeedback.units.__version__, str)
+    assert isinstance(lambdafeedback.physical_quantities.__version__, str)
 
 
 class TestQuantityParams:
@@ -299,8 +299,10 @@ class TestProductSigns:
 def test_parse_quantity_logs_the_value_unit_split(caplog):
     import logging
 
-    with caplog.at_level(logging.DEBUG, logger="lambdafeedback.units"):
+    with caplog.at_level(logging.DEBUG, logger="lambdafeedback.physical_quantities"):
         parse_quantity("9.81 m/s^2", QuantityParams())
-    messages = [record.getMessage() for record in caplog.records if record.name.startswith("lambdafeedback.units")]
+    messages = [
+        record.getMessage() for record in caplog.records if record.name.startswith("lambdafeedback.physical_quantities")
+    ]
     assert "split '9.81 m/s^2' into value '9.81' and unit 'metre/second^2'" in messages
     assert all(record.levelno < logging.WARNING for record in caplog.records)

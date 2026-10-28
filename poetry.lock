@@ -1278,7 +1278,7 @@ type = ["pygobject-stubs", "pytest-mypy (>=1.0.1)", "shtab", "types-pywin32"]
 
 [[package]]
 name = "lambdafeedback-criteria"
-version = "0.3.0rc3"
+version = "0.3.0rc4"
 description = "Criteria parser and criteria graphs that turn evaluations into feedback, for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.12"
@@ -1287,7 +1287,7 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-slr-parsing = ">=0.3.0rc3,<0.4.0"
+lambdafeedback-slr-parsing = ">=0.3.0rc4,<0.4.0"
 
 [package.source]
 type = "directory"
@@ -1295,7 +1295,7 @@ url = "criteria"
 
 [[package]]
 name = "lambdafeedback-expression-parsing"
-version = "0.3.0rc3"
+version = "0.3.0rc4"
 description = "Safe SymPy parsing and preprocessing of learner-written mathematical expressions, for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.12"
@@ -1304,7 +1304,7 @@ files = []
 develop = true
 
 [package.dependencies]
-lambdafeedback-slr-parsing = ">=0.3.0rc3,<0.4.0"
+lambdafeedback-slr-parsing = ">=0.3.0rc4,<0.4.0"
 latex2sympy2-extended = {version = ">=1.11.0,<2.0", extras = ["antlr4-13-2"]}
 sympy = ">=1.14,<2.0"
 
@@ -1313,8 +1313,27 @@ type = "directory"
 url = "expression_parsing"
 
 [[package]]
+name = "lambdafeedback-physical-quantities"
+version = "0.3.0rc4"
+description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
+optional = false
+python-versions = ">=3.12"
+groups = ["dev"]
+files = []
+develop = true
+
+[package.dependencies]
+lambdafeedback-expression-parsing = ">=0.3.0rc4,<0.4.0"
+lambdafeedback-slr-parsing = ">=0.3.0rc4,<0.4.0"
+sympy = ">=1.14,<2.0"
+
+[package.source]
+type = "directory"
+url = "physical_quantities"
+
+[[package]]
 name = "lambdafeedback-slr-parsing"
-version = "0.3.0rc3"
+version = "0.3.0rc4"
 description = "Dependency-free SLR(1) parser generator for Lambda Feedback evaluation functions."
 optional = false
 python-versions = ">=3.12"
@@ -1325,25 +1344,6 @@ develop = true
 [package.source]
 type = "directory"
 url = "slr_parsing"
-
-[[package]]
-name = "lambdafeedback-units"
-version = "0.3.0rc3"
-description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
-optional = false
-python-versions = ">=3.12"
-groups = ["dev"]
-files = []
-develop = true
-
-[package.dependencies]
-lambdafeedback-expression-parsing = ">=0.3.0rc3,<0.4.0"
-lambdafeedback-slr-parsing = ">=0.3.0rc3,<0.4.0"
-sympy = ">=1.14,<2.0"
-
-[package.source]
-type = "directory"
-url = "units"
 
 [[package]]
 name = "latex2sympy2-extended"
@@ -3022,4 +3022,4 @@ test = ["pytest"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12,<4.0"
-content-hash = "460ca14f1e861782181fed3d0d60a56c1187a6f763f03ae02fc0509c5b75d856"
+content-hash = "4458d98f8a00e762ea2898865298a056a925638e5cc5ba54126fbe7dd98eb185"

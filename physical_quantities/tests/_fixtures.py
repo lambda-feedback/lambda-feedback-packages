@@ -1,4 +1,4 @@
-"""Test fixtures for the units package.
+"""Test fixtures for the physical quantities package.
 
 ``default_parameters`` mirrors the quantity-specific defaults of the
 physical-quantity context in compareExpressions (app/context/physical_quantity.py);

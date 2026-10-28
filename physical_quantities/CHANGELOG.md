@@ -1,11 +1,12 @@
-# Changelog: lambdafeedback-units
+# Changelog: lambdafeedback-physical-quantities
 
-## 0.3.0 (unreleased; pre-release 0.3.0rc3, tag v0.3.0-rc.3)
+## 0.3.0 (unreleased; pre-release 0.3.0rc4, tag v0.3.0-rc.4)
 
 The first public release. This is a further tidy-up after the 0.2.0 extraction: the package now only does unit conversion. Package metadata (MIT licence, README, URLs) is in place for PyPI. Python 3.13 and later is supported, now that `lambdafeedback-expression-parsing` no longer depends on latex2sympy2. SymPy 1.14 or later is required (was 1.12): 1.12 predates Python 3.12, and a configuration with a declared function (`symbol_assumptions` `function`) can only be pickled from 1.14.
 
 ### Breaking
 
+- (since 0.3.0rc4) **Renamed from `lambdafeedback-units` to `lambdafeedback-physical-quantities`.** The import path is `lambdafeedback.physical_quantities` (was `lambdafeedback.units`), and the repository subdirectory is `physical_quantities` (was `units`). The API is otherwise unchanged.
 - Requires Python 3.12 or later (3.11 is not supported).
 - `PhysicalQuantity.standard_values` is a tuple of expressions (several for a value such as `{1, 2}`), replacing `standard_value`, which was one expression or a set.
 
@@ -20,7 +21,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 - An unknown `strictness` raises `QuantityParamsError` (with `.field`). It is still an `ExpressionParsingError`, so existing handlers keep working.
 - `UNIT_SETS` and `CONVERSION_TO_BASE_SI` are read-only mappings (`MappingProxyType`). Assigning to them raises `TypeError`, where before it would have silently changed every cached parser.
 - `parse_quantity` and `preprocess_quantity` now take `QuantityParams` only; the `Mapping[str, Any]` (raw dict) fallback is gone, along with the `as_quantity_params` helper. Convert evaluation-function parameters explicitly at the call site with `QuantityParams.from_dict(evaluation_params)`.
-- `preview_function` and `fix_exponents` have moved out of this package entirely, to compareExpressions (`app/context/physical_quantity_preview.py`): building a LaTeX/SymPy preview string is an app-layer display concern, not unit conversion. Import them from there instead of `lambdafeedback.units`.
+- `preview_function` and `fix_exponents` have moved out of this package entirely, to compareExpressions (`app/context/physical_quantity_preview.py`): building a LaTeX/SymPy preview string is an app-layer display concern, not unit conversion. Import them from there instead of `lambdafeedback.physical_quantities`.
 - `preprocess_quantity` now returns a plain `str` (`expression_parsing.preprocess_expression`, which it matches the shape of, no longer returns `Preprocessed`).
 - `FeedbackTag` is removed, matching `expression_parsing`'s move from feedback tags to typed exceptions: mapping a parsing fact to feedback text is an app-layer concern, not this package's. `PhysicalQuantity.messages` (`(message_id, FeedbackTag)` pairs) is replaced by `PhysicalQuantity.reverted_units: tuple[RevertedUnit, ...]` — plain `before`/`marked`/`after` facts about unit-like text found inside a value, with no tag name or synthetic id. This isn't a raised exception (unlike `expression_parsing`'s failures): it's non-fatal and can fire multiple times per response, so it stays a collection.
 - **`PhysicalQuantity` is a frozen result.** Its attributes can't be set (`dataclasses.FrozenInstanceError`); `value`, `unit` and `ast_root` are still ordinary parse trees. `parse_quantity` builds it through the new `PhysicalQuantity.from_tree(name, params, ast_root, parser)`, which runs each step (splitting value from unit, restoring the value's text, LaTeX, SI forms) as a separate function; the constructor now takes every attribute. Quantities still compare by identity, and pickle and deep-copy without a custom `__getstate__`/`__setstate__`.
@@ -29,7 +30,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Added
 
-- DEBUG logging through module loggers (`lambdafeedback.units.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. `parse_quantity` logs the normalised text and the value/unit split.
+- DEBUG logging through module loggers (`lambdafeedback.physical_quantities.*`), with a `NullHandler` on the package logger; nothing is logged at INFO or above. See the repository README. `parse_quantity` logs the normalised text and the value/unit split.
 - `DisallowedUnitError` (see Breaking).
 - `PhysicalQuantity.base_dimension`: the dimension without the unit's factor (`5 km/h` gives `length/time`, where `dimension` is `10**3*length/((3600*time))`), and `same_dimension(a, b)` to compare two quantities' dimensions.
 - `MAX_INPUT_LENGTH` (10,000 characters): `parse_quantity` raises `QuantityParseError` for longer input, and `preprocess_quantity` returns it unchanged. This bounds the running time on any input.
@@ -62,7 +63,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Changed
 
-- `quantity` keeps the public `PhysicalQuantity`, `RevertedUnit`, `parse_quantity` and `same_dimension`; the steps of reading a quantity are in private modules (`_split`, `_latex`, `_conversion`). Import public names from `lambdafeedback.units`: `MAX_UNIT_EXPONENT` is no longer in `lambdafeedback.units.quantity`.
+- `quantity` keeps the public `PhysicalQuantity`, `RevertedUnit`, `parse_quantity` and `same_dimension`; the steps of reading a quantity are in private modules (`_split`, `_latex`, `_conversion`). Import public names from `lambdafeedback.physical_quantities`: `MAX_UNIT_EXPONENT` is no longer in `lambdafeedback.physical_quantities.quantity`.
 - The regular expressions in preprocessing and parsing are replaced by string scanners, with the same results. The quantity grammar's tokens are `slr_parsing.Lexeme`s (requires `lambdafeedback-slr-parsing` with literal token patterns).
 
 ### Deprecated

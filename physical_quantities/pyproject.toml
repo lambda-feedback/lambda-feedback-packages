@@ -3,8 +3,8 @@ requires = ["poetry-core>=2.2.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [project]
-name = "lambdafeedback-units"
-version = "0.3.0rc3"
+name = "lambdafeedback-physical-quantities"
+version = "0.3.0rc4"
 description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
 readme = "README.md"
 license = "MIT"
@@ -25,17 +25,17 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "lambdafeedback-slr-parsing (>=0.3.0rc3,<0.4.0)",
-    "lambdafeedback-expression-parsing (>=0.3.0rc3,<0.4.0)",
+    "lambdafeedback-slr-parsing (>=0.3.0rc4,<0.4.0)",
+    "lambdafeedback-expression-parsing (>=0.3.0rc4,<0.4.0)",
     "sympy (>=1.14,<2.0)",
 ]
 
 [project.urls]
 Repository = "https://github.com/lambda-feedback/lambda-feedback-packages"
-Changelog = "https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/units/CHANGELOG.md"
+Changelog = "https://github.com/lambda-feedback/lambda-feedback-packages/blob/main/physical_quantities/CHANGELOG.md"
 
 [tool.poetry]
-packages = [{ include = "lambdafeedback/units", from = "src" }]
+packages = [{ include = "lambdafeedback/physical_quantities", from = "src" }]
 # The source distribution also carries the changelog and the tests.
 include = [{ path = "CHANGELOG.md", format = "sdist" }, { path = "tests", format = "sdist" }]
 
