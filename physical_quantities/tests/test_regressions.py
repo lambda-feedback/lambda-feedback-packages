@@ -117,6 +117,21 @@ class TestParsing:
         quantity = parse_quantity(expr, QuantityParams(is_latex=True))
         assert (quantity.value.content_string(), quantity.unit.content_string()) == (value, unit)
 
+    @pytest.mark.parametrize(
+        "expr, is_latex, values",
+        [
+            ("{1, 2} km", False, {1000, 2000}),
+            ("plus_minus 2 km", False, {-2000, 2000}),
+            (r"1,2~\mathrm{km}", True, {1000, 2000}),
+            (r"\pm 2~\mathrm{km}", True, {-2000, 2000}),
+        ],
+    )
+    def test_unit_factor_applies_to_each_value_of_a_list(self, expr, is_latex, values):
+        # The factor multiplied the list as a whole, "((1, 2))*(1000)", which raised.
+        quantity = parse_quantity(expr, QuantityParams(is_latex=is_latex))
+        assert set(quantity.standard_values) == values
+        assert str(quantity.standard_unit) == "metre"
+
     @pytest.mark.parametrize("strictness", ["strict", "natural"])
     @pytest.mark.parametrize(
         "expr, unit",

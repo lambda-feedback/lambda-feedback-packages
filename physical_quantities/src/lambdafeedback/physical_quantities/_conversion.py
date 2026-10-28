@@ -9,6 +9,7 @@ from sympy import Basic, Integer, simplify
 
 from lambdafeedback.expression_parsing import (
     SympyParsingConfig,
+    create_expression_set,
     parse_expression,
     parse_expressions,
     parse_latex,
@@ -85,6 +86,7 @@ def sympy_forms(
     value_text: Any = value.content_string() if value is not None else None
     if value_text is not None and params.is_latex:
         value_text = parse_latex(value_text, params.symbols, params.simplify)
+    standard_values: tuple[Basic, ...] | None = None
     standard_unit: Any = None
     expanded_unit: Any = None
     dimension: Basic = Integer(1)
@@ -99,10 +101,17 @@ def sympy_forms(
             base_symbols = {symbol: 1 for symbol in standard_unit.free_symbols if str(symbol) in _BASE_UNIT_NAMES}
             unit_factor = standard_unit.subs(base_symbols).simplify()
             standard_unit = (standard_unit / unit_factor).simplify(rational=True)
-            value_text = f"({value_text})*({unit_factor})"
+            if len(create_expression_set(value_text, config.substitution_params)) > 1:
+                # A list ({1, 2}, 1,2 in LaTeX, or ±): the factor applies to each value, not to the list.
+                factored_values = tuple(value * unit_factor for value in parse_expressions(value_text, config))
+                standard_values = tuple(dict.fromkeys(factored_values))
+            else:
+                value_text = f"({value_text})*({unit_factor})"
         dimension = parse_expression(substitute(expanded_unit_string, _BASE_UNIT_DIMENSIONS), config)
+    if standard_values is None and value_text is not None:
+        standard_values = parse_expressions(value_text, config)
     return SympyForms(
-        standard_values=None if value_text is None else parse_expressions(value_text, config),
+        standard_values=standard_values,
         standard_unit=standard_unit,
         expanded_unit=expanded_unit,
         dimension=dimension,
