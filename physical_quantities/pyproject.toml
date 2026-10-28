@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "lambdafeedback-physical-quantities"
-version = "0.3.0rc4"
+version = "0.3.0rc5"
 description = "Parse physical quantities such as 9.81 m/s^2 into value and unit, with SI conversion and dimensional analysis."
 readme = "README.md"
 license = "MIT"
@@ -25,8 +25,8 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "lambdafeedback-slr-parsing (>=0.3.0rc4,<0.4.0)",
-    "lambdafeedback-expression-parsing (>=0.3.0rc4,<0.4.0)",
+    "lambdafeedback-slr-parsing (>=0.3.0rc5,<0.4.0)",
+    "lambdafeedback-expression-parsing (>=0.3.0rc5,<0.4.0)",
     "sympy (>=1.14,<2.0)",
 ]
 

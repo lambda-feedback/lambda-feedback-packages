@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-slr-parsing
 
-## 0.3.0 (unreleased; pre-release 0.3.0rc4, tag v0.3.0-rc.4)
+## 0.3.0 (unreleased; pre-release 0.3.0rc5, tag v0.3.0-rc.5)
 
 The first public release, after the extraction refactor. The import path is now `lambdafeedback.slr_parsing` (was `slr_parsing`). There was no 0.2.0 release: all four `lambdafeedback-*` packages share one version, and the first release is 0.3.0. Supports Python 3.12 to 3.14 (3.11 is not supported); `__version__` gives the installed version.
 
