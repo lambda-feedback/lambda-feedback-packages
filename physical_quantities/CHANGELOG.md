@@ -1,6 +1,6 @@
 # Changelog: lambdafeedback-physical-quantities
 
-## 0.3.0 (unreleased; pre-release 0.3.0rc4, tag v0.3.0-rc.4)
+## 0.3.0 (unreleased; pre-release 0.3.0rc5, tag v0.3.0-rc.5)
 
 The first public release. This is a further tidy-up after the 0.2.0 extraction: the package now only does unit conversion. Package metadata (MIT licence, README, URLs) is in place for PyPI. Python 3.13 and later is supported, now that `lambdafeedback-expression-parsing` no longer depends on latex2sympy2. SymPy 1.14 or later is required (was 1.12): 1.12 predates Python 3.12, and a configuration with a declared function (`symbol_assumptions` `function`) can only be pickled from 1.14.
 
@@ -41,7 +41,7 @@ The first public release. This is a further tidy-up after the 0.2.0 extraction: 
 
 ### Fixed
 
-- A value that is a list, with a unit, is converted value by value: `{1, 2} km`, `1,2~\mathrm{km}` (LaTeX), `plus_minus 2 km` and `\pm 2~\mathrm{km}` give `standard_values` of 1000 and 2000 (or −2000 and 2000). Before, the unit factor multiplied the list as a whole, and `parse_quantity` raised `QuantityParseError`.
+- (since 0.3.0rc5) A value that is a list, with a unit, is converted value by value: `{1, 2} km`, `1,2~\mathrm{km}` (LaTeX), `plus_minus 2 km` and `\pm 2~\mathrm{km}` give `standard_values` of 1000 and 2000 (or −2000 and 2000). Before, the unit factor multiplied the list as a whole, and `parse_quantity` raised `QuantityParseError`.
 - The roentgen was converted as kelvin per kilogram; it is 2.58×10⁻⁴ C/kg (ampere·second per kilogram).
 - The imperial pint was 0.00056826 m³; it is 0.00056826125 m³, so that 8 pints make a gallon.
 - `nautical_miles` is recognised as the plural of `nautical_mile`. Before, only `nauticalmiles` was, and in natural mode `2 nautical_miles` parsed as 2 nautical_mile·second.

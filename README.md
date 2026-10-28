@@ -17,13 +17,13 @@ tag. They depend on each other by version, so install the ones you use
 **and the packages they depend on** from the same tag:
 
 ```bash
-pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=slr_parsing"
-pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=criteria"
-pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=expression_parsing"
-pip install "lambdafeedback-physical-quantities @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.4#subdirectory=physical_quantities"
+pip install "lambdafeedback-slr-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.5#subdirectory=slr_parsing"
+pip install "lambdafeedback-criteria @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.5#subdirectory=criteria"
+pip install "lambdafeedback-expression-parsing @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.5#subdirectory=expression_parsing"
+pip install "lambdafeedback-physical-quantities @ git+https://github.com/lambda-feedback/lambda-feedback-packages.git@v0.3.0-rc.5#subdirectory=physical_quantities"
 ```
 
-With Poetry: `lambdafeedback-physical-quantities = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0-rc.4", subdirectory = "physical_quantities" }`, and likewise for each package.
+With Poetry: `lambdafeedback-physical-quantities = { git = "https://github.com/lambda-feedback/lambda-feedback-packages.git", tag = "v0.3.0-rc.5", subdirectory = "physical_quantities" }`, and likewise for each package.
 
 ## Packages
 
