@@ -68,6 +68,7 @@ The first public release. Further tidy-up after the 0.2.0 extraction: previewing
 - `{f(x,y), 2}` is two answers, `f(x,y)` and `2`: `create_expression_set` split at every comma, including those inside brackets.
 - `is_number("2*10^3")` is true: the `^` in `NUMBER_REGEX` was an unescaped anchor, so the `*10^` exponent form never matched.
 - `compute_relative_tolerance_from_significant_decimals` counts only the mantissa for `1.5E3` and `1.5*10^3` (it counted the exponent's digits as significant figures, giving 5e-4 instead of 0.05).
+- (since 0.3.0rc3) A task symbol whose LaTeX starts with a big operator (`\sum`, `\int`, `\prod`, `\lim`, `\bigcup`, `\bigcap`; `BIG_OPERATOR_PREFIXES` in `sympy_parsing`) wraps its argument when applied: with `infsum` as `\sum_{n=1}^{\infty}`, `infsum((-1)^n/n^2)` is an undefined function `infsum` of the summand, which `sympy_to_latex` prints as the operator followed by it. It was the product `infsum*((-1)^n/n^2)`, so the operator was printed inside the fraction, or followed by `\cdot`. Not applied (`2*infsum`), it is still the task's symbol. From compareExpressions#261.
 - `parse_latex` recognises `\pm`/`\mp` without a following space (`1\pm\sqrt{2}` failed to parse), and no longer runs symbol substitution over the LaTeX when expanding them (`\lambda` became `\lamda`).
 
 ## 0.2.0 (internal, not published)
