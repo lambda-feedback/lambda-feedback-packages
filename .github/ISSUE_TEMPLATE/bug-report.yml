@@ -1,0 +1,73 @@
+name: "Bug Report"
+description: "Report a package that parses, evaluates, or converts something incorrectly, or raises an unexpected error."
+title: "Bug: "
+labels:
+  - bug
+assignees: []
+body:
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: "Which package is affected?"
+      options:
+        - slr_parsing
+        - criteria
+        - expression_parsing
+        - physical_quantities
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of the bug
+      description: "What's going wrong?"
+      placeholder: |
+        e.g. parse_quantity("9.81 m/s^2", ...) reports the dimension as length instead of acceleration.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: "The smallest snippet that shows the problem, including any params used."
+      placeholder: |
+        from lambdafeedback.physical_quantities import QuantityParams, parse_quantity
+
+        params = QuantityParams.from_dict({})
+        quantity = parse_quantity("9.81 m/s^2", params)
+        print(quantity.dimension)
+      render: python
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: Expected vs. actual result
+      description: "What did you expect to happen, and what actually happened instead? Include the traceback if one was raised."
+      placeholder: |
+        - Expected: dimension length/time**2
+        - Actual: dimension length
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "Optional: the release tag or commit you installed from."
+      placeholder: "v0.3.0-rc.5"
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Where it was found
+      description: "Optional: how you hit it, e.g. through compareExpressions, a specific set/question, evaluation params."
+    validations:
+      required: false

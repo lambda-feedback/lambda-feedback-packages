@@ -1,0 +1,48 @@
+name: "Feature Request"
+description: "Propose new functionality or an improvement to one of the packages."
+title: "Feature: "
+labels:
+  - enhancement
+assignees: []
+body:
+  - type: dropdown
+    id: package
+    attributes:
+      label: Package
+      description: "Optional: which package would this change?"
+      options:
+        - slr_parsing
+        - criteria
+        - expression_parsing
+        - physical_quantities
+        - New package
+        - Not sure
+    validations:
+      required: false
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: "What can't you currently do, and why does it matter?"
+      placeholder: |
+        e.g. expression_parsing has no way to register custom multi-character symbols such as `V_max`,
+        so every evaluation function has to preprocess them itself.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: "What would you like to see happen? A sketch of the API is welcome."
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: "Optional: any workarounds or other approaches you've considered."
+    validations:
+      required: false

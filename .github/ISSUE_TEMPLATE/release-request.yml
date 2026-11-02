@@ -1,0 +1,74 @@
+name: "Release Request"
+description: "Request a release of the packages by specifying the changes, the commit/branch to tag, and the kind of version bump."
+title: "Release Request"
+labels:
+  - release
+assignees: []
+body:
+  - type: textarea
+    id: description_of_changes
+    attributes:
+      label: Description of changes
+      description: "Summarize what is changing and why, and in which packages. Include links to PRs, issues, or changelogs."
+      placeholder: |
+        - What changed:
+        - Why:
+        - Related PRs/Issues: #123, #456
+      render: markdown
+    validations:
+      required: true
+
+  - type: input
+    id: branch_to_release
+    attributes:
+      label: Branch or commit to release
+      description: "The branch or commit the release tag should point at."
+      placeholder: "main"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: version-bump
+    attributes:
+      label: "🚀 What kind of update is this?"
+      description: "Tell us how significant this change is. This helps us set the correct new version number. All four packages share one version."
+      options:
+        - "Patch: A small fix for a bug. It won't break anything for existing users. (e.g., 1.2.3 ➔ 1.2.4)"
+        - "Minor: Adds a new feature, but doesn't change how existing ones work. A safe update. (e.g., 1.2.3 ➔ 1.3.0)"
+        - "Major: A big change that alters existing features. Users may need to update their work to adapt. (e.g., 1.2.3 ➔ 2.0.0)"
+        - "Pre-release: An alpha, beta or release candidate for testing before a final release. (e.g., 1.3.0-rc.1)"
+      default: 0
+    validations:
+      required: true
+
+  - type: input
+    id: target_version
+    attributes:
+      label: Target version
+      description: "Optional: the tag you expect, if you know it."
+      placeholder: "v0.4.0 or v0.4.0-rc.1"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before release
+      options:
+        - label: "The CHANGELOG.md of each changed package is updated."
+        - label: "CI passes on the branch or commit above."
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        ### 🏷️ How the release is made
+
+        A maintainer sets the new version in all four `pyproject.toml` files and the ranges between the packages
+        (PEP 440 spelling for pre-releases, e.g. `0.4.0rc1` with `>=0.4.0rc1,<0.5.0`), checks them with
+        `python scripts/release_version.py <tag>` (add `--prerelease` for a pre-release), and pushes the tag.
+
+        Pushing the tag starts the build and the GitHub Release:
+
+        - [➡️ Release workflow](../actions/workflows/release.yml) for `vX.Y.Z` tags
+        - [➡️ Pre-release workflow](../actions/workflows/prerelease.yml) for `vX.Y.Z-alpha.N`, `-beta.N` and `-rc.N` tags

@@ -1,0 +1,31 @@
+name: "Docs Issue"
+description: "Report missing or incorrect documentation."
+title: "Docs: "
+labels:
+  - documentation
+assignees: []
+body:
+  - type: textarea
+    id: issue
+    attributes:
+      label: What's missing or incorrect
+      description: "Describe the gap or error in the documentation."
+    validations:
+      required: true
+
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: "Where is this? e.g. a package README or CHANGELOG, the root README, docs/, a docstring."
+      placeholder: "physical_quantities/README.md"
+    validations:
+      required: false
+
+  - type: textarea
+    id: suggested_fix
+    attributes:
+      label: Suggested fix
+      description: "Optional: what should it say instead?"
+    validations:
+      required: false
