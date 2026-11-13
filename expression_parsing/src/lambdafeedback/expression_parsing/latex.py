@@ -362,8 +362,8 @@ def parse_latex(response: str, symbols: Mapping[str, SymbolSpec], simplify: bool
     for expression in responses:
         sides = split_equation(expression, LatexParseError)
         try:
-            if len(sides) == 2:
-                # An equation is written "lhs = rhs", as parse_expression reads it, with each
+            if len(sides) > 1:
+                # An equation is written "lhs = rhs" (or "x = y = z"), as parse_expression reads it, with each
                 # side parsed separately ("Eq(x, 2)" would not survive parse_expression with
                 # elementary_functions, where the E of Eq is Euler's number).
                 parsed_responses.add(" = ".join(text(_latex2sympy(side)) for side in sides))

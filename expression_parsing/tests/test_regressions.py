@@ -9,6 +9,7 @@ import warnings
 import pytest
 from sympy import (
     Abs,
+    And,
     Eq,
     Function,
     Integral,
@@ -130,9 +131,10 @@ class TestParsing:
         assert str(parse_expression("2E", parsing_params())) == "2*E"
         assert str(parse_expression("xE", parsing_params())) == "E*x"
 
-    def test_chained_equalities_are_rejected(self):
-        with pytest.raises(ValueError, match="="):
-            parse_expression("a=b=c", parsing_params())
+    def test_chained_equalities_are_each_equation(self):
+        # Was silently Eq(a, b), then rejected; a chain since compareExpressions#278.
+        a, b, c = Symbol("a"), Symbol("b"), Symbol("c")
+        assert parse_expression("a=b=c", parsing_params()) == And(Eq(a, b), Eq(b, c))
 
     def test_arithmetic_on_sets_is_rejected_in_strict_syntax(self):
         with warnings.catch_warnings():
@@ -211,10 +213,13 @@ class TestLatexEquations:
         # Simplifying the Eq as a whole turned "x = x" into "True".
         assert parse_latex("x = x", {}, simplify=True) == "x = x"
 
-    def test_more_than_one_equals_sign_is_rejected(self):
-        with pytest.raises(LatexParseError, match="=") as info:
-            parse_latex("x = y = 2", {})
-        assert info.value.expression == "x = y = 2"
+    def test_chained_equality_keeps_every_side(self):
+        assert parse_latex("x = y = 2", {}) == "x = y = 2"
+
+    def test_empty_side_is_rejected(self):
+        with pytest.raises(LatexParseError, match="on each side") as info:
+            parse_latex("x = = 2", {})
+        assert info.value.expression == "x = = 2"
 
 
 class TestPublicReleaseReview:

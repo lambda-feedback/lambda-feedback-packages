@@ -19,11 +19,51 @@ _BRACKET_PAIRS = dict(zip(CLOSING_BRACKETS, OPENING_BRACKETS, strict=True))
 
 
 def split_equation(expr: str, error: type[ExpressionParsingError]) -> list[str]:
-    """``[expr]``, or ``[lhs, rhs]`` for an equation; raises ``error`` for more than one ``=``."""
+    """``[expr]``, or the sides of an equation (``x = y = z`` has three); raises ``error`` for an empty side."""
     sides = expr.split("=")
-    if len(sides) > 2:
-        raise error(f"An expression can contain at most one '=': {expr}", expression=expr)
+    if len(sides) > 1 and any(not side.strip() for side in sides):
+        raise error(f"A relation needs an expression on each side: {expr}", expression=expr)
     return sides
+
+
+RELATIONAL_OPERATORS = ("<=", ">=", "!=", "<", ">", "=")
+"""The relations a response may state, two-character operators first (scanned in this order)."""
+
+
+def _relational_operator_at(expr: str, index: int) -> str | None:
+    return next((operator for operator in RELATIONAL_OPERATORS if expr.startswith(operator, index)), None)
+
+
+def split_relations(expr: str, error: type[ExpressionParsingError]) -> tuple[list[str], list[str]]:
+    """The operands of ``expr`` and the relational operators between them: ``1 < x <= 5`` gives
+    ``(["1 ", " x ", " 5"], ["<", "<="])``, and an expression ``([expr], [])``.
+
+    Allowed are one relation (``x = 1``, ``x < 1``, ``x != 1``), a chain of
+    equalities (``x = y = z``) or two order relations pointing the same way
+    (``1 < x <= 5``). Raises ``error`` for anything else, and for a relation
+    missing an operand (``x <``, ``x = = y``).
+    """
+    operands, operators = [], []
+    start = index = 0
+    while index < len(expr):
+        operator = _relational_operator_at(expr, index)
+        if operator is None:
+            index += 1
+            continue
+        operands.append(expr[start:index])
+        operators.append(operator)
+        index = start = index + len(operator)
+    operands.append(expr[start:])
+    if len(operators) > 1 and set(operators) != {"="}:
+        if "=" in operators or "!=" in operators:
+            raise error(f"'=' and '!=' can't be combined with another relation: {expr}", expression=expr)
+        if len(operators) > 2:
+            raise error(f"Only two inequalities can be chained, as in 1 < x < 5: {expr}", expression=expr)
+        if operators[0][0] != operators[1][0]:
+            raise error(f"A chain of inequalities must point one way, as in 1 < x < 5: {expr}", expression=expr)
+    if operators and any(not operand.strip() for operand in operands):
+        raise error(f"A relation needs an expression on each side: {expr}", expression=expr)
+    return operands, operators
 
 
 def has_matching_brackets(expr: str) -> bool:
