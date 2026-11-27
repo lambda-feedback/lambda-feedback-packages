@@ -11,6 +11,7 @@ from sympy import (
     Abs,
     Eq,
     Function,
+    I,
     Integral,
     Limit,
     Product,
@@ -913,3 +914,38 @@ def test_parsing_logs_its_decisions_at_debug_only(caplog):
     assert any(message.startswith("preprocess '2 sin(x)'") for message in messages)
     assert any(message.startswith("parse ") and "sin(x)" in message for message in messages)
     assert all(record.levelno == logging.DEBUG for record in caplog.records)
+
+
+class TestNumberFollowedByJ:
+    """Python reads ``2j`` as an imaginary literal; without ``complexNumbers`` it reads like ``2i``."""
+
+    @pytest.mark.parametrize(
+        "expr, expected",
+        [
+            ("4j", "4*j"),
+            ("3i+2j+6k", "3*i + 2*j + 6*k"),
+            ("2.5J", "5*J/2"),
+            ("sin(2j)", "sin(2*j)"),
+            ("j", "j"),
+            ("x_2j", "x_2j"),
+        ],
+    )
+    def test_is_multiplication(self, expr, expected):
+        config = parsing_params(strict_syntax=False, elementary_functions=True)
+        assert str(parse_expression(expr, config)) == expected
+
+    def test_number_in_a_name_is_not_split_off(self):
+        config = SympyParsingConfig.from_params(ExpressionParams.from_dict({"strict_syntax": False}), ("x2j",))
+        assert parse_expression("x2j", config) == Symbol("x2j")
+        assert parse_expression("0x1f", config) == 31
+
+    @pytest.mark.parametrize("expr", ["4j", "3i+2j+6k", "2.5J", "sin(2j)"])
+    def test_is_rejected_with_strict_syntax(self, expr):
+        with pytest.raises(ExpressionParsingError):
+            parse_expression(expr, parsing_params(strict_syntax=True))
+
+    @pytest.mark.parametrize("strict_syntax", [False, True])
+    @pytest.mark.parametrize("expr", ["4j", "2.5J"])
+    def test_is_imaginary_with_complex_numbers(self, expr, strict_syntax):
+        config = parsing_params(complexNumbers=True, strict_syntax=strict_syntax)
+        assert parse_expression(expr, config).has(I)

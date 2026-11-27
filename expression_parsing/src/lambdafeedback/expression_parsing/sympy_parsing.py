@@ -9,7 +9,7 @@ from dataclasses import dataclass, field, replace
 from functools import cached_property
 from io import StringIO
 from keyword import iskeyword
-from token import NAME, OP
+from token import NAME, NUMBER, OP
 from tokenize import TokenError, generate_tokens
 from typing import Any
 
@@ -87,6 +87,25 @@ def _keywords_as_names(tokens: list[Any], local_dict: dict[str, Any], global_dic
         else:
             constructor = "Function" if following == "(" else "Symbol"
             result += [(NAME, constructor), (OP, "("), (NAME, repr(value)), (OP, ")")]
+    return result
+
+
+def _split_imaginary_literals(tokens: list[Any], local_dict: dict[str, Any], global_dict: Any) -> list[Any]:
+    """Read a number followed by ``j`` or ``J`` as the number and then the name ``j`` or ``J``.
+
+    Python's tokenizer reads ``2j`` (also ``2.5J``, ``1e3j``) as one imaginary
+    literal, which ``auto_number`` would make ``2*I``, so ``3i+2j+6k`` was
+    ``3*i + 2*I + 6*k``. Split, it reads like ``2i``: ``2*j`` by implicit
+    multiplication, and a syntax error with strict syntax. Only used without
+    ``complex_numbers``, where ``2j`` keeps its meaning ``2*I``. A number that
+    is part of a name (``x2j``) is a NAME token and is not affected.
+    """
+    result: list[Any] = []
+    for kind, value in tokens:
+        if kind == NUMBER and value[-1] in "jJ":
+            result += [(NUMBER, value[:-1]), (NAME, value[-1])]
+        else:
+            result.append((kind, value))
     return result
 
 
@@ -235,7 +254,10 @@ class SympyParsingConfig:
         """
         # _keywords_as_names goes after auto_symbol (which leaves keywords alone, and
         # would wrap our Symbol('in') again), before the symbol splitting.
-        leading = (lambda_notation, auto_symbol, _keywords_as_names, repeated_decimals, auto_number)
+        leading: tuple[Any, ...] = (lambda_notation, auto_symbol, _keywords_as_names, repeated_decimals, auto_number)
+        # _split_imaginary_literals goes before auto_symbol, which declares the new name j or J.
+        if not self.params.complex_numbers:
+            leading = (_split_imaginary_literals, *leading)
         transformations: tuple[Any, ...]
         if self.params.strict_syntax:
             transformations = (*leading, function_exponentiation)
