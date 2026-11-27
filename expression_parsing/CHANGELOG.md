@@ -69,6 +69,7 @@ The first public release. Further tidy-up after the 0.2.0 extraction: previewing
 - `is_number("2*10^3")` is true: the `^` in `NUMBER_REGEX` was an unescaped anchor, so the `*10^` exponent form never matched.
 - `compute_relative_tolerance_from_significant_decimals` counts only the mantissa for `1.5E3` and `1.5*10^3` (it counted the exponent's digits as significant figures, giving 5e-4 instead of 0.05).
 - `parse_latex` recognises `\pm`/`\mp` without a following space (`1\pm\sqrt{2}` failed to parse), and no longer runs symbol substitution over the LaTeX when expanding them (`\lambda` became `\lamda`).
+- Without `complex_numbers`, a number followed by `j` or `J` is the number times the symbol `j` or `J`, like `2i`: `3i+2j+6k` is `3*i + 2*j + 6*k`, and `2.5J` is `5*J/2`. Python's tokenizer reads `2j` as an imaginary literal, so it was `2*I`, with `I` an ordinary symbol, whatever symbols the task defined. With strict syntax `2j` is now a syntax error, like `2i` (it was accepted as `2*I`). With `complex_numbers` nothing changes: `2j` is `2*I`, the imaginary number. A name ending in a number and `j` (`x2j`, `x_2j`) is unaffected.
 
 ## 0.2.0 (internal, not published)
 
